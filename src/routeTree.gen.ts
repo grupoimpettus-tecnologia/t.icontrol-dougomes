@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/_painel'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSelecionarEmpresaRouteImport } from './routes/_authenticated/selecionar-empresa'
+import { Route as StatusSlugRouteImport } from './routes/status.$slug'
 import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/_painel/configuracoes'
 import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_authenticated/_painel/dashboard'
 import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
@@ -25,9 +26,12 @@ import { Route as AuthenticatedPainelAdminGlobalMetricasRouteImport } from './ro
 import { Route as AuthenticatedPainelAdminGlobalUsuariosRouteImport } from './routes/_authenticated/_painel/admin-global/usuarios'
 import { Route as AuthenticatedPainelInfraAccessMapRouteImport } from './routes/_authenticated/_painel/infra/access-map'
 import { Route as AuthenticatedPainelInfraEquipmentsRouteImport } from './routes/_authenticated/_painel/infra/equipments'
-import { Route as AuthenticatedPainelInfraMonitoringRouteImport } from './routes/_authenticated/_painel/infra/monitoring'
 import { Route as AuthenticatedPainelInfraPhoneLinesRouteImport } from './routes/_authenticated/_painel/infra/phone-lines'
 import { Route as AuthenticatedPainelInfraServicesAssetsRouteImport } from './routes/_authenticated/_painel/infra/services-assets'
+import { Route as ApiPublicCronRunChecksRouteImport } from './routes/api/public/cron/run-checks'
+import { Route as ApiPublicHeartbeatTokenRouteImport } from './routes/api/public/heartbeat/$token'
+import { Route as AuthenticatedPainelInfraMonitoringIndexRouteImport } from './routes/_authenticated/_painel/infra/monitoring/index'
+import { Route as AuthenticatedPainelInfraMonitoringIdRouteImport } from './routes/_authenticated/_painel/infra/monitoring/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +67,11 @@ const AuthenticatedSelecionarEmpresaRoute =
     path: '/selecionar-empresa',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const StatusSlugRoute = StatusSlugRouteImport.update({
+  id: '/status/$slug',
+  path: '/status/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPainelConfiguracoesRoute =
   AuthenticatedPainelConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -116,12 +125,6 @@ const AuthenticatedPainelInfraEquipmentsRoute =
     path: '/infra/equipments',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
-const AuthenticatedPainelInfraMonitoringRoute =
-  AuthenticatedPainelInfraMonitoringRouteImport.update({
-    id: '/infra/monitoring',
-    path: '/infra/monitoring',
-    getParentRoute: () => AuthenticatedPainelRoute,
-  } as any)
 const AuthenticatedPainelInfraPhoneLinesRoute =
   AuthenticatedPainelInfraPhoneLinesRouteImport.update({
     id: '/infra/phone-lines',
@@ -134,6 +137,28 @@ const AuthenticatedPainelInfraServicesAssetsRoute =
     path: '/infra/services-assets',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const ApiPublicCronRunChecksRoute = ApiPublicCronRunChecksRouteImport.update({
+  id: '/api/public/cron/run-checks',
+  path: '/api/public/cron/run-checks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHeartbeatTokenRoute = ApiPublicHeartbeatTokenRouteImport.update({
+  id: '/api/public/heartbeat/$token',
+  path: '/api/public/heartbeat/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPainelInfraMonitoringIndexRoute =
+  AuthenticatedPainelInfraMonitoringIndexRouteImport.update({
+    id: '/infra/monitoring/',
+    path: '/infra/monitoring/',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraMonitoringIdRoute =
+  AuthenticatedPainelInfraMonitoringIdRouteImport.update({
+    id: '/infra/monitoring/$id',
+    path: '/infra/monitoring/$id',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
+  '/status/$slug': typeof StatusSlugRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
@@ -150,9 +176,12 @@ export interface FileRoutesByFullPath {
   '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
-  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
+  '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
+  '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
+  '/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
+  '/infra/monitoring/': typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -160,6 +189,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
+  '/status/$slug': typeof StatusSlugRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
@@ -169,9 +199,12 @@ export interface FileRoutesByTo {
   '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
-  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
+  '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
+  '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
+  '/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
+  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -182,6 +215,7 @@ export interface FileRoutesById {
   '/_authenticated/_painel': typeof AuthenticatedPainelRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
+  '/status/$slug': typeof StatusSlugRoute
   '/_authenticated/_painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/_authenticated/_painel/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
@@ -191,9 +225,12 @@ export interface FileRoutesById {
   '/_authenticated/_painel/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/_authenticated/_painel/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/_authenticated/_painel/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
-  '/_authenticated/_painel/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
   '/_authenticated/_painel/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/_authenticated/_painel/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
+  '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
+  '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
+  '/_authenticated/_painel/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
+  '/_authenticated/_painel/infra/monitoring/': typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -203,6 +240,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/selecionar-empresa'
+    | '/status/$slug'
     | '/configuracoes'
     | '/dashboard'
     | '/pdv'
@@ -212,9 +250,12 @@ export interface FileRouteTypes {
     | '/admin-global/usuarios'
     | '/infra/access-map'
     | '/infra/equipments'
-    | '/infra/monitoring'
     | '/infra/phone-lines'
     | '/infra/services-assets'
+    | '/api/public/cron/run-checks'
+    | '/api/public/heartbeat/$token'
+    | '/infra/monitoring/$id'
+    | '/infra/monitoring/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -222,6 +263,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/selecionar-empresa'
+    | '/status/$slug'
     | '/configuracoes'
     | '/dashboard'
     | '/pdv'
@@ -231,9 +273,12 @@ export interface FileRouteTypes {
     | '/admin-global/usuarios'
     | '/infra/access-map'
     | '/infra/equipments'
-    | '/infra/monitoring'
     | '/infra/phone-lines'
     | '/infra/services-assets'
+    | '/api/public/cron/run-checks'
+    | '/api/public/heartbeat/$token'
+    | '/infra/monitoring/$id'
+    | '/infra/monitoring'
   id:
     | '__root__'
     | '/'
@@ -243,6 +288,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel'
     | '/_authenticated/onboarding'
     | '/_authenticated/selecionar-empresa'
+    | '/status/$slug'
     | '/_authenticated/_painel/configuracoes'
     | '/_authenticated/_painel/dashboard'
     | '/_authenticated/_painel/pdv'
@@ -252,9 +298,12 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/admin-global/usuarios'
     | '/_authenticated/_painel/infra/access-map'
     | '/_authenticated/_painel/infra/equipments'
-    | '/_authenticated/_painel/infra/monitoring'
     | '/_authenticated/_painel/infra/phone-lines'
     | '/_authenticated/_painel/infra/services-assets'
+    | '/api/public/cron/run-checks'
+    | '/api/public/heartbeat/$token'
+    | '/_authenticated/_painel/infra/monitoring/$id'
+    | '/_authenticated/_painel/infra/monitoring/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +311,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AceitarConviteRoute: typeof AceitarConviteRoute
   AuthRoute: typeof AuthRoute
+  StatusSlugRoute: typeof StatusSlugRoute
+  ApiPublicCronRunChecksRoute: typeof ApiPublicCronRunChecksRoute
+  ApiPublicHeartbeatTokenRoute: typeof ApiPublicHeartbeatTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -314,6 +366,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/selecionar-empresa'
       preLoaderRoute: typeof AuthenticatedSelecionarEmpresaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/status/$slug': {
+      id: '/status/$slug'
+      path: '/status/$slug'
+      fullPath: '/status/$slug'
+      preLoaderRoute: typeof StatusSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_painel/configuracoes': {
       id: '/_authenticated/_painel/configuracoes'
@@ -378,13 +437,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelInfraEquipmentsRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
-    '/_authenticated/_painel/infra/monitoring': {
-      id: '/_authenticated/_painel/infra/monitoring'
-      path: '/infra/monitoring'
-      fullPath: '/infra/monitoring'
-      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringRouteImport
-      parentRoute: typeof AuthenticatedPainelRoute
-    }
     '/_authenticated/_painel/infra/phone-lines': {
       id: '/_authenticated/_painel/infra/phone-lines'
       path: '/infra/phone-lines'
@@ -397,6 +449,34 @@ declare module '@tanstack/react-router' {
       path: '/infra/services-assets'
       fullPath: '/infra/services-assets'
       preLoaderRoute: typeof AuthenticatedPainelInfraServicesAssetsRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/api/public/cron/run-checks': {
+      id: '/api/public/cron/run-checks'
+      path: '/api/public/cron/run-checks'
+      fullPath: '/api/public/cron/run-checks'
+      preLoaderRoute: typeof ApiPublicCronRunChecksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/heartbeat/$token': {
+      id: '/api/public/heartbeat/$token'
+      path: '/api/public/heartbeat/$token'
+      fullPath: '/api/public/heartbeat/$token'
+      preLoaderRoute: typeof ApiPublicHeartbeatTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_painel/infra/monitoring/': {
+      id: '/_authenticated/_painel/infra/monitoring/'
+      path: '/infra/monitoring'
+      fullPath: '/infra/monitoring/'
+      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringIndexRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/monitoring/$id': {
+      id: '/_authenticated/_painel/infra/monitoring/$id'
+      path: '/infra/monitoring/$id'
+      fullPath: '/infra/monitoring/$id'
+      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringIdRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
   }
@@ -412,9 +492,10 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelAdminGlobalUsuariosRoute: typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   AuthenticatedPainelInfraAccessMapRoute: typeof AuthenticatedPainelInfraAccessMapRoute
   AuthenticatedPainelInfraEquipmentsRoute: typeof AuthenticatedPainelInfraEquipmentsRoute
-  AuthenticatedPainelInfraMonitoringRoute: typeof AuthenticatedPainelInfraMonitoringRoute
   AuthenticatedPainelInfraPhoneLinesRoute: typeof AuthenticatedPainelInfraPhoneLinesRoute
   AuthenticatedPainelInfraServicesAssetsRoute: typeof AuthenticatedPainelInfraServicesAssetsRoute
+  AuthenticatedPainelInfraMonitoringIdRoute: typeof AuthenticatedPainelInfraMonitoringIdRoute
+  AuthenticatedPainelInfraMonitoringIndexRoute: typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
@@ -433,12 +514,14 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
     AuthenticatedPainelInfraAccessMapRoute,
   AuthenticatedPainelInfraEquipmentsRoute:
     AuthenticatedPainelInfraEquipmentsRoute,
-  AuthenticatedPainelInfraMonitoringRoute:
-    AuthenticatedPainelInfraMonitoringRoute,
   AuthenticatedPainelInfraPhoneLinesRoute:
     AuthenticatedPainelInfraPhoneLinesRoute,
   AuthenticatedPainelInfraServicesAssetsRoute:
     AuthenticatedPainelInfraServicesAssetsRoute,
+  AuthenticatedPainelInfraMonitoringIdRoute:
+    AuthenticatedPainelInfraMonitoringIdRoute,
+  AuthenticatedPainelInfraMonitoringIndexRoute:
+    AuthenticatedPainelInfraMonitoringIndexRoute,
 }
 
 const AuthenticatedPainelRouteWithChildren =
@@ -464,6 +547,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AceitarConviteRoute: AceitarConviteRoute,
   AuthRoute: AuthRoute,
+  StatusSlugRoute: StatusSlugRoute,
+  ApiPublicCronRunChecksRoute: ApiPublicCronRunChecksRoute,
+  ApiPublicHeartbeatTokenRoute: ApiPublicHeartbeatTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
