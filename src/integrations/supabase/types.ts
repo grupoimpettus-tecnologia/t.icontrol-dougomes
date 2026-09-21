@@ -420,7 +420,7 @@ export type Database = {
     Enums: {
       app_role: "master" | "admin" | "tecnico" | "viewer"
       monitor_status: "pendente" | "ativo" | "fora" | "pausado"
-      monitor_type: "http" | "keyword" | "tcp" | "dns" | "heartbeat"
+      monitor_type: "http" | "keyword" | "tcp" | "dns" | "heartbeat" | "ping"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -550,7 +550,7 @@ export const Constants = {
     Enums: {
       app_role: ["master", "admin", "tecnico", "viewer"],
       monitor_status: ["pendente", "ativo", "fora", "pausado"],
-      monitor_type: ["http", "keyword", "tcp", "dns", "heartbeat"],
+      monitor_type: ["http", "keyword", "tcp", "dns", "heartbeat", "ping"],
     },
   },
 } as const

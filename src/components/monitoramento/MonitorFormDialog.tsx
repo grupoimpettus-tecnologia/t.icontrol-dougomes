@@ -105,7 +105,10 @@ export function MonitorFormDialog({
         nome: form.nome,
         tipo: form.tipo,
         url: form.tipo === "http" || form.tipo === "keyword" ? form.url : null,
-        hostname: form.tipo === "tcp" || form.tipo === "dns" ? form.hostname : null,
+        hostname:
+          form.tipo === "tcp" || form.tipo === "dns" || form.tipo === "ping"
+            ? form.hostname
+            : null,
         porta: form.tipo === "tcp" ? Number(form.porta) || null : null,
         keyword: form.tipo === "keyword" ? form.keyword : null,
         dns_tipo: form.tipo === "dns" ? form.dns_tipo : null,
@@ -137,7 +140,7 @@ export function MonitorFormDialog({
   });
 
   const precisaUrl = form.tipo === "http" || form.tipo === "keyword";
-  const precisaHost = form.tipo === "tcp" || form.tipo === "dns";
+  const precisaHost = form.tipo === "tcp" || form.tipo === "dns" || form.tipo === "ping";
   const valido =
     form.nome.trim() !== "" &&
     (!precisaUrl || form.url.trim() !== "") &&
@@ -213,10 +216,10 @@ export function MonitorFormDialog({
                   id="monitor-host"
                   value={form.hostname}
                   onChange={(e) => set("hostname", e.target.value)}
-                  placeholder="servidor.empresa.com.br"
+                  placeholder={form.tipo === "ping" ? "189.113.131.169" : "servidor.empresa.com.br"}
                 />
               </div>
-              {form.tipo === "tcp" ? (
+              {form.tipo === "ping" ? null : form.tipo === "tcp" ? (
                 <div className="space-y-2">
                   <Label htmlFor="monitor-porta">Porta</Label>
                   <Input

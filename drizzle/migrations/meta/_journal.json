@@ -43,6 +43,13 @@
       "when": 1790016834587,
       "tag": "0005_agendar_verificacoes_monitores",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790018664033,
+      "tag": "0006_tipo_monitor_ping",
+      "breakpoints": true
     }
   ]
 }

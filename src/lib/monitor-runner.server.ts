@@ -123,6 +123,81 @@ async function checarTcp(monitor: Monitor): Promise<CheckResult> {
   }
 }
 
+/** Ping ICMP via nós externos do check-host.net (o runtime de borda não envia ICMP). */
+async function checarPing(monitor: Monitor): Promise<CheckResult> {
+  const inicio = Date.now();
+  const alvo = (monitor.hostname ?? "").trim();
+  if (!alvo) {
+    return { ok: false, latencia_ms: null, status_code: null, mensagem: "Endereço não informado" };
+  }
+  try {
+    const criar = await fetch(
+      `https://check-host.net/check-ping?host=${encodeURIComponent(alvo)}&max_nodes=1`,
+      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) },
+    );
+    const pedido = (await criar.json()) as { request_id?: string; error?: string };
+    if (!pedido.request_id) {
+      return {
+        ok: false,
+        latencia_ms: null,
+        status_code: null,
+        mensagem: pedido.error ?? "Serviço de ping indisponível",
+      };
+    }
+
+    const limite = Date.now() + Math.min((monitor.timeout_segundos || 15) * 1000, 30000);
+    let respostas: unknown[] | null = null;
+    while (Date.now() < limite) {
+      await new Promise((r) => setTimeout(r, 3000));
+      const resultado = await fetch(`https://check-host.net/check-result/${pedido.request_id}`, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(15000),
+      });
+      const dados = (await resultado.json()) as Record<string, unknown[] | null>;
+      const primeiro = Object.values(dados)[0];
+      if (primeiro) {
+        respostas = (primeiro[0] as unknown[]) ?? [];
+        break;
+      }
+    }
+
+    if (!respostas) {
+      return {
+        ok: false,
+        latencia_ms: Date.now() - inicio,
+        status_code: null,
+        mensagem: "Sem resposta do serviço de ping a tempo",
+      };
+    }
+
+    const pacotes = respostas as [string, number?][];
+    const okCount = pacotes.filter((p) => p?.[0] === "OK").length;
+    const tempos = pacotes
+      .filter((p) => p?.[0] === "OK" && typeof p[1] === "number")
+      .map((p) => (p[1] as number) * 1000);
+    const media = tempos.length
+      ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length)
+      : null;
+    const perda = pacotes.length ? Math.round(((pacotes.length - okCount) / pacotes.length) * 100) : 100;
+
+    return {
+      ok: okCount > 0,
+      latencia_ms: media,
+      status_code: null,
+      mensagem: okCount
+        ? `Respondeu ${okCount}/${pacotes.length} pacotes${perda ? ` (${perda}% de perda)` : ""}`
+        : "Sem resposta ao ping (100% de perda)",
+    };
+  } catch (erro) {
+    return {
+      ok: false,
+      latencia_ms: Date.now() - inicio,
+      status_code: null,
+      mensagem: erro instanceof Error ? erro.message : "Falha ao executar ping",
+    };
+  }
+}
+
 function checarHeartbeat(monitor: Monitor): CheckResult {
   const limite = (monitor.intervalo_segundos || 300) * 1000;
   const ultimo = monitor.ultima_verificacao ? new Date(monitor.ultima_verificacao).getTime() : 0;
@@ -148,6 +223,8 @@ export async function executarCheck(monitor: Monitor): Promise<CheckResult> {
       return checarDns(monitor);
     case "tcp":
       return checarTcp(monitor);
+    case "ping":
+      return checarPing(monitor);
     case "heartbeat":
       return checarHeartbeat(monitor);
     default:
