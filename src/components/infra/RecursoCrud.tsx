@@ -149,16 +149,15 @@ export function RecursoCrud({
         else payload[c.nome] = bruto === "" || bruto === undefined ? null : String(bruto);
       }
       if (!payload[campoTitulo]) throw new Error("Informe o nome do registro.");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const query = supabase.from(tabela) as any;
       if (editando) {
-        const { error } = await supabase
-          .from(tabela)
+        const { error } = await query
           .update({ ...payload, updated_at: new Date().toISOString() })
           .eq("id", editando.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from(tabela)
-          .insert({ ...payload, workspace_id: workspaceId! });
+        const { error } = await query.insert({ ...payload, workspace_id: workspaceId! });
         if (error) throw error;
       }
     },
