@@ -25,7 +25,6 @@ import { Route as AuthenticatedPainelAdminGlobalMetricasRouteImport } from './ro
 import { Route as AuthenticatedPainelAdminGlobalUsuariosRouteImport } from './routes/_authenticated/_painel/admin-global/usuarios'
 import { Route as AuthenticatedPainelInfraAccessMapRouteImport } from './routes/_authenticated/_painel/infra/access-map'
 import { Route as AuthenticatedPainelInfraEquipmentsRouteImport } from './routes/_authenticated/_painel/infra/equipments'
-import { Route as AuthenticatedPainelInfraMonitoringRouteImport } from './routes/_authenticated/_painel/infra/monitoring'
 import { Route as AuthenticatedPainelInfraPhoneLinesRouteImport } from './routes/_authenticated/_painel/infra/phone-lines'
 import { Route as AuthenticatedPainelInfraServicesAssetsRouteImport } from './routes/_authenticated/_painel/infra/services-assets'
 import { Route as ApiPublicCronRunChecksRouteImport } from './routes/api/public/cron/run-checks'
@@ -118,12 +117,6 @@ const AuthenticatedPainelInfraEquipmentsRoute =
     path: '/infra/equipments',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
-const AuthenticatedPainelInfraMonitoringRoute =
-  AuthenticatedPainelInfraMonitoringRouteImport.update({
-    id: '/infra/monitoring',
-    path: '/infra/monitoring',
-    getParentRoute: () => AuthenticatedPainelRoute,
-  } as any)
 const AuthenticatedPainelInfraPhoneLinesRoute =
   AuthenticatedPainelInfraPhoneLinesRouteImport.update({
     id: '/infra/phone-lines',
@@ -162,7 +155,6 @@ export interface FileRoutesByFullPath {
   '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
-  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
@@ -183,7 +175,6 @@ export interface FileRoutesByTo {
   '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
-  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
@@ -207,7 +198,6 @@ export interface FileRoutesById {
   '/_authenticated/_painel/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/_authenticated/_painel/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/_authenticated/_painel/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
-  '/_authenticated/_painel/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
   '/_authenticated/_painel/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/_authenticated/_painel/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
@@ -230,7 +220,6 @@ export interface FileRouteTypes {
     | '/admin-global/usuarios'
     | '/infra/access-map'
     | '/infra/equipments'
-    | '/infra/monitoring'
     | '/infra/phone-lines'
     | '/infra/services-assets'
     | '/api/public/cron/run-checks'
@@ -251,7 +240,6 @@ export interface FileRouteTypes {
     | '/admin-global/usuarios'
     | '/infra/access-map'
     | '/infra/equipments'
-    | '/infra/monitoring'
     | '/infra/phone-lines'
     | '/infra/services-assets'
     | '/api/public/cron/run-checks'
@@ -274,7 +262,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/admin-global/usuarios'
     | '/_authenticated/_painel/infra/access-map'
     | '/_authenticated/_painel/infra/equipments'
-    | '/_authenticated/_painel/infra/monitoring'
     | '/_authenticated/_painel/infra/phone-lines'
     | '/_authenticated/_painel/infra/services-assets'
     | '/api/public/cron/run-checks'
@@ -404,13 +391,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelInfraEquipmentsRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
-    '/_authenticated/_painel/infra/monitoring': {
-      id: '/_authenticated/_painel/infra/monitoring'
-      path: '/infra/monitoring'
-      fullPath: '/infra/monitoring'
-      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringRouteImport
-      parentRoute: typeof AuthenticatedPainelRoute
-    }
     '/_authenticated/_painel/infra/phone-lines': {
       id: '/_authenticated/_painel/infra/phone-lines'
       path: '/infra/phone-lines'
@@ -452,7 +432,6 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelAdminGlobalUsuariosRoute: typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   AuthenticatedPainelInfraAccessMapRoute: typeof AuthenticatedPainelInfraAccessMapRoute
   AuthenticatedPainelInfraEquipmentsRoute: typeof AuthenticatedPainelInfraEquipmentsRoute
-  AuthenticatedPainelInfraMonitoringRoute: typeof AuthenticatedPainelInfraMonitoringRoute
   AuthenticatedPainelInfraPhoneLinesRoute: typeof AuthenticatedPainelInfraPhoneLinesRoute
   AuthenticatedPainelInfraServicesAssetsRoute: typeof AuthenticatedPainelInfraServicesAssetsRoute
 }
@@ -473,8 +452,6 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
     AuthenticatedPainelInfraAccessMapRoute,
   AuthenticatedPainelInfraEquipmentsRoute:
     AuthenticatedPainelInfraEquipmentsRoute,
-  AuthenticatedPainelInfraMonitoringRoute:
-    AuthenticatedPainelInfraMonitoringRoute,
   AuthenticatedPainelInfraPhoneLinesRoute:
     AuthenticatedPainelInfraPhoneLinesRoute,
   AuthenticatedPainelInfraServicesAssetsRoute:
