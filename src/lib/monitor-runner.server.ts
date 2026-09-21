@@ -223,6 +223,8 @@ export async function executarCheck(monitor: Monitor): Promise<CheckResult> {
       return checarDns(monitor);
     case "tcp":
       return checarTcp(monitor);
+    case "ping":
+      return checarPing(monitor);
     case "heartbeat":
       return checarHeartbeat(monitor);
     default:
