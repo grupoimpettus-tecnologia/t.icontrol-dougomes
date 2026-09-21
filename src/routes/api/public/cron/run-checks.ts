@@ -2,14 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { executarCheck, registrarResultado, type Monitor } from "@/lib/monitor-runner.server";
 
 async function executar(request: Request) {
-  const segredo = process.env["LOVABLE_CRON_SECRET"];
+  const aceitos = [
+    process.env["MONITOR_CRON_SECRET"],
+    process.env["LOVABLE_CRON_SECRET"],
+  ].filter(Boolean) as string[];
   const enviado =
     request.headers.get("x-cron-secret") ??
     new URL(request.url).searchParams.get("secret") ??
     "";
-  if (!segredo || enviado !== segredo) {
+  if (!aceitos.length || !aceitos.includes(enviado)) {
     return new Response("Não autorizado", { status: 401 });
   }
+
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: monitores, error } = await supabaseAdmin
