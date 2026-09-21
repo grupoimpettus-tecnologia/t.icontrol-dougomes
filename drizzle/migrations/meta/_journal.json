@@ -36,6 +36,13 @@
       "when": 1790016764545,
       "tag": "0004_status_publico_empresas",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790016834587,
+      "tag": "0005_agendar_verificacoes_monitores",
+      "breakpoints": true
     }
   ]
 }
