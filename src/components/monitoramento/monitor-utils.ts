@@ -35,6 +35,8 @@ export function alvoDoMonitor(monitor: Monitor) {
       return monitor.url ?? "—";
     case "tcp":
       return `${monitor.hostname ?? "—"}:${monitor.porta ?? ""}`;
+    case "ping":
+      return monitor.hostname ?? "—";
     case "dns":
       return `${monitor.hostname ?? "—"} (${monitor.dns_tipo ?? "A"})`;
     case "heartbeat":
