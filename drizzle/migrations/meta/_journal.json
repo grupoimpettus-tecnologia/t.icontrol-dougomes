@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790015422212,
+      "tag": "0000_ticontrol_base_empresas_perfis",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790015644210,
+      "tag": "0001_funcao_aceitar_convite",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790015863648,
+      "tag": "0002_seed_empresas_exemplo",
+      "breakpoints": true
+    }
+  ]
+}
