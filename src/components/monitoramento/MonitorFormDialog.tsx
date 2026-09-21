@@ -105,7 +105,10 @@ export function MonitorFormDialog({
         nome: form.nome,
         tipo: form.tipo,
         url: form.tipo === "http" || form.tipo === "keyword" ? form.url : null,
-        hostname: form.tipo === "tcp" || form.tipo === "dns" ? form.hostname : null,
+        hostname:
+          form.tipo === "tcp" || form.tipo === "dns" || form.tipo === "ping"
+            ? form.hostname
+            : null,
         porta: form.tipo === "tcp" ? Number(form.porta) || null : null,
         keyword: form.tipo === "keyword" ? form.keyword : null,
         dns_tipo: form.tipo === "dns" ? form.dns_tipo : null,
