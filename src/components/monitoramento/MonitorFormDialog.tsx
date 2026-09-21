@@ -216,10 +216,10 @@ export function MonitorFormDialog({
                   id="monitor-host"
                   value={form.hostname}
                   onChange={(e) => set("hostname", e.target.value)}
-                  placeholder="servidor.empresa.com.br"
+                  placeholder={form.tipo === "ping" ? "189.113.131.169" : "servidor.empresa.com.br"}
                 />
               </div>
-              {form.tipo === "tcp" ? (
+              {form.tipo === "ping" ? null : form.tipo === "tcp" ? (
                 <div className="space-y-2">
                   <Label htmlFor="monitor-porta">Porta</Label>
                   <Input
