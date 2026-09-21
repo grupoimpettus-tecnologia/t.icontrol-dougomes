@@ -140,7 +140,7 @@ export function MonitorFormDialog({
   });
 
   const precisaUrl = form.tipo === "http" || form.tipo === "keyword";
-  const precisaHost = form.tipo === "tcp" || form.tipo === "dns";
+  const precisaHost = form.tipo === "tcp" || form.tipo === "dns" || form.tipo === "ping";
   const valido =
     form.nome.trim() !== "" &&
     (!precisaUrl || form.url.trim() !== "") &&
