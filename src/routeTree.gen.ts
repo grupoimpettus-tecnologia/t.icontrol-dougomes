@@ -10,33 +10,258 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AceitarConviteRouteImport } from './routes/aceitar-convite'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/_painel'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedSelecionarEmpresaRouteImport } from './routes/_authenticated/selecionar-empresa'
+import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/_painel/configuracoes'
+import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_authenticated/_painel/dashboard'
+import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
+import { Route as AuthenticatedPainelAdminGlobalConvitesRouteImport } from './routes/_authenticated/_painel/admin-global/convites'
+import { Route as AuthenticatedPainelAdminGlobalEmpresasRouteImport } from './routes/_authenticated/_painel/admin-global/empresas'
+import { Route as AuthenticatedPainelAdminGlobalMetricasRouteImport } from './routes/_authenticated/_painel/admin-global/metricas'
+import { Route as AuthenticatedPainelAdminGlobalUsuariosRouteImport } from './routes/_authenticated/_painel/admin-global/usuarios'
+import { Route as AuthenticatedPainelInfraAccessMapRouteImport } from './routes/_authenticated/_painel/infra/access-map'
+import { Route as AuthenticatedPainelInfraEquipmentsRouteImport } from './routes/_authenticated/_painel/infra/equipments'
+import { Route as AuthenticatedPainelInfraMonitoringRouteImport } from './routes/_authenticated/_painel/infra/monitoring'
+import { Route as AuthenticatedPainelInfraPhoneLinesRouteImport } from './routes/_authenticated/_painel/infra/phone-lines'
+import { Route as AuthenticatedPainelInfraServicesAssetsRouteImport } from './routes/_authenticated/_painel/infra/services-assets'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AceitarConviteRoute = AceitarConviteRouteImport.update({
+  id: '/aceitar-convite',
+  path: '/aceitar-convite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/_painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSelecionarEmpresaRoute =
+  AuthenticatedSelecionarEmpresaRouteImport.update({
+    id: '/selecionar-empresa',
+    path: '/selecionar-empresa',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPainelConfiguracoesRoute =
+  AuthenticatedPainelConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelDashboardRoute =
+  AuthenticatedPainelDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelPdvRoute = AuthenticatedPainelPdvRouteImport.update({
+  id: '/pdv',
+  path: '/pdv',
+  getParentRoute: () => AuthenticatedPainelRoute,
+} as any)
+const AuthenticatedPainelAdminGlobalConvitesRoute =
+  AuthenticatedPainelAdminGlobalConvitesRouteImport.update({
+    id: '/admin-global/convites',
+    path: '/admin-global/convites',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelAdminGlobalEmpresasRoute =
+  AuthenticatedPainelAdminGlobalEmpresasRouteImport.update({
+    id: '/admin-global/empresas',
+    path: '/admin-global/empresas',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelAdminGlobalMetricasRoute =
+  AuthenticatedPainelAdminGlobalMetricasRouteImport.update({
+    id: '/admin-global/metricas',
+    path: '/admin-global/metricas',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelAdminGlobalUsuariosRoute =
+  AuthenticatedPainelAdminGlobalUsuariosRouteImport.update({
+    id: '/admin-global/usuarios',
+    path: '/admin-global/usuarios',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraAccessMapRoute =
+  AuthenticatedPainelInfraAccessMapRouteImport.update({
+    id: '/infra/access-map',
+    path: '/infra/access-map',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraEquipmentsRoute =
+  AuthenticatedPainelInfraEquipmentsRouteImport.update({
+    id: '/infra/equipments',
+    path: '/infra/equipments',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraMonitoringRoute =
+  AuthenticatedPainelInfraMonitoringRouteImport.update({
+    id: '/infra/monitoring',
+    path: '/infra/monitoring',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraPhoneLinesRoute =
+  AuthenticatedPainelInfraPhoneLinesRouteImport.update({
+    id: '/infra/phone-lines',
+    path: '/infra/phone-lines',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraServicesAssetsRoute =
+  AuthenticatedPainelInfraServicesAssetsRouteImport.update({
+    id: '/infra/services-assets',
+    path: '/infra/services-assets',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aceitar-convite': typeof AceitarConviteRoute
+  '/auth': typeof AuthRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
+  '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedPainelDashboardRoute
+  '/pdv': typeof AuthenticatedPainelPdvRoute
+  '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
+  '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  '/admin-global/metricas': typeof AuthenticatedPainelAdminGlobalMetricasRoute
+  '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
+  '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
+  '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
+  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
+  '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
+  '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aceitar-convite': typeof AceitarConviteRoute
+  '/auth': typeof AuthRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
+  '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedPainelDashboardRoute
+  '/pdv': typeof AuthenticatedPainelPdvRoute
+  '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
+  '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  '/admin-global/metricas': typeof AuthenticatedPainelAdminGlobalMetricasRoute
+  '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
+  '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
+  '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
+  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
+  '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
+  '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/aceitar-convite': typeof AceitarConviteRoute
+  '/auth': typeof AuthRoute
+  '/_authenticated/_painel': typeof AuthenticatedPainelRouteWithChildren
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
+  '/_authenticated/_painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
+  '/_authenticated/_painel/dashboard': typeof AuthenticatedPainelDashboardRoute
+  '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
+  '/_authenticated/_painel/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
+  '/_authenticated/_painel/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  '/_authenticated/_painel/admin-global/metricas': typeof AuthenticatedPainelAdminGlobalMetricasRoute
+  '/_authenticated/_painel/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
+  '/_authenticated/_painel/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
+  '/_authenticated/_painel/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
+  '/_authenticated/_painel/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringRoute
+  '/_authenticated/_painel/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
+  '/_authenticated/_painel/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/aceitar-convite'
+    | '/auth'
+    | '/onboarding'
+    | '/selecionar-empresa'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/pdv'
+    | '/admin-global/convites'
+    | '/admin-global/empresas'
+    | '/admin-global/metricas'
+    | '/admin-global/usuarios'
+    | '/infra/access-map'
+    | '/infra/equipments'
+    | '/infra/monitoring'
+    | '/infra/phone-lines'
+    | '/infra/services-assets'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/aceitar-convite'
+    | '/auth'
+    | '/onboarding'
+    | '/selecionar-empresa'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/pdv'
+    | '/admin-global/convites'
+    | '/admin-global/empresas'
+    | '/admin-global/metricas'
+    | '/admin-global/usuarios'
+    | '/infra/access-map'
+    | '/infra/equipments'
+    | '/infra/monitoring'
+    | '/infra/phone-lines'
+    | '/infra/services-assets'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/aceitar-convite'
+    | '/auth'
+    | '/_authenticated/_painel'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/selecionar-empresa'
+    | '/_authenticated/_painel/configuracoes'
+    | '/_authenticated/_painel/dashboard'
+    | '/_authenticated/_painel/pdv'
+    | '/_authenticated/_painel/admin-global/convites'
+    | '/_authenticated/_painel/admin-global/empresas'
+    | '/_authenticated/_painel/admin-global/metricas'
+    | '/_authenticated/_painel/admin-global/usuarios'
+    | '/_authenticated/_painel/infra/access-map'
+    | '/_authenticated/_painel/infra/equipments'
+    | '/_authenticated/_painel/infra/monitoring'
+    | '/_authenticated/_painel/infra/phone-lines'
+    | '/_authenticated/_painel/infra/services-assets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AceitarConviteRoute: typeof AceitarConviteRoute
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +273,197 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aceitar-convite': {
+      id: '/aceitar-convite'
+      path: '/aceitar-convite'
+      fullPath: '/aceitar-convite'
+      preLoaderRoute: typeof AceitarConviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_painel': {
+      id: '/_authenticated/_painel'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/selecionar-empresa': {
+      id: '/_authenticated/selecionar-empresa'
+      path: '/selecionar-empresa'
+      fullPath: '/selecionar-empresa'
+      preLoaderRoute: typeof AuthenticatedSelecionarEmpresaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/_painel/configuracoes': {
+      id: '/_authenticated/_painel/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedPainelConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/dashboard': {
+      id: '/_authenticated/_painel/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedPainelDashboardRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/pdv': {
+      id: '/_authenticated/_painel/pdv'
+      path: '/pdv'
+      fullPath: '/pdv'
+      preLoaderRoute: typeof AuthenticatedPainelPdvRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/admin-global/convites': {
+      id: '/_authenticated/_painel/admin-global/convites'
+      path: '/admin-global/convites'
+      fullPath: '/admin-global/convites'
+      preLoaderRoute: typeof AuthenticatedPainelAdminGlobalConvitesRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/admin-global/empresas': {
+      id: '/_authenticated/_painel/admin-global/empresas'
+      path: '/admin-global/empresas'
+      fullPath: '/admin-global/empresas'
+      preLoaderRoute: typeof AuthenticatedPainelAdminGlobalEmpresasRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/admin-global/metricas': {
+      id: '/_authenticated/_painel/admin-global/metricas'
+      path: '/admin-global/metricas'
+      fullPath: '/admin-global/metricas'
+      preLoaderRoute: typeof AuthenticatedPainelAdminGlobalMetricasRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/admin-global/usuarios': {
+      id: '/_authenticated/_painel/admin-global/usuarios'
+      path: '/admin-global/usuarios'
+      fullPath: '/admin-global/usuarios'
+      preLoaderRoute: typeof AuthenticatedPainelAdminGlobalUsuariosRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/access-map': {
+      id: '/_authenticated/_painel/infra/access-map'
+      path: '/infra/access-map'
+      fullPath: '/infra/access-map'
+      preLoaderRoute: typeof AuthenticatedPainelInfraAccessMapRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/equipments': {
+      id: '/_authenticated/_painel/infra/equipments'
+      path: '/infra/equipments'
+      fullPath: '/infra/equipments'
+      preLoaderRoute: typeof AuthenticatedPainelInfraEquipmentsRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/monitoring': {
+      id: '/_authenticated/_painel/infra/monitoring'
+      path: '/infra/monitoring'
+      fullPath: '/infra/monitoring'
+      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/phone-lines': {
+      id: '/_authenticated/_painel/infra/phone-lines'
+      path: '/infra/phone-lines'
+      fullPath: '/infra/phone-lines'
+      preLoaderRoute: typeof AuthenticatedPainelInfraPhoneLinesRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/services-assets': {
+      id: '/_authenticated/_painel/infra/services-assets'
+      path: '/infra/services-assets'
+      fullPath: '/infra/services-assets'
+      preLoaderRoute: typeof AuthenticatedPainelInfraServicesAssetsRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
   }
 }
 
+interface AuthenticatedPainelRouteChildren {
+  AuthenticatedPainelConfiguracoesRoute: typeof AuthenticatedPainelConfiguracoesRoute
+  AuthenticatedPainelDashboardRoute: typeof AuthenticatedPainelDashboardRoute
+  AuthenticatedPainelPdvRoute: typeof AuthenticatedPainelPdvRoute
+  AuthenticatedPainelAdminGlobalConvitesRoute: typeof AuthenticatedPainelAdminGlobalConvitesRoute
+  AuthenticatedPainelAdminGlobalEmpresasRoute: typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  AuthenticatedPainelAdminGlobalMetricasRoute: typeof AuthenticatedPainelAdminGlobalMetricasRoute
+  AuthenticatedPainelAdminGlobalUsuariosRoute: typeof AuthenticatedPainelAdminGlobalUsuariosRoute
+  AuthenticatedPainelInfraAccessMapRoute: typeof AuthenticatedPainelInfraAccessMapRoute
+  AuthenticatedPainelInfraEquipmentsRoute: typeof AuthenticatedPainelInfraEquipmentsRoute
+  AuthenticatedPainelInfraMonitoringRoute: typeof AuthenticatedPainelInfraMonitoringRoute
+  AuthenticatedPainelInfraPhoneLinesRoute: typeof AuthenticatedPainelInfraPhoneLinesRoute
+  AuthenticatedPainelInfraServicesAssetsRoute: typeof AuthenticatedPainelInfraServicesAssetsRoute
+}
+
+const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
+  AuthenticatedPainelConfiguracoesRoute: AuthenticatedPainelConfiguracoesRoute,
+  AuthenticatedPainelDashboardRoute: AuthenticatedPainelDashboardRoute,
+  AuthenticatedPainelPdvRoute: AuthenticatedPainelPdvRoute,
+  AuthenticatedPainelAdminGlobalConvitesRoute:
+    AuthenticatedPainelAdminGlobalConvitesRoute,
+  AuthenticatedPainelAdminGlobalEmpresasRoute:
+    AuthenticatedPainelAdminGlobalEmpresasRoute,
+  AuthenticatedPainelAdminGlobalMetricasRoute:
+    AuthenticatedPainelAdminGlobalMetricasRoute,
+  AuthenticatedPainelAdminGlobalUsuariosRoute:
+    AuthenticatedPainelAdminGlobalUsuariosRoute,
+  AuthenticatedPainelInfraAccessMapRoute:
+    AuthenticatedPainelInfraAccessMapRoute,
+  AuthenticatedPainelInfraEquipmentsRoute:
+    AuthenticatedPainelInfraEquipmentsRoute,
+  AuthenticatedPainelInfraMonitoringRoute:
+    AuthenticatedPainelInfraMonitoringRoute,
+  AuthenticatedPainelInfraPhoneLinesRoute:
+    AuthenticatedPainelInfraPhoneLinesRoute,
+  AuthenticatedPainelInfraServicesAssetsRoute:
+    AuthenticatedPainelInfraServicesAssetsRoute,
+}
+
+const AuthenticatedPainelRouteWithChildren =
+  AuthenticatedPainelRoute._addFileChildren(AuthenticatedPainelRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRouteWithChildren
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedSelecionarEmpresaRoute: typeof AuthenticatedSelecionarEmpresaRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPainelRoute: AuthenticatedPainelRouteWithChildren,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedSelecionarEmpresaRoute: AuthenticatedSelecionarEmpresaRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AceitarConviteRoute: AceitarConviteRoute,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
