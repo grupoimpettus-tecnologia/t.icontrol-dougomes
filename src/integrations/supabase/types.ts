@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_entries: {
+        Row: {
+          ambiente: string | null
+          created_at: string
+          criado_por: string | null
+          custo_mensal: number | null
+          grupo: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          tipo: string | null
+          updated_at: string
+          url: string | null
+          usuario: string | null
+          workspace_id: string
+        }
+        Insert: {
+          ambiente?: string | null
+          created_at?: string
+          criado_por?: string | null
+          custo_mensal?: number | null
+          grupo?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          tipo?: string | null
+          updated_at?: string
+          url?: string | null
+          usuario?: string | null
+          workspace_id: string
+        }
+        Update: {
+          ambiente?: string | null
+          created_at?: string
+          criado_por?: string | null
+          custo_mensal?: number | null
+          grupo?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          tipo?: string | null
+          updated_at?: string
+          url?: string | null
+          usuario?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_entries_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_entries_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           acao: string
@@ -48,6 +111,93 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "audit_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipments: {
+        Row: {
+          condicao: string | null
+          configuracao: string | null
+          created_at: string
+          criado_por: string | null
+          custo_compra: number | null
+          grupo: string | null
+          id: string
+          ip: string | null
+          local: string | null
+          marca: string | null
+          modelo: string | null
+          numero_serie: string | null
+          observacoes: string | null
+          patrimonio: string
+          responsavel: string | null
+          setor: string | null
+          status: string | null
+          termo_url: string | null
+          tipo: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          condicao?: string | null
+          configuracao?: string | null
+          created_at?: string
+          criado_por?: string | null
+          custo_compra?: number | null
+          grupo?: string | null
+          id?: string
+          ip?: string | null
+          local?: string | null
+          marca?: string | null
+          modelo?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          patrimonio: string
+          responsavel?: string | null
+          setor?: string | null
+          status?: string | null
+          termo_url?: string | null
+          tipo?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          condicao?: string | null
+          configuracao?: string | null
+          created_at?: string
+          criado_por?: string | null
+          custo_compra?: number | null
+          grupo?: string | null
+          id?: string
+          ip?: string | null
+          local?: string | null
+          marca?: string | null
+          modelo?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          patrimonio?: string
+          responsavel?: string | null
+          setor?: string | null
+          status?: string | null
+          termo_url?: string | null
+          tipo?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipments_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipments_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -298,6 +448,99 @@ export type Database = {
           },
         ]
       }
+      phone_lines: {
+        Row: {
+          condicoes: string | null
+          created_at: string
+          criado_por: string | null
+          fidelidade_ate: string | null
+          grupo: string | null
+          id: string
+          imei: string | null
+          linha: string | null
+          marca: string | null
+          modelo: string | null
+          observacoes: string | null
+          operadora: string | null
+          pacote_extra: string | null
+          plano: string | null
+          responsavel: string
+          setor: string | null
+          sistema: string | null
+          status: string | null
+          tem_aparelho: boolean
+          tipo_linha: string | null
+          updated_at: string
+          valor: number | null
+          workspace_id: string
+        }
+        Insert: {
+          condicoes?: string | null
+          created_at?: string
+          criado_por?: string | null
+          fidelidade_ate?: string | null
+          grupo?: string | null
+          id?: string
+          imei?: string | null
+          linha?: string | null
+          marca?: string | null
+          modelo?: string | null
+          observacoes?: string | null
+          operadora?: string | null
+          pacote_extra?: string | null
+          plano?: string | null
+          responsavel: string
+          setor?: string | null
+          sistema?: string | null
+          status?: string | null
+          tem_aparelho?: boolean
+          tipo_linha?: string | null
+          updated_at?: string
+          valor?: number | null
+          workspace_id: string
+        }
+        Update: {
+          condicoes?: string | null
+          created_at?: string
+          criado_por?: string | null
+          fidelidade_ate?: string | null
+          grupo?: string | null
+          id?: string
+          imei?: string | null
+          linha?: string | null
+          marca?: string | null
+          modelo?: string | null
+          observacoes?: string | null
+          operadora?: string | null
+          pacote_extra?: string | null
+          plano?: string | null
+          responsavel?: string
+          setor?: string | null
+          sistema?: string | null
+          status?: string | null
+          tem_aparelho?: boolean
+          tipo_linha?: string | null
+          updated_at?: string
+          valor?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_lines_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_lines_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -324,6 +567,72 @@ export type Database = {
           role_global?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
+      }
+      service_assets: {
+        Row: {
+          contrato_url: string | null
+          created_at: string
+          criado_por: string | null
+          custo: number | null
+          fornecedor: string | null
+          grupo: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          renovacao_em: string | null
+          status: string | null
+          tipo_contrato: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          contrato_url?: string | null
+          created_at?: string
+          criado_por?: string | null
+          custo?: number | null
+          fornecedor?: string | null
+          grupo?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          renovacao_em?: string | null
+          status?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          contrato_url?: string | null
+          created_at?: string
+          criado_por?: string | null
+          custo?: number | null
+          fornecedor?: string | null
+          grupo?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          renovacao_em?: string | null
+          status?: string | null
+          tipo_contrato?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_assets_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_assets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_workspaces: {
         Row: {
