@@ -29,6 +29,8 @@ import { Route as AuthenticatedPainelInfraPhoneLinesRouteImport } from './routes
 import { Route as AuthenticatedPainelInfraServicesAssetsRouteImport } from './routes/_authenticated/_painel/infra/services-assets'
 import { Route as ApiPublicCronRunChecksRouteImport } from './routes/api/public/cron/run-checks'
 import { Route as ApiPublicHeartbeatTokenRouteImport } from './routes/api/public/heartbeat/$token'
+import { Route as AuthenticatedPainelInfraMonitoringIndexRouteImport } from './routes/_authenticated/_painel/infra/monitoring/index'
+import { Route as AuthenticatedPainelInfraMonitoringIdRouteImport } from './routes/_authenticated/_painel/infra/monitoring/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -139,6 +141,18 @@ const ApiPublicHeartbeatTokenRoute = ApiPublicHeartbeatTokenRouteImport.update({
   path: '/api/public/heartbeat/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPainelInfraMonitoringIndexRoute =
+  AuthenticatedPainelInfraMonitoringIndexRouteImport.update({
+    id: '/infra/monitoring/',
+    path: '/infra/monitoring/',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelInfraMonitoringIdRoute =
+  AuthenticatedPainelInfraMonitoringIdRouteImport.update({
+    id: '/infra/monitoring/$id',
+    path: '/infra/monitoring/$id',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -159,6 +173,8 @@ export interface FileRoutesByFullPath {
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
   '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
+  '/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
+  '/infra/monitoring/': typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -179,6 +195,8 @@ export interface FileRoutesByTo {
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
   '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
+  '/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
+  '/infra/monitoring': typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -202,6 +220,8 @@ export interface FileRoutesById {
   '/_authenticated/_painel/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
   '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
+  '/_authenticated/_painel/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
+  '/_authenticated/_painel/infra/monitoring/': typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -224,6 +244,8 @@ export interface FileRouteTypes {
     | '/infra/services-assets'
     | '/api/public/cron/run-checks'
     | '/api/public/heartbeat/$token'
+    | '/infra/monitoring/$id'
+    | '/infra/monitoring/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -244,6 +266,8 @@ export interface FileRouteTypes {
     | '/infra/services-assets'
     | '/api/public/cron/run-checks'
     | '/api/public/heartbeat/$token'
+    | '/infra/monitoring/$id'
+    | '/infra/monitoring'
   id:
     | '__root__'
     | '/'
@@ -266,6 +290,8 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/infra/services-assets'
     | '/api/public/cron/run-checks'
     | '/api/public/heartbeat/$token'
+    | '/_authenticated/_painel/infra/monitoring/$id'
+    | '/_authenticated/_painel/infra/monitoring/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -419,6 +445,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHeartbeatTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_painel/infra/monitoring/': {
+      id: '/_authenticated/_painel/infra/monitoring/'
+      path: '/infra/monitoring'
+      fullPath: '/infra/monitoring/'
+      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringIndexRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
+    '/_authenticated/_painel/infra/monitoring/$id': {
+      id: '/_authenticated/_painel/infra/monitoring/$id'
+      path: '/infra/monitoring/$id'
+      fullPath: '/infra/monitoring/$id'
+      preLoaderRoute: typeof AuthenticatedPainelInfraMonitoringIdRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
   }
 }
 
@@ -434,6 +474,8 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelInfraEquipmentsRoute: typeof AuthenticatedPainelInfraEquipmentsRoute
   AuthenticatedPainelInfraPhoneLinesRoute: typeof AuthenticatedPainelInfraPhoneLinesRoute
   AuthenticatedPainelInfraServicesAssetsRoute: typeof AuthenticatedPainelInfraServicesAssetsRoute
+  AuthenticatedPainelInfraMonitoringIdRoute: typeof AuthenticatedPainelInfraMonitoringIdRoute
+  AuthenticatedPainelInfraMonitoringIndexRoute: typeof AuthenticatedPainelInfraMonitoringIndexRoute
 }
 
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
@@ -456,6 +498,10 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
     AuthenticatedPainelInfraPhoneLinesRoute,
   AuthenticatedPainelInfraServicesAssetsRoute:
     AuthenticatedPainelInfraServicesAssetsRoute,
+  AuthenticatedPainelInfraMonitoringIdRoute:
+    AuthenticatedPainelInfraMonitoringIdRoute,
+  AuthenticatedPainelInfraMonitoringIndexRoute:
+    AuthenticatedPainelInfraMonitoringIndexRoute,
 }
 
 const AuthenticatedPainelRouteWithChildren =
