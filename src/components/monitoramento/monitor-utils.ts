@@ -10,6 +10,7 @@ export const tipoLabels: Record<MonitorTipo, string> = {
   keyword: "Palavra-chave",
   tcp: "Porta TCP",
   dns: "DNS",
+  ping: "Ping (ICMP)",
   heartbeat: "Sinal de vida",
 };
 
