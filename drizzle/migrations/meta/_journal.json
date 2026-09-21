@@ -50,6 +50,13 @@
       "when": 1790018664033,
       "tag": "0006_tipo_monitor_ping",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790021921678,
+      "tag": "0007_infraestrutura_modulos",
+      "breakpoints": true
     }
   ]
 }
