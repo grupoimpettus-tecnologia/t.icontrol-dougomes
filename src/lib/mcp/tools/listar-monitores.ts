@@ -9,7 +9,7 @@ export default defineTool({
     "Lista os monitores de disponibilidade de uma empresa, com status atual, última verificação e latência.",
   inputSchema: {
     empresa: z.string().optional().describe("Nome, slug ou id da empresa. Opcional se houver apenas uma."),
-    status: z.enum(["ativo", "inativo", "pausado", "pendente"]).optional().describe("Filtra por status atual."),
+    status: z.enum(["ativo", "fora", "pausado", "pendente"]).optional().describe("Filtra por status atual."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ empresa, status }, ctx) => {

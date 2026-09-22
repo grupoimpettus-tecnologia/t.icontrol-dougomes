@@ -34,7 +34,7 @@ export default defineTool({
       .eq("workspace_id", ws.id);
 
     const ativos = (monitores ?? []).filter((m) => m.ativo);
-    const fora = ativos.filter((m) => String(m.status) === "inativo").map((m) => m.nome);
+    const fora = ativos.filter((m) => String(m.status) === "fora").map((m) => m.nome);
 
     const resumo = {
       empresa: ws.nome,

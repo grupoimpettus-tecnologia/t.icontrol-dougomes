@@ -17,6 +17,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSelecionarEmpresaRouteImport } from './routes/_authenticated/selecionar-empresa'
 import { Route as StatusSlugRouteImport } from './routes/status.$slug'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/_painel/configuracoes'
 import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_authenticated/_painel/dashboard'
 import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
@@ -71,6 +72,11 @@ const AuthenticatedSelecionarEmpresaRoute =
 const StatusSlugRoute = StatusSlugRouteImport.update({
   id: '/status/$slug',
   path: '/status/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPainelConfiguracoesRoute =
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
   '/status/$slug': typeof StatusSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
   '/status/$slug': typeof StatusSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
   '/status/$slug': typeof StatusSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/_painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/_authenticated/_painel/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/selecionar-empresa'
     | '/status/$slug'
+    | '/.lovable/oauth/consent'
     | '/configuracoes'
     | '/dashboard'
     | '/pdv'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/selecionar-empresa'
     | '/status/$slug'
+    | '/.lovable/oauth/consent'
     | '/configuracoes'
     | '/dashboard'
     | '/pdv'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/selecionar-empresa'
     | '/status/$slug'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/_painel/configuracoes'
     | '/_authenticated/_painel/dashboard'
     | '/_authenticated/_painel/pdv'
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   AceitarConviteRoute: typeof AceitarConviteRoute
   AuthRoute: typeof AuthRoute
   StatusSlugRoute: typeof StatusSlugRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicCronRunChecksRoute: typeof ApiPublicCronRunChecksRoute
   ApiPublicHeartbeatTokenRoute: typeof ApiPublicHeartbeatTokenRoute
 }
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/status/$slug'
       fullPath: '/status/$slug'
       preLoaderRoute: typeof StatusSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_painel/configuracoes': {
@@ -571,6 +591,7 @@ const rootRouteChildren: RootRouteChildren = {
   AceitarConviteRoute: AceitarConviteRoute,
   AuthRoute: AuthRoute,
   StatusSlugRoute: StatusSlugRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicCronRunChecksRoute: ApiPublicCronRunChecksRoute,
   ApiPublicHeartbeatTokenRoute: ApiPublicHeartbeatTokenRoute,
 }

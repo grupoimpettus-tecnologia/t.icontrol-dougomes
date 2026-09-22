@@ -19,8 +19,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
     const authorizationId = new URLSearchParams(location.search).get("authorization_id")!;
     const { data, error } = await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
     if (error) throw error;
-    const immediate = data?.redirect_url;
-    if (immediate && !data?.client) throw redirect({ href: immediate });
+    if (data && "redirect_url" in data) throw redirect({ href: data.redirect_url });
     return data;
   },
   component: Consent,
@@ -32,7 +31,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
 });
 
 function Consent() {
-  const details = Route.useLoaderData();
+  const details = Route.useLoaderData() as { client?: { name?: string } } | undefined;
   const { authorization_id } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -49,7 +48,7 @@ function Consent() {
       setErro(error.message);
       return;
     }
-    const destino = data?.redirect_url;
+    const destino = data && "redirect_url" in data ? data.redirect_url : undefined;
     if (!destino) {
       setBusy(false);
       setErro("O servidor de autorização não retornou um destino de redirecionamento.");
