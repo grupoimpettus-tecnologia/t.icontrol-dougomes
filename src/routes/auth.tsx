@@ -84,7 +84,7 @@ function AuthPage() {
       });
       return;
     }
-    navigate({ to: "/selecionar-empresa", replace: true });
+    irParaDestino();
   }
 
   async function entrarComGoogle() {
