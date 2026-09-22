@@ -6,6 +6,7 @@ import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import { TableKit } from "@tiptap/extension-table";
 import Highlight from "@tiptap/extension-highlight";
+import Placeholder from "@tiptap/extension-placeholder";
 import {
   AlignCenter,
   AlignJustify,
@@ -90,6 +91,9 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       TableKit.configure({ table: { resizable: true } }),
       Highlight,
+      Placeholder.configure({
+        placeholder: placeholder ?? "Digite ou cole aqui uma descrição formatada...",
+      }),
     ],
     content: value,
     editorProps: {
@@ -98,7 +102,6 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
         class:
           "rich-text-editor min-h-44 px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "aria-label": "Conteúdo da descrição",
-        "data-placeholder": placeholder ?? "Digite ou cole aqui uma descrição formatada...",
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
@@ -233,7 +236,7 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
           <RemoveFormatting className={icone} />
         </BotaoFerramenta>
       </div>
-      <EditorContent editor={editor} className={cn("min-h-44", !value && "is-editor-empty")} />
+      <EditorContent editor={editor} className="min-h-44" />
     </div>
   );
 }
