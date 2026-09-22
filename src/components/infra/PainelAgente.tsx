@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { gerarTokenAgente, definirManutencao } from "@/lib/equipments.functions";
-import { gerarScriptAgente, situacaoAgente, agentStatusLabels } from "@/lib/agente";
+import {
+  gerarScriptAgente,
+  gerarInstaladorWindows,
+  situacaoAgente,
+  agentStatusLabels,
+} from "@/lib/agente";
 import type { Registro } from "@/components/infra/RecursoCrud";
 
 function baixarArquivo(nome: string, conteudo: string) {
