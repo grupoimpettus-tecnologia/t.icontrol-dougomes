@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Agente de status do TIControl — envia heartbeat a cada 60s",
-  "main": "ticontrol-agent.js",
+  "main": "ticontrol-agent.cjs",
   "scripts": {
-    "start": "node ticontrol-agent.js"
+    "start": "node ticontrol-agent.cjs"
   },
   "dependencies": {
     "node-os-utils": "^1.3.7",

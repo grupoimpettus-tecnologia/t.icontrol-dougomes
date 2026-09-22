@@ -2,11 +2,11 @@
 # Execute como administrador na pasta do agente.
 
 $pasta = (Get-Location).Path
-$script = Join-Path $pasta "ticontrol-agent.js"
+$script = Join-Path $pasta "ticontrol-agent.cjs"
 $node = (Get-Command node).Source
 
 if (-not (Test-Path $script)) {
-  Write-Error "ticontrol-agent.js não encontrado nesta pasta."
+  Write-Error "ticontrol-agent.cjs não encontrado nesta pasta."
   exit 1
 }
 
