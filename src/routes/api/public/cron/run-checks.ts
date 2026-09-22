@@ -40,7 +40,22 @@ async function executar(request: Request) {
     }),
   );
 
-  return Response.json({ verificados: resultados.length, resultados });
+  // Equipamentos sem sinal do agente há mais de 3 minutos passam a offline.
+  const limite = new Date(agora - 3 * 60 * 1000).toISOString();
+  const { data: expirados } = await supabaseAdmin
+    .from("equipments")
+    .update({ agent_status: "offline" })
+    .not("agent_token_hash", "is", null)
+    .eq("manutencao", false)
+    .eq("agent_status", "online")
+    .lt("ultimo_heartbeat", limite)
+    .select("id");
+
+  return Response.json({
+    verificados: resultados.length,
+    resultados,
+    equipamentos_offline: expirados?.length ?? 0,
+  });
 }
 
 export const Route = createFileRoute("/api/public/cron/run-checks")({

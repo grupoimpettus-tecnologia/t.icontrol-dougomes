@@ -78,6 +78,13 @@
       "when": 1790076784692,
       "tag": "0010_secure_database_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790087242630,
+      "tag": "0011_agente_status_equipamentos",
+      "breakpoints": true
     }
   ]
 }

@@ -31,7 +31,14 @@ import { cn } from "@/lib/utils";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
 import { ExportarMenu } from "@/components/ExportarMenu";
 
-export type CampoTipo = "texto" | "textarea" | "editor" | "numero" | "booleano" | "data";
+export type CampoTipo =
+  | "texto"
+  | "textarea"
+  | "editor"
+  | "numero"
+  | "booleano"
+  | "data"
+  | "select";
 
 export type Campo = {
   nome: string;
@@ -40,9 +47,17 @@ export type Campo = {
   placeholder?: string;
   naTabela?: boolean;
   larguraCompleta?: boolean;
+  opcoes?: string[];
 };
 
-type Registro = Record<string, unknown> & { id: string };
+export type Registro = Record<string, unknown> & { id: string };
+
+export type ColunaExtra = {
+  chave: string;
+  titulo: string;
+  render: (item: Registro) => React.ReactNode;
+  valorExport?: (item: Registro) => string;
+};
 
 function formatarValor(valor: unknown, tipo: CampoTipo) {
   if (valor === null || valor === undefined || valor === "") return "—";
@@ -62,6 +77,10 @@ export function RecursoCrud({
   ordenarPor,
   campoGrupo,
   rotuloItem,
+  colunasExtras = [],
+  acoesExtras,
+  filtroExtra,
+  atualizarACada,
 }: {
   titulo: string;
   descricao: string;
@@ -71,6 +90,13 @@ export function RecursoCrud({
   ordenarPor: string;
   campoGrupo?: string;
   rotuloItem: string;
+  colunasExtras?: ColunaExtra[];
+  acoesExtras?: (item: Registro) => React.ReactNode;
+  filtroExtra?: {
+    opcoes: { valor: string; rotulo: string }[];
+    predicado: (item: Registro, valor: string) => boolean;
+  };
+  atualizarACada?: number;
 }) {
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
@@ -80,6 +106,7 @@ export function RecursoCrud({
 
   const [busca, setBusca] = useState("");
   const [grupoAtivo, setGrupoAtivo] = useState<string>("todos");
+  const [filtroExtraAtivo, setFiltroExtraAtivo] = useState<string>("todos");
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<Registro | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>({});
@@ -89,6 +116,7 @@ export function RecursoCrud({
   const lista = useQuery({
     queryKey: chave,
     enabled: !!workspaceId,
+    refetchInterval: atualizarACada ?? false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from(tabela)
@@ -115,6 +143,8 @@ export function RecursoCrud({
     return (lista.data ?? []).filter((item) => {
       if (campoGrupo && grupoAtivo !== "todos" && String(item[campoGrupo] ?? "") !== grupoAtivo)
         return false;
+      if (filtroExtra && filtroExtraAtivo !== "todos" && !filtroExtra.predicado(item, filtroExtraAtivo))
+        return false;
       if (!termo) return true;
       return campos.some((c) =>
         String(item[c.nome] ?? "")
@@ -122,7 +152,7 @@ export function RecursoCrud({
           .includes(termo),
       );
     });
-  }, [lista.data, busca, grupoAtivo, campoGrupo, campos]);
+  }, [lista.data, busca, grupoAtivo, campoGrupo, campos, filtroExtra, filtroExtraAtivo]);
 
   const colunas = campos.filter((c) => c.naTabela !== false);
 
@@ -193,8 +223,15 @@ export function RecursoCrud({
         <div className="flex flex-wrap gap-2">
           <ExportarMenu
             titulo={titulo}
-            colunas={colunas.map((campo) => ({ chave: campo.nome, titulo: campo.label }))}
-            linhas={filtrados}
+            colunas={[
+              ...colunas.map((campo) => ({ chave: campo.nome, titulo: campo.label })),
+              ...colunasExtras.map((c) => ({ chave: c.chave, titulo: c.titulo })),
+            ]}
+            linhas={filtrados.map((item) => {
+              const extra: Record<string, unknown> = { ...item };
+              for (const c of colunasExtras) extra[c.chave] = c.valorExport?.(item) ?? "";
+              return extra as Registro;
+            })}
           />
           {podeEditar && (
             <Button onClick={abrirNovo}>
@@ -217,6 +254,25 @@ export function RecursoCrud({
         </div>
         <Badge variant="secondary">{filtrados.length} registros</Badge>
       </div>
+
+      {filtroExtra && (
+        <div className="flex flex-wrap gap-2">
+          {[{ valor: "todos", rotulo: "Todas as situações" }, ...filtroExtra.opcoes].map((op) => (
+            <button
+              key={op.valor}
+              onClick={() => setFiltroExtraAtivo(op.valor)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs transition-colors",
+                filtroExtraAtivo === op.valor
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:bg-muted",
+              )}
+            >
+              {op.rotulo}
+            </button>
+          ))}
+        </div>
+      )}
 
       {grupos.length > 1 && (
         <div className="flex flex-wrap gap-2">
@@ -246,20 +302,23 @@ export function RecursoCrud({
                   {colunas.map((c) => (
                     <TableHead key={c.nome}>{c.label}</TableHead>
                   ))}
-                  <TableHead className="w-24 text-right">Ações</TableHead>
+                  {colunasExtras.map((c) => (
+                    <TableHead key={c.chave}>{c.titulo}</TableHead>
+                  ))}
+                  <TableHead className="w-32 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {lista.isLoading && (
                   <TableRow>
-                    <TableCell colSpan={colunas.length + 1} className="py-10 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={colunas.length + colunasExtras.length + 1} className="py-10 text-center text-sm text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 )}
                 {!lista.isLoading && filtrados.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={colunas.length + 1} className="py-10 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={colunas.length + colunasExtras.length + 1} className="py-10 text-center text-sm text-muted-foreground">
                       Nenhum registro encontrado.
                     </TableCell>
                   </TableRow>
@@ -278,8 +337,12 @@ export function RecursoCrud({
                         {formatarValor(item[c.nome], c.tipo ?? "texto")}
                       </TableCell>
                     ))}
+                    {colunasExtras.map((c) => (
+                      <TableCell key={c.chave}>{c.render(item)}</TableCell>
+                    ))}
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {acoesExtras?.(item)}
                         {podeEditar && (
                           <Button variant="ghost" size="icon" onClick={() => abrirEdicao(item)}>
                             <Pencil className="h-4 w-4" />
@@ -351,6 +414,20 @@ export function RecursoCrud({
                         onCheckedChange={(v) => setForm((f) => ({ ...f, [c.nome]: v }))}
                       />
                     </div>
+                  ) : tipo === "select" ? (
+                    <select
+                      id={c.nome}
+                      value={String(valor ?? "")}
+                      onChange={(e) => setForm((f) => ({ ...f, [c.nome]: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      <option value="">Selecione...</option>
+                      {(c.opcoes ?? []).map((op) => (
+                        <option key={op} value={op}>
+                          {op}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
                     <Input
                       id={c.nome}

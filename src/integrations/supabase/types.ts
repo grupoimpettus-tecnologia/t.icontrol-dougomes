@@ -130,73 +130,142 @@ export type Database = {
           },
         ]
       }
+      equipment_heartbeats: {
+        Row: {
+          equipment_id: string
+          id: number
+          metricas: Json
+          recebido_em: string
+          workspace_id: string
+        }
+        Insert: {
+          equipment_id: string
+          id?: number
+          metricas?: Json
+          recebido_em?: string
+          workspace_id: string
+        }
+        Update: {
+          equipment_id?: string
+          id?: number
+          metricas?: Json
+          recebido_em?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_heartbeats_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_heartbeats_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipments: {
         Row: {
+          agent_status: string
+          agent_token_hash: string | null
           condicao: string | null
           configuracao: string | null
+          cpu: string | null
           created_at: string
           criado_por: string | null
           custo_compra: number | null
+          disco: string | null
           grupo: string | null
+          hostname: string | null
           id: string
           ip: string | null
           local: string | null
+          mac: string | null
+          manutencao: boolean
           marca: string | null
+          memoria: string | null
           modelo: string | null
           numero_serie: string | null
           observacoes: string | null
           patrimonio: string
           responsavel: string | null
           setor: string | null
+          sistema_operacional: string | null
           status: string | null
           termo_url: string | null
           tipo: string | null
+          ultimo_heartbeat: string | null
           updated_at: string
           workspace_id: string
         }
         Insert: {
+          agent_status?: string
+          agent_token_hash?: string | null
           condicao?: string | null
           configuracao?: string | null
+          cpu?: string | null
           created_at?: string
           criado_por?: string | null
           custo_compra?: number | null
+          disco?: string | null
           grupo?: string | null
+          hostname?: string | null
           id?: string
           ip?: string | null
           local?: string | null
+          mac?: string | null
+          manutencao?: boolean
           marca?: string | null
+          memoria?: string | null
           modelo?: string | null
           numero_serie?: string | null
           observacoes?: string | null
           patrimonio: string
           responsavel?: string | null
           setor?: string | null
+          sistema_operacional?: string | null
           status?: string | null
           termo_url?: string | null
           tipo?: string | null
+          ultimo_heartbeat?: string | null
           updated_at?: string
           workspace_id: string
         }
         Update: {
+          agent_status?: string
+          agent_token_hash?: string | null
           condicao?: string | null
           configuracao?: string | null
+          cpu?: string | null
           created_at?: string
           criado_por?: string | null
           custo_compra?: number | null
+          disco?: string | null
           grupo?: string | null
+          hostname?: string | null
           id?: string
           ip?: string | null
           local?: string | null
+          mac?: string | null
+          manutencao?: boolean
           marca?: string | null
+          memoria?: string | null
           modelo?: string | null
           numero_serie?: string | null
           observacoes?: string | null
           patrimonio?: string
           responsavel?: string | null
           setor?: string | null
+          sistema_operacional?: string | null
           status?: string | null
           termo_url?: string | null
           tipo?: string | null
+          ultimo_heartbeat?: string | null
           updated_at?: string
           workspace_id?: string
         }

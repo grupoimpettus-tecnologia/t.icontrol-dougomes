@@ -32,6 +32,7 @@ import { Route as AuthenticatedPainelInfraAccessMapRouteImport } from './routes/
 import { Route as AuthenticatedPainelInfraEquipmentsRouteImport } from './routes/_authenticated/_painel/infra/equipments'
 import { Route as AuthenticatedPainelInfraPhoneLinesRouteImport } from './routes/_authenticated/_painel/infra/phone-lines'
 import { Route as AuthenticatedPainelInfraServicesAssetsRouteImport } from './routes/_authenticated/_painel/infra/services-assets'
+import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicCronRunChecksRouteImport } from './routes/api/public/cron/run-checks'
 import { Route as ApiPublicHeartbeatTokenRouteImport } from './routes/api/public/heartbeat/$token'
 import { Route as AuthenticatedPainelInfraMonitoringIndexRouteImport } from './routes/_authenticated/_painel/infra/monitoring/index'
@@ -163,6 +164,11 @@ const AuthenticatedPainelInfraServicesAssetsRoute =
     path: '/infra/services-assets',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
+  id: '/api/public/agent/heartbeat',
+  path: '/api/public/agent/heartbeat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronRunChecksRoute = ApiPublicCronRunChecksRouteImport.update({
   id: '/api/public/cron/run-checks',
   path: '/api/public/cron/run-checks',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
   '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
   '/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
   '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
   '/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/_authenticated/_painel/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
   '/_authenticated/_painel/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
   '/_authenticated/_painel/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
   '/api/public/heartbeat/$token': typeof ApiPublicHeartbeatTokenRoute
   '/_authenticated/_painel/infra/monitoring/$id': typeof AuthenticatedPainelInfraMonitoringIdRoute
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/infra/equipments'
     | '/infra/phone-lines'
     | '/infra/services-assets'
+    | '/api/public/agent/heartbeat'
     | '/api/public/cron/run-checks'
     | '/api/public/heartbeat/$token'
     | '/infra/monitoring/$id'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/infra/equipments'
     | '/infra/phone-lines'
     | '/infra/services-assets'
+    | '/api/public/agent/heartbeat'
     | '/api/public/cron/run-checks'
     | '/api/public/heartbeat/$token'
     | '/infra/monitoring/$id'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/infra/equipments'
     | '/_authenticated/_painel/infra/phone-lines'
     | '/_authenticated/_painel/infra/services-assets'
+    | '/api/public/agent/heartbeat'
     | '/api/public/cron/run-checks'
     | '/api/public/heartbeat/$token'
     | '/_authenticated/_painel/infra/monitoring/$id'
@@ -365,6 +377,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   StatusSlugRoute: typeof StatusSlugRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
   ApiPublicCronRunChecksRoute: typeof ApiPublicCronRunChecksRoute
   ApiPublicHeartbeatTokenRoute: typeof ApiPublicHeartbeatTokenRoute
 }
@@ -532,6 +545,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelInfraServicesAssetsRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/api/public/agent/heartbeat': {
+      id: '/api/public/agent/heartbeat'
+      path: '/api/public/agent/heartbeat'
+      fullPath: '/api/public/agent/heartbeat'
+      preLoaderRoute: typeof ApiPublicAgentHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/run-checks': {
       id: '/api/public/cron/run-checks'
       path: '/api/public/cron/run-checks'
@@ -636,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   StatusSlugRoute: StatusSlugRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
   ApiPublicCronRunChecksRoute: ApiPublicCronRunChecksRoute,
   ApiPublicHeartbeatTokenRoute: ApiPublicHeartbeatTokenRoute,
 }
