@@ -13,10 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AceitarConviteRouteImport } from './routes/aceitar-convite'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/_painel'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSelecionarEmpresaRouteImport } from './routes/_authenticated/selecionar-empresa'
 import { Route as StatusSlugRouteImport } from './routes/status.$slug'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/_painel/configuracoes'
 import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_authenticated/_painel/dashboard'
 import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
@@ -53,6 +56,17 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/_painel',
   getParentRoute: () => AuthenticatedRouteRoute,
@@ -71,6 +85,11 @@ const AuthenticatedSelecionarEmpresaRoute =
 const StatusSlugRoute = StatusSlugRouteImport.update({
   id: '/status/$slug',
   path: '/status/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPainelConfiguracoesRoute =
@@ -171,9 +190,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aceitar-convite': typeof AceitarConviteRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
   '/status/$slug': typeof StatusSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
@@ -195,9 +217,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aceitar-convite': typeof AceitarConviteRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
   '/status/$slug': typeof StatusSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
@@ -221,10 +246,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/aceitar-convite': typeof AceitarConviteRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/_painel': typeof AuthenticatedPainelRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/selecionar-empresa': typeof AuthenticatedSelecionarEmpresaRoute
   '/status/$slug': typeof StatusSlugRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/_painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/_authenticated/_painel/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
@@ -248,9 +276,12 @@ export interface FileRouteTypes {
     | '/'
     | '/aceitar-convite'
     | '/auth'
+    | '/mcp'
+    | '/.well-known/oauth-protected-resource'
     | '/onboarding'
     | '/selecionar-empresa'
     | '/status/$slug'
+    | '/.lovable/oauth/consent'
     | '/configuracoes'
     | '/dashboard'
     | '/pdv'
@@ -272,9 +303,12 @@ export interface FileRouteTypes {
     | '/'
     | '/aceitar-convite'
     | '/auth'
+    | '/mcp'
+    | '/.well-known/oauth-protected-resource'
     | '/onboarding'
     | '/selecionar-empresa'
     | '/status/$slug'
+    | '/.lovable/oauth/consent'
     | '/configuracoes'
     | '/dashboard'
     | '/pdv'
@@ -297,10 +331,13 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/aceitar-convite'
     | '/auth'
+    | '/mcp'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/_painel'
     | '/_authenticated/onboarding'
     | '/_authenticated/selecionar-empresa'
     | '/status/$slug'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/_painel/configuracoes'
     | '/_authenticated/_painel/dashboard'
     | '/_authenticated/_painel/pdv'
@@ -324,7 +361,10 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AceitarConviteRoute: typeof AceitarConviteRoute
   AuthRoute: typeof AuthRoute
+  McpRoute: typeof McpRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   StatusSlugRoute: typeof StatusSlugRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicCronRunChecksRoute: typeof ApiPublicCronRunChecksRoute
   ApiPublicHeartbeatTokenRoute: typeof ApiPublicHeartbeatTokenRoute
 }
@@ -359,6 +399,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/_painel': {
       id: '/_authenticated/_painel'
       path: ''
@@ -385,6 +439,13 @@ declare module '@tanstack/react-router' {
       path: '/status/$slug'
       fullPath: '/status/$slug'
       preLoaderRoute: typeof StatusSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_painel/configuracoes': {
@@ -570,7 +631,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AceitarConviteRoute: AceitarConviteRoute,
   AuthRoute: AuthRoute,
+  McpRoute: McpRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   StatusSlugRoute: StatusSlugRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicCronRunChecksRoute: ApiPublicCronRunChecksRoute,
   ApiPublicHeartbeatTokenRoute: ApiPublicHeartbeatTokenRoute,
 }

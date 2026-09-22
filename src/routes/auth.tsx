@@ -20,20 +20,36 @@ export const Route = createFileRoute("/auth")({
       { property: "og:description", content: "Acesse a plataforma de gestão de T.I TIControl." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const valor = s['next'];
+    const seguro =
+      typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//") ? valor : undefined;
+    return (seguro ? { next: seguro } : {}) as { next?: string };
+  },
   component: AuthPage,
 });
 
 function AuthPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const destinoApos = next ?? "/selecionar-empresa";
+  function irParaDestino() {
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    navigate({ to: "/selecionar-empresa", replace: true });
+  }
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
 
   useEffect(() => {
-    if (session) navigate({ to: "/selecionar-empresa", replace: true });
-  }, [session, navigate]);
+    if (session) irParaDestino();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, next]);
 
   async function entrar(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +60,7 @@ function AuthPage() {
       toast.error("Não foi possível entrar", { description: error.message });
       return;
     }
-    navigate({ to: "/selecionar-empresa", replace: true });
+    irParaDestino();
   }
 
   async function cadastrar(e: React.FormEvent) {
@@ -54,7 +70,7 @@ function AuthPage() {
       email,
       password: senha,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}${destinoApos}`,
         data: { nome },
       },
     });
@@ -69,19 +85,19 @@ function AuthPage() {
       });
       return;
     }
-    navigate({ to: "/selecionar-empresa", replace: true });
+    irParaDestino();
   }
 
   async function entrarComGoogle() {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${destinoApos}`,
     });
     if (result.error) {
       toast.error("Falha ao entrar com Google");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/selecionar-empresa", replace: true });
+    irParaDestino();
   }
 
   return (
