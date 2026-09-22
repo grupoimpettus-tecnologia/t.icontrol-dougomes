@@ -321,8 +321,73 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
         <BotaoFerramenta titulo="Limpar formatação" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}>
           <RemoveFormatting className={icone} />
         </BotaoFerramenta>
+        <span className="mx-1 h-6 w-px bg-border" />
+        <BotaoFerramenta
+          titulo="Anexar arquivo"
+          desabilitado={enviando}
+          onClick={() => inputRef.current?.click()}
+        >
+          {enviando ? <Loader2 className={cn(icone, "animate-spin")} /> : <Paperclip className={icone} />}
+        </BotaoFerramenta>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const arquivos = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            if (arquivos.length > 0) enviarArquivosRef.current(arquivos);
+          }}
+        />
       </div>
-      <EditorContent editor={editor} className="min-h-44" />
+      <div onClick={aoClicarNoConteudo}>
+        <EditorContent editor={editor} className="min-h-44" />
+      </div>
+
+      <Dialog open={!!selecionado} onOpenChange={(v) => !v && setSelecionado(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="truncate">{selecionado?.nome}</DialogTitle>
+            <DialogDescription>
+              {selecionado && podeVisualizar(selecionado.tipo, selecionado.nome)
+                ? "Abra o arquivo em uma nova aba ou faça o download."
+                : "Este formato não pode ser visualizado no navegador — faça o download."}
+              {selecionado?.tamanho ? ` (${formatarTamanho(selecionado.tamanho)})` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-start">
+            {selecionado && podeVisualizar(selecionado.tipo, selecionado.nome) && (
+              <Button
+                type="button"
+                onClick={() => {
+                  const alvo = selecionado;
+                  setSelecionado(null);
+                  abrirAnexo(alvo.path).catch(() => toast.error("Não foi possível abrir o arquivo"));
+                }}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const alvo = selecionado;
+                setSelecionado(null);
+                if (alvo)
+                  baixarAnexo(alvo.path, alvo.nome).catch(() =>
+                    toast.error("Não foi possível baixar o arquivo"),
+                  );
+              }}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Baixar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
