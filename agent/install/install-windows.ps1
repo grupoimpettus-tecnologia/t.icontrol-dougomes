@@ -1,4 +1,4 @@
-# Instala o agente TIControl como tarefa agendada (executa na inicialização).
+# Instala o agente TIControl como tarefa agendada (inicialização + cada minuto).
 # Execute como administrador na pasta do agente.
 
 $pasta = (Get-Location).Path
@@ -10,11 +10,19 @@ if (-not (Test-Path $script)) {
   exit 1
 }
 
-$acao = New-ScheduledTaskAction -Execute $node -Argument "`"$script`"" -WorkingDirectory $pasta
-$gatilho = New-ScheduledTaskTrigger -AtStartup
-$config = New-ScheduledTaskSettingsSet -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$acao = New-ScheduledTaskAction -Execute $node -Argument "`"$script`" --once" -WorkingDirectory $pasta
+$inicializacao = New-ScheduledTaskTrigger -AtStartup
+$recorrente = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 3650)
+$config = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
 
-Register-ScheduledTask -TaskName "TIControl Agent" -Action $acao -Trigger $gatilho -Settings $config -User "SYSTEM" -RunLevel Highest -Force
+Register-ScheduledTask -TaskName "TIControl Agent" -Action $acao -Trigger @($inicializacao, $recorrente) -Settings $config -User "SYSTEM" -RunLevel Highest -Force
 
 Start-ScheduledTask -TaskName "TIControl Agent"
-Write-Host "Agente TIControl instalado e iniciado."
+Start-Sleep -Seconds 5
+$tarefa = Get-ScheduledTask -TaskName "TIControl Agent"
+$info = Get-ScheduledTaskInfo -TaskName "TIControl Agent"
+if ($tarefa.State -eq "Disabled") {
+  Write-Error "A tarefa foi criada, mas está desativada."
+  exit 1
+}
+Write-Host "Agente TIControl instalado. Estado: $($tarefa.State). Próxima execução: $($info.NextRunTime)."

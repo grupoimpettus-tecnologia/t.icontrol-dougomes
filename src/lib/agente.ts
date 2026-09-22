@@ -45,7 +45,7 @@ export function enderecoPublico() {
   return /lovableproject\.com|id-preview--|localhost/.test(origem) ? URL_PUBLICA_PADRAO : origem;
 }
 
-/** Instalador Windows: instala dependências, cria tarefa na inicialização e inicia o agente. */
+/** Instalador Windows: instala dependências e agenda um envio independente a cada minuto. */
 export function gerarInstaladorWindows(nomeArquivo: string) {
   return `@echo off
 setlocal
@@ -89,7 +89,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$a = New-ScheduledTaskAction -Execute '%NODE%' -Argument '\"%DESTINO%\\ticontrol-agent.cjs\"' -WorkingDirectory '%DESTINO%'; $t = New-ScheduledTaskTrigger -AtStartup; $s = New-ScheduledTaskSettingsSet -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; Register-ScheduledTask -TaskName 'TIControl Agent' -Action $a -Trigger $t -Settings $s -User 'SYSTEM' -RunLevel Highest -Force | Out-Null; Start-ScheduledTask -TaskName 'TIControl Agent'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$a = New-ScheduledTaskAction -Execute '%NODE%' -Argument '\"%DESTINO%\\ticontrol-agent.cjs\" --once' -WorkingDirectory '%DESTINO%'; $inicio = New-ScheduledTaskTrigger -AtStartup; $minuto = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 3650); $s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew; Register-ScheduledTask -TaskName 'TIControl Agent' -Action $a -Trigger @($inicio, $minuto) -Settings $s -User 'SYSTEM' -RunLevel Highest -Force | Out-Null; Start-ScheduledTask -TaskName 'TIControl Agent'; Start-Sleep -Seconds 5; $tarefa = Get-ScheduledTask -TaskName 'TIControl Agent'; $info = Get-ScheduledTaskInfo -TaskName 'TIControl Agent'; if ($tarefa.State -eq 'Disabled') { exit 1 }; Write-Host ('Tarefa: ' + $tarefa.State + ' | Proxima execucao: ' + $info.NextRunTime)"
 if errorlevel 1 (
   echo Falha ao criar ou iniciar a tarefa do Windows.
   pause
@@ -97,7 +97,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Agente TIControl instalado, testado e iniciado.
+echo Agente TIControl instalado. Um novo sinal sera enviado a cada minuto.
 pause
 `;
 }
