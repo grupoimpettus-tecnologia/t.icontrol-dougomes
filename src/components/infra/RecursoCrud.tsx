@@ -116,7 +116,7 @@ export function RecursoCrud({
   const lista = useQuery({
     queryKey: chave,
     enabled: !!workspaceId,
-    refetchInterval: atualizarACada,
+    refetchInterval: atualizarACada ?? false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from(tabela)
