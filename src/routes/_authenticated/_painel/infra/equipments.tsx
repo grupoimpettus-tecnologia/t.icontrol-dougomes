@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/equipments")
         { nome: "ip", label: "IP", naTabela: false },
         { nome: "termo_url", label: "Termo de responsabilidade (link)", naTabela: false },
         { nome: "configuracao", label: "Configuração", tipo: "textarea", naTabela: false },
-        { nome: "observacoes", label: "Observações", tipo: "textarea", naTabela: false },
+        { nome: "observacoes", label: "Descrição", tipo: "textarea", naTabela: false },
       ]}
     />
   ),
