@@ -33,11 +33,8 @@ const modulos: { titulo: string; itens: Item[] }[] = [
     ],
   },
   {
-    titulo: "Outros",
-    itens: [
-      { to: "/pdv", label: "Sistema PDV", icon: Store },
-      { to: "/configuracoes", label: "Configurações", icon: Settings },
-    ],
+    titulo: "Sistemas",
+    itens: [{ to: "/pdv", label: "Sistema PDV", icon: Store }],
   },
 ];
 
@@ -47,6 +44,7 @@ const adminItens: Item[] = [
   { to: "/admin-global/convites", label: "Convites", icon: KeyRound },
   { to: "/admin-global/logs", label: "Logs", icon: History },
   { to: "/admin-global/metricas", label: "Métricas", icon: Activity },
+  { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 export function AppSidebar({
