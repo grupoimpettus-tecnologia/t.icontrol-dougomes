@@ -38,7 +38,7 @@ type EditorFormatadoProps = {
   id: string;
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
+  placeholder?: string | undefined;
 };
 
 function BotaoFerramenta({
@@ -108,16 +108,17 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
   }, [editor, value]);
 
   if (!editor) return null;
+  const currentEditor = editor;
 
   function definirLink() {
-    const anterior = editor.getAttributes("link").href as string | undefined;
+    const anterior = currentEditor.getAttributes("link")["href"] as string | undefined;
     const href = window.prompt("Informe o endereço do link:", anterior ?? "https://");
     if (href === null) return;
     if (!href.trim()) {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      currentEditor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: href.trim() }).run();
+    currentEditor.chain().focus().extendMarkRange("link").setLink({ href: href.trim() }).run();
   }
 
   const icone = "h-4 w-4";
