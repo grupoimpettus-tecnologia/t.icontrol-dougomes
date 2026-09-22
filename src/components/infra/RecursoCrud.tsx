@@ -28,8 +28,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { cn } from "@/lib/utils";
+import { EditorFormatado } from "@/components/infra/EditorFormatado";
 
-export type CampoTipo = "texto" | "textarea" | "numero" | "booleano" | "data";
+export type CampoTipo = "texto" | "textarea" | "editor" | "numero" | "booleano" | "data";
 
 export type Campo = {
   nome: string;
@@ -315,11 +316,18 @@ export function RecursoCrud({
                   key={c.nome}
                   className={cn(
                     "space-y-2",
-                    (tipo === "textarea" || c.larguraCompleta) && "sm:col-span-2",
+                    (tipo === "textarea" || tipo === "editor" || c.larguraCompleta) && "sm:col-span-2",
                   )}
                 >
                   <Label htmlFor={c.nome}>{c.label}</Label>
-                  {tipo === "textarea" ? (
+                  {tipo === "editor" ? (
+                    <EditorFormatado
+                      id={c.nome}
+                      value={String(valor ?? "")}
+                      onChange={(conteudo) => setForm((f) => ({ ...f, [c.nome]: conteudo }))}
+                      placeholder={c.placeholder}
+                    />
+                  ) : tipo === "textarea" ? (
                     <Textarea
                       id={c.nome}
                       rows={4}

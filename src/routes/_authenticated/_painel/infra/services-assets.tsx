@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/services-ass
         { nome: "renovacao_em", label: "Renovação em", tipo: "data" },
         { nome: "grupo", label: "Grupo" },
         { nome: "contrato_url", label: "Link do contrato", naTabela: false },
-        { nome: "observacoes", label: "Descrição", tipo: "textarea", naTabela: false },
+        { nome: "observacoes", label: "Descrição", tipo: "editor", naTabela: false },
       ]}
     />
   ),
