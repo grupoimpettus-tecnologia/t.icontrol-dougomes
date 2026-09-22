@@ -13,6 +13,7 @@ import {
   AlignRight,
   Bold,
   Code2,
+  Columns3,
   Heading1,
   Heading2,
   Highlighter,
@@ -24,9 +25,12 @@ import {
   Pilcrow,
   Quote,
   Redo2,
+  Rows3,
   RemoveFormatting,
   Strikethrough,
   Table2,
+  TableCellsMerge,
+  TableCellsSplit,
   Trash2,
   UnderlineIcon,
   Undo2,
@@ -199,11 +203,26 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
         </BotaoFerramenta>
         {editor.isActive("table") && (
           <>
-            <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => editor.chain().focus().addColumnAfter().run()}>
-              + coluna
-            </Button>
-            <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => editor.chain().focus().addRowAfter().run()}>
-              + linha
+            <BotaoFerramenta titulo="Adicionar coluna" onClick={() => editor.chain().focus().addColumnAfter().run()}>
+              <Columns3 className={icone} />
+            </BotaoFerramenta>
+            <BotaoFerramenta titulo="Excluir coluna" onClick={() => editor.chain().focus().deleteColumn().run()}>
+              <Columns3 className={cn(icone, "text-destructive")} />
+            </BotaoFerramenta>
+            <BotaoFerramenta titulo="Adicionar linha" onClick={() => editor.chain().focus().addRowAfter().run()}>
+              <Rows3 className={icone} />
+            </BotaoFerramenta>
+            <BotaoFerramenta titulo="Excluir linha" onClick={() => editor.chain().focus().deleteRow().run()}>
+              <Rows3 className={cn(icone, "text-destructive")} />
+            </BotaoFerramenta>
+            <BotaoFerramenta titulo="Mesclar células" desabilitado={!editor.can().mergeCells()} onClick={() => editor.chain().focus().mergeCells().run()}>
+              <TableCellsMerge className={icone} />
+            </BotaoFerramenta>
+            <BotaoFerramenta titulo="Separar célula" desabilitado={!editor.can().splitCell()} onClick={() => editor.chain().focus().splitCell().run()}>
+              <TableCellsSplit className={icone} />
+            </BotaoFerramenta>
+            <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => editor.chain().focus().toggleHeaderRow().run()}>
+              Cabeçalho
             </Button>
             <BotaoFerramenta titulo="Excluir tabela" onClick={() => editor.chain().focus().deleteTable().run()}>
               <Trash2 className={icone} />
