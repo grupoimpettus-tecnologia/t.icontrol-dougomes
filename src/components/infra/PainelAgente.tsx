@@ -160,8 +160,8 @@ export function PainelAgente({ item, podeGerenciar }: { item: Registro; podeGere
               <p className="text-xs text-muted-foreground">
                 No Windows, salve os dois arquivos na mesma pasta e clique com o botão direito no
                 arquivo <strong>instalar-ticontrol…bat</strong> e escolha "Executar como
-                administrador". Não abra o arquivo do agente com dois cliques: o Windows tenta
-                executá-lo pelo programa errado e mostra o erro "Caractere inválido".
+                administrador". O instalador testa a comunicação antes de concluir e mostra
+                qualquer erro na própria janela. Não abra o arquivo do agente com dois cliques.
               </p>
 
               {token ? (
