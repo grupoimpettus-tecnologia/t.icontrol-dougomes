@@ -69,7 +69,8 @@ async function receber(request: Request) {
     if (valor) atualizacao[campo] = valor;
   }
 
-  await supabaseAdmin.from("equipments").update(atualizacao).eq("id", equipamento.id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabaseAdmin.from("equipments") as any).update(atualizacao).eq("id", equipamento.id);
 
   return Response.json({ ok: true, recebido_em: agora });
 }
