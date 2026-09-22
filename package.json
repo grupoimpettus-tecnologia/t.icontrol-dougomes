@@ -51,6 +51,7 @@
     "@tanstack/router-plugin": "1.168.23",
     "@tiptap/extension-highlight": "^3.31.3",
     "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/extension-placeholder": "^3.31.3",
     "@tiptap/extension-table": "^3.31.3",
     "@tiptap/extension-text-align": "^3.31.3",
     "@tiptap/extension-underline": "^3.31.3",
