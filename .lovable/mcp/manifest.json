@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://zwurwwnciqkgqpmwjijo.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "t-icontrol-dougomes",
+      "version": "0.1.0",
+      "title": "T.IControl - Dougomes"
+    },
+    "tools": [
+      {
+        "name": "listar_empresas",
+        "title": "Listar empresas",
+        "description": "Lista as empresas (workspaces) ativas às quais o usuário autenticado tem acesso no TIControl.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "resumo_empresa",
+        "title": "Resumo da empresa",
+        "description": "Resumo da infraestrutura de uma empresa: totais de equipamentos, acessos, serviços, linhas e monitores fora do ar.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "empresa": {
+              "description": "Nome, slug ou id da empresa.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_monitores",
+        "title": "Listar monitores",
+        "description": "Lista os monitores de disponibilidade de uma empresa, com status atual, última verificação e latência.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "empresa": {
+              "description": "Nome, slug ou id da empresa. Opcional se houver apenas uma.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Filtra por status atual.",
+              "type": "string",
+              "enum": [
+                "ativo",
+                "fora",
+                "pausado",
+                "pendente"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_equipamentos",
+        "title": "Listar equipamentos",
+        "description": "Lista os equipamentos de T.I de uma empresa (patrimônio, responsável, setor, status).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "empresa": {
+              "description": "Nome, slug ou id da empresa.",
+              "type": "string"
+            },
+            "busca": {
+              "description": "Texto para filtrar por patrimônio, responsável, modelo ou setor.",
+              "type": "string"
+            },
+            "limite": {
+              "description": "Máximo de registros (padrão 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_servicos",
+        "title": "Listar serviços e ativos",
+        "description": "Lista serviços e ativos contratados de uma empresa, com fornecedor, custo e data de renovação.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "empresa": {
+              "description": "Nome, slug ou id da empresa.",
+              "type": "string"
+            },
+            "busca": {
+              "description": "Texto para filtrar por nome, fornecedor ou grupo.",
+              "type": "string"
+            },
+            "limite": {
+              "description": "Máximo de registros (padrão 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_linhas",
+        "title": "Listar linhas e celulares",
+        "description": "Lista linhas telefônicas e celulares de uma empresa, com responsável, operadora, plano e valor.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "empresa": {
+              "description": "Nome, slug ou id da empresa.",
+              "type": "string"
+            },
+            "busca": {
+              "description": "Texto para filtrar por responsável, linha, operadora ou setor.",
+              "type": "string"
+            },
+            "limite": {
+              "description": "Máximo de registros (padrão 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_acessos",
+        "title": "Listar mapa de acessos",
+        "description": "Lista os acessos cadastrados no mapa de acessos de uma empresa (nome, tipo, ambiente, URL e usuário). Nunca retorna senhas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "empresa": {
+              "description": "Nome, slug ou id da empresa.",
+              "type": "string"
+            },
+            "busca": {
+              "description": "Texto para filtrar por nome, tipo, grupo ou URL.",
+              "type": "string"
+            },
+            "limite": {
+              "description": "Máximo de registros (padrão 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
