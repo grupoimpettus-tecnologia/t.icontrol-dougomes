@@ -22,6 +22,7 @@ import {
   gerarInstaladorWindows,
   situacaoAgente,
   agentStatusLabels,
+  enderecoPublico,
 } from "@/lib/agente";
 import type { Registro } from "@/components/infra/RecursoCrud";
 
