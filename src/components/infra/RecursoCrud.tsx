@@ -79,6 +79,7 @@ export function RecursoCrud({
   rotuloItem,
   colunasExtras = [],
   acoesExtras,
+  filtroExtra,
 }: {
   titulo: string;
   descricao: string;
