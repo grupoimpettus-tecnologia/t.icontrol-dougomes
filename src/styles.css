@@ -146,3 +146,104 @@
     color: var(--color-foreground);
   }
 }
+
+@layer components {
+  .rich-text-editor p.is-editor-empty:first-child::before {
+    color: var(--muted-foreground);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .rich-text-editor h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 2rem;
+  }
+
+  .rich-text-editor h2 {
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.75rem;
+  }
+
+  .rich-text-editor ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+  }
+
+  .rich-text-editor ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+  }
+
+  .rich-text-editor blockquote {
+    border-left: 3px solid var(--primary);
+    color: var(--muted-foreground);
+    padding-left: 0.875rem;
+  }
+
+  .rich-text-editor pre {
+    background: var(--muted);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    padding: 0.75rem;
+  }
+
+  .rich-text-editor a {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+  .rich-text-editor mark {
+    background: var(--warning);
+    border-radius: 0.125rem;
+    color: var(--foreground);
+    padding-inline: 0.125rem;
+  }
+
+  .rich-text-editor .tableWrapper {
+    overflow-x: auto;
+    padding-block: 0.5rem;
+  }
+
+  .rich-text-editor table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .rich-text-editor th,
+  .rich-text-editor td {
+    border: 1px solid var(--border);
+    min-width: 6rem;
+    padding: 0.5rem;
+    position: relative;
+    vertical-align: top;
+  }
+
+  .rich-text-editor th {
+    background: var(--muted);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .rich-text-editor .selectedCell::after {
+    background: color-mix(in oklch, var(--primary) 18%, transparent);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .rich-text-editor .column-resize-handle {
+    background: var(--primary);
+    bottom: 0;
+    pointer-events: none;
+    position: absolute;
+    right: -2px;
+    top: 0;
+    width: 3px;
+  }
+}

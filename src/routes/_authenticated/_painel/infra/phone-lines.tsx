@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/phone-lines"
         { nome: "sistema", label: "Sistema", naTabela: false },
         { nome: "imei", label: "IMEI", naTabela: false },
         { nome: "fidelidade_ate", label: "Fidelidade até", tipo: "data", naTabela: false },
-        { nome: "observacoes", label: "Descrição", tipo: "textarea", naTabela: false },
+        { nome: "observacoes", label: "Descrição", tipo: "editor", naTabela: false },
       ]}
     />
   ),

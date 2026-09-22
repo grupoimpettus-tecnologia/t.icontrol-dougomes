@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/access-map")
         { nome: "ambiente", label: "Ambiente", placeholder: "Produção, Escritório..." },
         { nome: "custo_mensal", label: "Custo mensal", tipo: "numero" },
         { nome: "grupo", label: "Grupo" },
-        { nome: "observacoes", label: "Descrição", tipo: "textarea", naTabela: false },
+        { nome: "observacoes", label: "Descrição", tipo: "editor", naTabela: false },
       ]}
     />
   ),
