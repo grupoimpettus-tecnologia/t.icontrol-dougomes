@@ -15,8 +15,10 @@ import { useCurrentWorkspace, useMyWorkspaces, useProfile } from "@/hooks/useWor
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function WorkspaceSwitcher() {
-  const { data: empresas = [] } = useMyWorkspaces();
+  const { data: todas = [] } = useMyWorkspaces();
+  const empresas = todas.filter((item) => item.workspace.ativo);
   const atual = useCurrentWorkspace();
+
   const setWorkspaceId = useWorkspaceStore((s) => s.setWorkspaceId);
   const profile = useProfile();
   const queryClient = useQueryClient();
