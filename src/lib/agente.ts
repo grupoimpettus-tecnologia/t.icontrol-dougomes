@@ -83,7 +83,7 @@ export function gerarScriptAgente(token: string, endpoint: string, nome: string)
  * Requisitos: Node.js 18+ e as dependências:
  *   npm install systeminformation node-os-utils
  *
- * Execução: node ticontrol-agent.js
+ * Execução: node ticontrol-agent.cjs
  */
 const si = require("systeminformation");
 const osu = require("node-os-utils");
