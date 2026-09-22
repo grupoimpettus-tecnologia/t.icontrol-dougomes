@@ -29,10 +29,10 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/equipments")
       campoGrupo="tipo"
       campos={[
         { nome: "patrimonio", label: "Patrimônio", placeholder: "L0073" },
+          { nome: "responsavel", label: "Responsável" },
         { nome: "tipo", label: "Tipo", placeholder: "Notebook, Desktop, Servidor..." },
         { nome: "marca", label: "Marca" },
         { nome: "modelo", label: "Modelo" },
-        { nome: "responsavel", label: "Responsável" },
         { nome: "setor", label: "Setor" },
         { nome: "local", label: "Local" },
         { nome: "condicao", label: "Condição", placeholder: "Novo, Semi-novo..." },

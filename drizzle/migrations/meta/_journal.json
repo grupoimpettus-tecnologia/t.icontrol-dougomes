@@ -64,6 +64,20 @@
       "when": 1790038472540,
       "tag": "0008_anexos_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790076257527,
+      "tag": "0009_audit_logs_and_monitor_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790076784692,
+      "tag": "0010_secure_database_functions",
+      "breakpoints": true
     }
   ]
 }

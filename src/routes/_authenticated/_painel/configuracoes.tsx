@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { BellRing } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { RoleBadge } from "@/components/empresa/RoleBadge";
 import { useCurrentWorkspace, useProfile, roleLabels } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { obterChavePush, removerAssinaturasPush, salvarAssinaturaPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_painel/configuracoes")({
+  head: () => ({ meta: [
+    { title: "Configurações | TIControl" }, { name: "description", content: "Preferências de perfil, empresa e notificações do TIControl." },
+    { property: "og:title", content: "Configurações | TIControl" }, { property: "og:description", content: "Preferências de perfil, empresa e notificações do TIControl." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: Configuracoes,
 });
 
@@ -16,6 +26,32 @@ function Configuracoes() {
   const profile = useProfile();
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
+  const obterChave = useServerFn(obterChavePush);
+  const salvarPush = useServerFn(salvarAssinaturaPush);
+  const removerPush = useServerFn(removerAssinaturasPush);
+  const pushDisponivel = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+
+  function converterChave(chave: string) {
+    const base64 = chave.replace(/-/g, "+").replace(/_/g, "/");
+    const preenchida = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    return Uint8Array.from(atob(preenchida), (caractere) => caractere.charCodeAt(0));
+  }
+
+  const push = useMutation({
+    mutationFn: async () => {
+      if (!pushDisponivel) throw new Error("Este navegador não oferece notificações push.");
+      const permissao = await Notification.requestPermission();
+      if (permissao !== "granted") throw new Error("A permissão para notificações não foi concedida.");
+      const registro = await navigator.serviceWorker.register("/push-sw.js");
+      const { publicKey } = await obterChave();
+      const assinatura = await registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: converterChave(publicKey) });
+      await salvarPush({ data: { assinatura: JSON.stringify(assinatura.toJSON()) } });
+    },
+    onSuccess: () => toast.success("Notificações push ativadas neste dispositivo"),
+    onError: (erro: Error) => toast.error("Não foi possível ativar", { description: erro.message }),
+  });
+
+  const desativarPush = useMutation({ mutationFn: () => removerPush(), onSuccess: () => toast.success("Notificações push desativadas") });
 
   const membros = useQuery({
     queryKey: ["membros-detalhe", workspaceId],
@@ -92,17 +128,15 @@ function Configuracoes() {
         <CardHeader>
           <CardTitle>E-mail e notificações</CardTitle>
           <CardDescription>
-            O servidor de e-mail do cliente já está guardado com segurança e será usado quando os
-            alertas forem ativados.
+            O servidor de e-mail está configurado. Ative o push neste dispositivo para poder ser escolhido nos alertas dos monitores.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <Badge variant="secondary">Próxima etapa</Badge>
-          <p>
-            Envio de convites e alertas por e-mail, templates editáveis e notificações no celular
-            entram nas próximas fases. Perfis disponíveis hoje:{" "}
-            {Object.values(roleLabels).join(", ")}.
-          </p>
+        <CardContent className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">E-mail ativo</Badge>
+          <Button onClick={() => push.mutate()} disabled={!pushDisponivel || push.isPending}><BellRing className="mr-2 h-4 w-4" />Ativar push neste dispositivo</Button>
+          <Button variant="outline" onClick={() => desativarPush.mutate()} disabled={desativarPush.isPending}>Desativar push</Button>
+          {!pushDisponivel && <p className="w-full text-sm text-muted-foreground">Este navegador não oferece notificações push.</p>}
+          <p className="w-full text-xs text-muted-foreground">Perfis disponíveis: {Object.values(roleLabels).join(", ")}.</p>
         </CardContent>
       </Card>
     </div>

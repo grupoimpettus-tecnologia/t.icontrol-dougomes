@@ -81,30 +81,42 @@ export type Database = {
         Row: {
           acao: string
           created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
           entidade: string | null
           entidade_id: string | null
           id: string
+          item_nome: string | null
           metadata: Json
+          modulo: string | null
           user_id: string | null
           workspace_id: string | null
         }
         Insert: {
           acao: string
           created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
           entidade?: string | null
           entidade_id?: string | null
           id?: string
+          item_nome?: string | null
           metadata?: Json
+          modulo?: string | null
           user_id?: string | null
           workspace_id?: string | null
         }
         Update: {
           acao?: string
           created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
           entidade?: string | null
           entidade_id?: string | null
           id?: string
+          item_nome?: string | null
           metadata?: Json
+          modulo?: string | null
           user_id?: string | null
           workspace_id?: string | null
         }
@@ -337,6 +349,58 @@ export type Database = {
           },
         ]
       }
+      monitor_notification_recipients: {
+        Row: {
+          canal: string
+          created_at: string
+          email: string | null
+          id: string
+          monitor_id: string
+          profile_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          canal: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          monitor_id: string
+          profile_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          monitor_id?: string
+          profile_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitor_notification_recipients_monitor_id_fkey"
+            columns: ["monitor_id"]
+            isOneToOne: false
+            referencedRelation: "monitors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitor_notification_recipients_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitor_notification_recipients_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monitors: {
         Row: {
           ativo: boolean
@@ -441,6 +505,57 @@ export type Database = {
           },
           {
             foreignKeyName: "monitors_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_logs: {
+        Row: {
+          canal: string
+          created_at: string
+          destinatario: string | null
+          enviado: boolean
+          evento: string
+          id: string
+          mensagem: string | null
+          monitor_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          canal: string
+          created_at?: string
+          destinatario?: string | null
+          enviado?: boolean
+          evento: string
+          id?: string
+          mensagem?: string | null
+          monitor_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          destinatario?: string | null
+          enviado?: boolean
+          evento?: string
+          id?: string
+          mensagem?: string | null
+          monitor_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_monitor_id_fkey"
+            columns: ["monitor_id"]
+            isOneToOne: false
+            referencedRelation: "monitors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -567,6 +682,41 @@ export type Database = {
           role_global?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          plataforma: string
+          profile_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plataforma?: string
+          profile_id: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plataforma?: string
+          profile_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_assets: {
         Row: {

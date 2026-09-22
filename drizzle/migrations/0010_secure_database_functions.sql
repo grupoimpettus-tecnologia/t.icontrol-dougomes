@@ -1,0 +1,12 @@
+REVOKE ALL ON FUNCTION public.registrar_auditoria() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.accept_invite(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.accept_invite(text) TO authenticated;
+REVOKE ALL ON FUNCTION public.is_master(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_master(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.my_workspace_ids(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.my_workspace_ids(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.workspace_role(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.workspace_role(uuid, uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.can_manage_workspace(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_manage_workspace(uuid, uuid) TO authenticated;

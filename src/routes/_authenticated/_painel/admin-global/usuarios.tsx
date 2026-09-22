@@ -26,8 +26,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { RoleBadge } from "@/components/empresa/RoleBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, roleLabels, type AppRole } from "@/hooks/useWorkspaces";
+import { ExportarMenu } from "@/components/ExportarMenu";
 
 export const Route = createFileRoute("/_authenticated/_painel/admin-global/usuarios")({
+  head: () => ({ meta: [
+    { title: "Usuários | TIControl" }, { name: "description", content: "Administração de usuários, perfis e acessos às empresas." },
+    { property: "og:title", content: "Usuários | TIControl" }, { property: "og:description", content: "Administração de usuários, perfis e acessos às empresas." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminUsuarios,
 });
 
@@ -117,11 +123,16 @@ function AdminUsuarios() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Usuários</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Perfis do sistema e empresas que cada pessoa acessa.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Usuários</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Perfis do sistema e empresas que cada pessoa acessa.</p>
+        </div>
+        <ExportarMenu
+          titulo="Usuários"
+          colunas={[{ chave: "nome", titulo: "Nome" }, { chave: "email", titulo: "E-mail" }, { chave: "perfil", titulo: "Perfil" }, { chave: "empresas", titulo: "Empresas" }]}
+          linhas={(usuarios.data ?? []).map((usuario) => ({ ...usuario, perfil: roleLabels[usuario.role_global], empresas: usuario.role_global === "master" ? "Todas" : (vinculos.data ?? []).filter((v) => v.profile_id === usuario.id).length }))}
+        />
       </div>
 
       <Card className="rounded-xl">

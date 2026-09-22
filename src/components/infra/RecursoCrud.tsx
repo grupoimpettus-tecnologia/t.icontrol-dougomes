@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { cn } from "@/lib/utils";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
+import { ExportarMenu } from "@/components/ExportarMenu";
 
 export type CampoTipo = "texto" | "textarea" | "editor" | "numero" | "booleano" | "data";
 
@@ -189,12 +190,19 @@ export function RecursoCrud({
           <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{descricao}</p>
         </div>
-        {podeEditar && (
-          <Button onClick={abrirNovo}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo {rotuloItem.toLowerCase()}
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <ExportarMenu
+            titulo={titulo}
+            colunas={colunas.map((campo) => ({ chave: campo.nome, titulo: campo.label }))}
+            linhas={filtrados}
+          />
+          {podeEditar && (
+            <Button onClick={abrirNovo}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo {rotuloItem.toLowerCase()}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -231,7 +239,7 @@ export function RecursoCrud({
 
       <Card className="rounded-xl">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="app-scrollbar overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

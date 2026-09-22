@@ -12,6 +12,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  head: () => ({ meta: [
+    { title: "Criar empresa | TIControl" }, { name: "description", content: "Cadastre uma empresa para começar a usar o TIControl." },
+    { property: "og:title", content: "Criar empresa | TIControl" }, { property: "og:description", content: "Cadastre uma empresa para começar a usar o TIControl." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: Onboarding,
 });
 
@@ -61,14 +66,6 @@ function Onboarding() {
       profile_id: user.id,
       workspace_id: data.id,
       role_no_workspace: "admin",
-    });
-
-    await supabase.from("audit_logs").insert({
-      workspace_id: data.id,
-      user_id: user.id,
-      acao: "empresa_criada",
-      entidade: "workspaces",
-      entidade_id: data.id,
     });
 
     setWorkspaceId(data.id);

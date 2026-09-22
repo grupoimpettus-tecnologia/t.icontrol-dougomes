@@ -29,8 +29,14 @@ import { RoleBadge } from "@/components/empresa/RoleBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile, roleLabels, type AppRole } from "@/hooks/useWorkspaces";
+import { ExportarMenu } from "@/components/ExportarMenu";
 
 export const Route = createFileRoute("/_authenticated/_painel/admin-global/convites")({
+  head: () => ({ meta: [
+    { title: "Convites | TIControl" }, { name: "description", content: "Convites de usuários e acessos por empresa no TIControl." },
+    { property: "og:title", content: "Convites | TIControl" }, { property: "og:description", content: "Convites de usuários e acessos por empresa no TIControl." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminConvites,
 });
 
@@ -132,6 +138,11 @@ function AdminConvites() {
             Convide pessoas e defina o perfil e as empresas que elas poderão acessar.
           </p>
         </div>
+        <ExportarMenu
+          titulo="Convites"
+          colunas={[{ chave: "email", titulo: "E-mail" }, { chave: "perfil", titulo: "Perfil" }, { chave: "empresas", titulo: "Empresas" }, { chave: "situacao", titulo: "Situação" }, { chave: "criado", titulo: "Criado em" }]}
+          linhas={(convites.data ?? []).map((convite) => ({ ...convite, perfil: roleLabels[convite.role], empresas: convite.workspace_ids.length, situacao: convite.aceito_em ? "Aceito" : new Date(convite.expira_em) < new Date() ? "Expirado" : "Pendente", criado: new Date(convite.created_at).toLocaleString("pt-BR") }))}
+        />
         <Dialog open={aberto} onOpenChange={setAberto}>
           <DialogTrigger asChild>
             <Button>

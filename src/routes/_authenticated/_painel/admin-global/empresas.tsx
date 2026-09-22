@@ -22,8 +22,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useWorkspaces";
 import { useAuth } from "@/hooks/useAuth";
+import { ExportarMenu } from "@/components/ExportarMenu";
 
 export const Route = createFileRoute("/_authenticated/_painel/admin-global/empresas")({
+  head: () => ({ meta: [
+    { title: "Empresas | TIControl" }, { name: "description", content: "Administração global das empresas cadastradas no TIControl." },
+    { property: "og:title", content: "Empresas | TIControl" }, { property: "og:description", content: "Administração global das empresas cadastradas no TIControl." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminEmpresas,
 });
 
@@ -109,6 +115,11 @@ function AdminEmpresas() {
             Cadastro das empresas atendidas pela plataforma.
           </p>
         </div>
+        <ExportarMenu
+          titulo="Empresas"
+          colunas={[{ chave: "nome", titulo: "Nome" }, { chave: "slug", titulo: "Identificador" }, { chave: "segmento", titulo: "Segmento" }, { chave: "situacao", titulo: "Situação" }]}
+          linhas={todas.map((empresa) => ({ ...empresa, situacao: empresa.ativo ? "Ativa" : "Inativa" }))}
+        />
         <Dialog open={aberto} onOpenChange={setAberto}>
           <DialogTrigger asChild>
             <Button>

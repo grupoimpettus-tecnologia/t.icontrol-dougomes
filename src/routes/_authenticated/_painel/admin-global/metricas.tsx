@@ -7,6 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useWorkspaces";
 
 export const Route = createFileRoute("/_authenticated/_painel/admin-global/metricas")({
+  head: () => ({ meta: [
+    { title: "Métricas globais | TIControl" }, { name: "description", content: "Visão consolidada de empresas, usuários e convites do TIControl." },
+    { property: "og:title", content: "Métricas globais | TIControl" }, { property: "og:description", content: "Visão consolidada de empresas, usuários e convites do TIControl." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: Metricas,
 });
 
