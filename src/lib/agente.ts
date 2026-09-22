@@ -35,6 +35,44 @@ export const tiposEquipamento = [
   "Access Point",
 ];
 
+/** Instalador Windows: instala dependências, cria tarefa na inicialização e inicia o agente. */
+export function gerarInstaladorWindows(nomeArquivo: string) {
+  return `@echo off
+setlocal
+title Instalador do Agente TIControl
+
+where node >nul 2>&1
+if errorlevel 1 (
+  echo Node.js nao encontrado. Instale o Node.js 18 ou superior em https://nodejs.org e execute novamente.
+  pause
+  exit /b 1
+)
+
+set "DESTINO=%ProgramData%\\TIControl\\agente"
+if not exist "%DESTINO%" mkdir "%DESTINO%"
+copy /Y "%~dp0${nomeArquivo}" "%DESTINO%\\ticontrol-agent.cjs" >nul
+
+pushd "%DESTINO%"
+echo Instalando dependencias...
+call npm install --no-audit --no-fund --silent systeminformation node-os-utils
+if errorlevel 1 (
+  echo Falha ao instalar as dependencias.
+  popd
+  pause
+  exit /b 1
+)
+popd
+
+for /f "delims=" %%N in ('where node') do set "NODE=%%N"
+schtasks /Create /TN "TIControl Agent" /TR "\\"%NODE%\\" \\"%DESTINO%\\ticontrol-agent.cjs\\"" /SC ONSTART /RU SYSTEM /RL HIGHEST /F >nul
+schtasks /Run /TN "TIControl Agent" >nul
+
+echo.
+echo Agente TIControl instalado e iniciado.
+pause
+`;
+}
+
 /** Script do agente já configurado com o token do equipamento. */
 export function gerarScriptAgente(token: string, endpoint: string, nome: string) {
   return `#!/usr/bin/env node
@@ -45,7 +83,7 @@ export function gerarScriptAgente(token: string, endpoint: string, nome: string)
  * Requisitos: Node.js 18+ e as dependências:
  *   npm install systeminformation node-os-utils
  *
- * Execução: node ticontrol-agent.js
+ * Execução: node ticontrol-agent.cjs
  */
 const si = require("systeminformation");
 const osu = require("node-os-utils");

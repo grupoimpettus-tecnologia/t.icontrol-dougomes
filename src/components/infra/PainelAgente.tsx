@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { gerarTokenAgente, definirManutencao } from "@/lib/equipments.functions";
-import { gerarScriptAgente, situacaoAgente, agentStatusLabels } from "@/lib/agente";
+import {
+  gerarScriptAgente,
+  gerarInstaladorWindows,
+  situacaoAgente,
+  agentStatusLabels,
+} from "@/lib/agente";
 import type { Registro } from "@/components/infra/RecursoCrud";
 
 function baixarArquivo(nome: string, conteudo: string) {
@@ -133,18 +138,31 @@ export function PainelAgente({ item, podeGerenciar }: { item: Registro; podeGere
                 <Button
                   variant="outline"
                   disabled={!token}
-                  onClick={() =>
-                    token &&
-                    baixarArquivo(
-                      `ticontrol-agent-${patrimonio}.js`,
-                      gerarScriptAgente(token, endpoint, patrimonio),
-                    )
-                  }
+                  onClick={() => {
+                    if (!token) return;
+                    const arquivo = `ticontrol-agent-${patrimonio}.cjs`;
+                    baixarArquivo(arquivo, gerarScriptAgente(token, endpoint, patrimonio));
+                    setTimeout(
+                      () =>
+                        baixarArquivo(
+                          `instalar-ticontrol-${patrimonio}.bat`,
+                          gerarInstaladorWindows(arquivo),
+                        ),
+                      400,
+                    );
+                  }}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Baixar agente
                 </Button>
               </div>
+
+              <p className="text-xs text-muted-foreground">
+                No Windows, salve os dois arquivos na mesma pasta e clique com o botão direito no
+                arquivo <strong>instalar-ticontrol…bat</strong> e escolha "Executar como
+                administrador". Não abra o arquivo do agente com dois cliques: o Windows tenta
+                executá-lo pelo programa errado e mostra o erro "Caractere inválido".
+              </p>
 
               {token ? (
                 <div className="space-y-2">
