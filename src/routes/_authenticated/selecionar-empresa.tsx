@@ -24,7 +24,7 @@ function SelecionarEmpresa() {
   const [busca, setBusca] = useState("");
 
   const isMaster = profile.data?.role_global === "master";
-  const lista = empresas.data ?? [];
+  const lista = (empresas.data ?? []).filter((item) => item.workspace.ativo);
 
   useEffect(() => {
     if (!empresas.isSuccess) return;
@@ -33,6 +33,7 @@ function SelecionarEmpresa() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [empresas.isSuccess, lista.length]);
+
 
   async function entrar(id: string) {
     setWorkspaceId(id);
