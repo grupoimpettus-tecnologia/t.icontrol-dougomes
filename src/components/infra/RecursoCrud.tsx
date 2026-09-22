@@ -95,6 +95,7 @@ export function RecursoCrud({
     opcoes: { valor: string; rotulo: string }[];
     predicado: (item: Registro, valor: string) => boolean;
   };
+  atualizarACada?: number;
 }) {
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
