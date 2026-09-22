@@ -48,8 +48,16 @@ async function urlAssinada(path: string, download?: string) {
 }
 
 export async function abrirAnexo(path: string) {
-  const url = await urlAssinada(path);
-  window.open(url, "_blank", "noopener,noreferrer");
+  // abre a aba antes do await para não ser bloqueada pelo navegador
+  const aba = window.open("", "_blank", "noopener,noreferrer");
+  try {
+    const url = await urlAssinada(path);
+    if (aba) aba.location.href = url;
+    else window.open(url, "_blank", "noopener,noreferrer");
+  } catch (erro) {
+    aba?.close();
+    throw erro;
+  }
 }
 
 export async function baixarAnexo(path: string, nome: string) {
