@@ -17,27 +17,43 @@ export async function enviarAlertasMonitor(monitor: Monitor, resultado: Resultad
   const perfis = destinos.filter((item) => item.canal === "push" && item.profile_id).map((item) => item.profile_id as string);
 
   if (emails.length) {
+    let ultimoErro = "Falha no envio";
+    let enviado = false;
     try {
       const nodemailer = await import("nodemailer");
-      const porta = Number(process.env["DEFAULT_SMTP_PORT"] ?? 587);
-      const transporte = nodemailer.createTransport({
-        host: process.env["DEFAULT_SMTP_HOST"],
-        port: porta,
-        secure: porta === 465,
-        auth: { user: process.env["DEFAULT_SMTP_USER"], pass: process.env["DEFAULT_SMTP_PASSWORD"] },
-      });
-      await transporte.sendMail({
-        from: process.env["DEFAULT_SMTP_FROM"],
-        to: emails,
-        subject: `[TIControl] ${titulo}`,
-        text: `${corpo}\nEmpresa: ${workspace?.nome ?? ""}`,
-        html: `<h2>${titulo}</h2><p>${corpo}</p><p><strong>Empresa:</strong> ${workspace?.nome ?? ""}</p>`,
-      });
-      await supabaseAdmin.from("notification_logs").insert(emails.map((email) => ({ monitor_id: monitor.id, workspace_id: monitor.workspace_id, canal: "email", destinatario: email, evento, enviado: true, mensagem: corpo })));
+      const configurada = Number(process.env["DEFAULT_SMTP_PORT"] ?? 587);
+      const portas = Array.from(new Set([465, configurada, 587]));
+      for (const porta of portas) {
+        try {
+          const transporte = nodemailer.createTransport({
+            host: process.env["DEFAULT_SMTP_HOST"],
+            port: porta,
+            secure: porta === 465,
+            requireTLS: porta !== 465,
+            connectionTimeout: 15000,
+            greetingTimeout: 15000,
+            tls: { servername: process.env["DEFAULT_SMTP_HOST"] },
+            auth: { user: process.env["DEFAULT_SMTP_USER"], pass: process.env["DEFAULT_SMTP_PASSWORD"] },
+          });
+          await transporte.sendMail({
+            from: process.env["DEFAULT_SMTP_FROM"],
+            to: emails,
+            subject: `[TIControl] ${titulo}`,
+            text: `${corpo}\nEmpresa: ${workspace?.nome ?? ""}`,
+            html: `<h2>${titulo}</h2><p>${corpo}</p><p><strong>Empresa:</strong> ${workspace?.nome ?? ""}</p>`,
+          });
+          enviado = true;
+          break;
+        } catch (erro) {
+          ultimoErro = `porta ${porta}: ${erro instanceof Error ? erro.message : "falha"}`;
+        }
+      }
     } catch (erro) {
-      await supabaseAdmin.from("notification_logs").insert(emails.map((email) => ({ monitor_id: monitor.id, workspace_id: monitor.workspace_id, canal: "email", destinatario: email, evento, enviado: false, mensagem: erro instanceof Error ? erro.message : "Falha no envio" })));
+      ultimoErro = erro instanceof Error ? erro.message : "Falha no envio";
     }
+    await supabaseAdmin.from("notification_logs").insert(emails.map((email) => ({ monitor_id: monitor.id, workspace_id: monitor.workspace_id, canal: "email", destinatario: email, evento, enviado, mensagem: enviado ? corpo : ultimoErro })));
   }
+
 
   if (perfis.length) {
     const { data: assinaturas } = await supabaseAdmin.from("push_subscriptions").select("profile_id, token").in("profile_id", perfis);
