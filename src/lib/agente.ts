@@ -61,6 +61,11 @@ if errorlevel 1 (
 set "DESTINO=%ProgramData%\\TIControl\\agente"
 if not exist "%DESTINO%" mkdir "%DESTINO%"
 copy /Y "%~dp0${nomeArquivo}" "%DESTINO%\\ticontrol-agent.cjs" >nul
+if errorlevel 1 (
+  echo Falha ao copiar o agente. Confirme que os dois arquivos estao na mesma pasta.
+  pause
+  exit /b 1
+)
 
 pushd "%DESTINO%"
 echo Instalando dependencias...
@@ -74,11 +79,25 @@ if errorlevel 1 (
 popd
 
 for /f "delims=" %%N in ('where node') do set "NODE=%%N"
-schtasks /Create /TN "TIControl Agent" /TR "\\"%NODE%\\" \\"%DESTINO%\\ticontrol-agent.cjs\\"" /SC ONSTART /RU SYSTEM /RL HIGHEST /F >nul
-schtasks /Run /TN "TIControl Agent" >nul
+echo Testando a comunicacao com o TIControl...
+"%NODE%" "%DESTINO%\\ticontrol-agent.cjs" --once
+if errorlevel 1 (
+  echo.
+  echo O agente foi instalado, mas o teste de comunicacao falhou.
+  echo Consulte o erro acima ou o arquivo "%DESTINO%\\ticontrol-agent.log".
+  pause
+  exit /b 1
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$a = New-ScheduledTaskAction -Execute '%NODE%' -Argument '\"%DESTINO%\\ticontrol-agent.cjs\"' -WorkingDirectory '%DESTINO%'; $t = New-ScheduledTaskTrigger -AtStartup; $s = New-ScheduledTaskSettingsSet -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; Register-ScheduledTask -TaskName 'TIControl Agent' -Action $a -Trigger $t -Settings $s -User 'SYSTEM' -RunLevel Highest -Force | Out-Null; Start-ScheduledTask -TaskName 'TIControl Agent'"
+if errorlevel 1 (
+  echo Falha ao criar ou iniciar a tarefa do Windows.
+  pause
+  exit /b 1
+)
 
 echo.
-echo Agente TIControl instalado e iniciado.
+echo Agente TIControl instalado, testado e iniciado.
 pause
 `;
 }
@@ -97,10 +116,23 @@ export function gerarScriptAgente(token: string, endpoint: string, nome: string)
  */
 const si = require("systeminformation");
 const osu = require("node-os-utils");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const ENDPOINT = ${JSON.stringify(endpoint)};
 const TOKEN = ${JSON.stringify(token)};
 const INTERVALO_MS = 60000;
+const EXECUCAO_UNICA = process.argv.includes("--once");
+const ARQUIVO_LOG = path.join(__dirname, "ticontrol-agent.log");
+
+function registrar(...partes) {
+  const linha = partes.map((parte) =>
+    parte instanceof Error ? parte.stack || parte.message : String(parte)
+  ).join(" ");
+  const mensagem = "[" + new Date().toISOString() + "] " + linha;
+  console.log(mensagem);
+  try { fs.appendFileSync(ARQUIVO_LOG, mensagem + "\\n"); } catch {}
+}
 
 async function coletar() {
   const [os, cpu, mem, fs, net, tempo] = await Promise.all([
@@ -140,14 +172,23 @@ async function enviar() {
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + TOKEN },
       body: JSON.stringify(corpo),
     });
-    if (!resposta.ok) console.error("[TIControl] falha:", resposta.status, await resposta.text());
-    else console.log("[TIControl] sinal enviado", new Date().toISOString());
+    if (!resposta.ok) {
+      registrar("[TIControl] falha:", resposta.status, await resposta.text());
+      return false;
+    }
+    registrar("[TIControl] sinal enviado");
+    return true;
   } catch (erro) {
-    console.error("[TIControl] erro ao enviar:", erro.message);
+    registrar("[TIControl] erro ao enviar:", erro);
+    return false;
   }
 }
 
-enviar();
-setInterval(enviar, INTERVALO_MS);
+if (EXECUCAO_UNICA) {
+  enviar().then((ok) => process.exit(ok ? 0 : 1));
+} else {
+  enviar();
+  setInterval(enviar, INTERVALO_MS);
+}
 `;
 }
