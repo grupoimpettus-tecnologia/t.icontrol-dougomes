@@ -1,0 +1,15 @@
+[Unit]
+Description=Agente de status TIControl
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ticontrol-agent
+ExecStart=/usr/bin/node /opt/ticontrol-agent/ticontrol-agent.js
+Restart=always
+RestartSec=30
+User=root
+
+[Install]
+WantedBy=multi-user.target
