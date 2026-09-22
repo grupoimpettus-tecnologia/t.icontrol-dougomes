@@ -281,14 +281,14 @@ export function RecursoCrud({
               <TableBody>
                 {lista.isLoading && (
                   <TableRow>
-                    <TableCell colSpan={colunas.length + 1} className="py-10 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={colunas.length + colunasExtras.length + 1} className="py-10 text-center text-sm text-muted-foreground">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 )}
                 {!lista.isLoading && filtrados.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={colunas.length + 1} className="py-10 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={colunas.length + colunasExtras.length + 1} className="py-10 text-center text-sm text-muted-foreground">
                       Nenhum registro encontrado.
                     </TableCell>
                   </TableRow>
