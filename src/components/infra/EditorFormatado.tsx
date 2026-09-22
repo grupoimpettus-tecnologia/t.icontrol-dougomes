@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -35,9 +35,31 @@ import {
   Trash2,
   UnderlineIcon,
   Undo2,
+  Download,
+  ExternalLink,
+  Loader2,
+  Paperclip,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Anexo } from "@/components/infra/anexo-node";
+import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
+import {
+  abrirAnexo,
+  baixarAnexo,
+  enviarAnexo,
+  formatarTamanho,
+  podeVisualizar,
+} from "@/lib/anexos";
 
 type EditorFormatadoProps = {
   id: string;
