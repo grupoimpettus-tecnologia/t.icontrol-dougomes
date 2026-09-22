@@ -252,6 +252,25 @@ export function RecursoCrud({
         <Badge variant="secondary">{filtrados.length} registros</Badge>
       </div>
 
+      {filtroExtra && (
+        <div className="flex flex-wrap gap-2">
+          {[{ valor: "todos", rotulo: "Todas as situações" }, ...filtroExtra.opcoes].map((op) => (
+            <button
+              key={op.valor}
+              onClick={() => setFiltroExtraAtivo(op.valor)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs transition-colors",
+                filtroExtraAtivo === op.valor
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:bg-muted",
+              )}
+            >
+              {op.rotulo}
+            </button>
+          ))}
+        </div>
+      )}
+
       {grupos.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {["todos", ...grupos].map((g) => (
