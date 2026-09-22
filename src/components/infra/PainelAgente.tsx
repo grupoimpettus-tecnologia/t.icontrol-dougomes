@@ -43,8 +43,7 @@ export function PainelAgente({ item, podeGerenciar }: { item: Registro; podeGere
 
   const patrimonio = String(item["patrimonio"] ?? "Equipamento");
   const situacao = situacaoAgente(item as never);
-  const endpoint =
-    typeof window !== "undefined" ? `${window.location.origin}/api/public/agent/heartbeat` : "";
+  const endpoint = `${enderecoPublico()}/api/public/agent/heartbeat`;
 
   const historico = useQuery({
     queryKey: ["equipment-heartbeats", item.id],
