@@ -35,6 +35,16 @@ export const tiposEquipamento = [
   "Access Point",
 ];
 
+/** Endereço estável do app, usado pelo agente instalado nas máquinas. */
+export const URL_PUBLICA_PADRAO = "https://ticontroldg.lovable.app";
+
+export function enderecoPublico() {
+  if (typeof window === "undefined") return URL_PUBLICA_PADRAO;
+  const origem = window.location.origin;
+  // Origens do editor/preview não são acessíveis pelas máquinas monitoradas.
+  return /lovableproject\.com|id-preview--|localhost/.test(origem) ? URL_PUBLICA_PADRAO : origem;
+}
+
 /** Instalador Windows: instala dependências, cria tarefa na inicialização e inicia o agente. */
 export function gerarInstaladorWindows(nomeArquivo: string) {
   return `@echo off
