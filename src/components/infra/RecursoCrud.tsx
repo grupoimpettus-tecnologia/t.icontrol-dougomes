@@ -80,6 +80,7 @@ export function RecursoCrud({
   colunasExtras = [],
   acoesExtras,
   filtroExtra,
+  atualizarACada,
 }: {
   titulo: string;
   descricao: string;
