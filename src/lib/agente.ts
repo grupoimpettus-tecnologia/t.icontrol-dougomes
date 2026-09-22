@@ -45,7 +45,7 @@ export function enderecoPublico() {
   return /lovableproject\.com|id-preview--|localhost/.test(origem) ? URL_PUBLICA_PADRAO : origem;
 }
 
-/** Instalador Windows: instala dependências e agenda um envio independente a cada minuto. */
+/** Instalador Windows: mantém o agente em segundo plano desde a inicialização. */
 export function gerarInstaladorWindows(nomeArquivo: string) {
   return `@echo off
 setlocal
@@ -89,7 +89,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$a = New-ScheduledTaskAction -Execute '%NODE%' -Argument '\"%DESTINO%\\ticontrol-agent.cjs\" --once' -WorkingDirectory '%DESTINO%'; $inicio = New-ScheduledTaskTrigger -AtStartup; $minuto = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 3650); $s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew; Register-ScheduledTask -TaskName 'TIControl Agent' -Action $a -Trigger @($inicio, $minuto) -Settings $s -User 'SYSTEM' -RunLevel Highest -Force | Out-Null; Start-ScheduledTask -TaskName 'TIControl Agent'; Start-Sleep -Seconds 5; $tarefa = Get-ScheduledTask -TaskName 'TIControl Agent'; $info = Get-ScheduledTaskInfo -TaskName 'TIControl Agent'; if ($tarefa.State -eq 'Disabled') { exit 1 }; Write-Host ('Tarefa: ' + $tarefa.State + ' | Proxima execucao: ' + $info.NextRunTime)"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$existente = Get-ScheduledTask -TaskName 'TIControl Agent' -ErrorAction SilentlyContinue; if ($existente) { Stop-ScheduledTask -TaskName 'TIControl Agent' -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName 'TIControl Agent' -Confirm:$false }; $a = New-ScheduledTaskAction -Execute '%NODE%' -Argument '\"%DESTINO%\\ticontrol-agent.cjs\"' -WorkingDirectory '%DESTINO%'; $inicio = New-ScheduledTaskTrigger -AtStartup; $s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero); Register-ScheduledTask -TaskName 'TIControl Agent' -Action $a -Trigger $inicio -Settings $s -User 'SYSTEM' -RunLevel Highest -Force | Out-Null; Start-ScheduledTask -TaskName 'TIControl Agent'; Start-Sleep -Seconds 5; $tarefa = Get-ScheduledTask -TaskName 'TIControl Agent'; if ($tarefa.State -ne 'Running') { Write-Error ('Estado inesperado da tarefa: ' + $tarefa.State); exit 1 }; Write-Host ('Tarefa em segundo plano: ' + $tarefa.State)"
 if errorlevel 1 (
   echo Falha ao criar ou iniciar a tarefa do Windows.
   pause
@@ -97,7 +97,8 @@ if errorlevel 1 (
 )
 
 echo.
-echo Agente TIControl instalado. Um novo sinal sera enviado a cada minuto.
+echo Agente TIControl instalado e rodando em segundo plano.
+echo Se a internet cair, ele tentara novamente a cada 5 segundos ate reconectar.
 pause
 `;
 }
@@ -121,8 +122,10 @@ const path = require("node:path");
 const ENDPOINT = ${JSON.stringify(endpoint)};
 const TOKEN = ${JSON.stringify(token)};
 const INTERVALO_MS = 60000;
+const INTERVALO_RECONEXAO_MS = 5000;
 const EXECUCAO_UNICA = process.argv.includes("--once");
 const ARQUIVO_LOG = path.join(__dirname, "ticontrol-agent.log");
+let encerrando = false;
 
 function registrar(...partes) {
   const linha = partes.map((parte) =>
@@ -183,11 +186,29 @@ async function enviar() {
   }
 }
 
+async function executarContinuamente() {
+  const enviado = await enviar();
+  if (encerrando) return;
+  const proximoEnvio = enviado ? INTERVALO_MS : INTERVALO_RECONEXAO_MS;
+  setTimeout(executarContinuamente, proximoEnvio);
+}
+
+function encerrar(sinal) {
+  encerrando = true;
+  registrar("[TIControl] agente encerrado pelo sistema:", sinal);
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => encerrar("SIGTERM"));
+process.on("SIGINT", () => encerrar("SIGINT"));
+process.on("uncaughtException", (erro) => registrar("[TIControl] erro inesperado:", erro));
+process.on("unhandledRejection", (erro) => registrar("[TIControl] falha inesperada:", erro));
+
 if (EXECUCAO_UNICA) {
   enviar().then((ok) => process.exit(ok ? 0 : 1));
 } else {
-  enviar();
-  setInterval(enviar, INTERVALO_MS);
+  registrar("[TIControl] agente iniciado em segundo plano");
+  executarContinuamente();
 }
 `;
 }
