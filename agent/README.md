@@ -32,7 +32,7 @@ agente. Se o teste falhar, o diagnóstico fica salvo em
 ```bash
 sudo mkdir -p /opt/ticontrol-agent && cd /opt/ticontrol-agent
 # copie o arquivo .cjs baixado como ticontrol-agent.cjs
-sudo npm install systeminformation node-os-utils
+sudo npm install systeminformation
 node ticontrol-agent.cjs   # teste manual
 ```
 
