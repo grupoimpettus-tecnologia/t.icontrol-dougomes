@@ -91,6 +91,10 @@ export function RecursoCrud({
   rotuloItem: string;
   colunasExtras?: ColunaExtra[];
   acoesExtras?: (item: Registro) => React.ReactNode;
+  filtroExtra?: {
+    opcoes: { valor: string; rotulo: string }[];
+    predicado: (item: Registro, valor: string) => boolean;
+  };
 }) {
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
