@@ -85,6 +85,13 @@
       "when": 1790087242630,
       "tag": "0011_agente_status_equipamentos",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790091000000,
+      "tag": "0012_reposicao_pecas_para_descarte",
+      "breakpoints": true
     }
   ]
 }

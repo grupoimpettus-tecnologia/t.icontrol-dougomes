@@ -1,9 +1,12 @@
+import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { RecursoCrud, type Registro } from "@/components/infra/RecursoCrud";
 import { PainelAgente } from "@/components/infra/PainelAgente";
 import { agentStatusLabels, situacaoAgente, tiposEquipamento } from "@/lib/agente";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
+import { supabase } from "@/integrations/supabase/client";
 
 const cores: Record<string, string> = {
   online: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
@@ -12,9 +15,47 @@ const cores: Record<string, string> = {
   sem_agente: "bg-muted text-muted-foreground",
 };
 
+const situacoesEquipamento = ["Ativo", "Estoque", "Manutenção", "Descarte"];
+
 function Equipamentos() {
   const atual = useCurrentWorkspace();
+  const workspaceId = atual?.workspace.id;
   const podeGerenciar = atual ? ["master", "admin", "tecnico"].includes(atual.role) : false;
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    let cancelado = false;
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from("equipments")
+        .select("id, status")
+        .eq("workspace_id", workspaceId)
+        .ilike("status", "reposi%de pe%as");
+
+      if (cancelado || error || !data?.length) return;
+
+      const ids = data
+        .filter((item) => /reposi[cç][aã]o de pe[cç]as/i.test(String(item.status ?? "")))
+        .map((item) => item.id);
+
+      if (!ids.length) return;
+
+      const { error: erroUpdate } = await supabase
+        .from("equipments")
+        .update({ status: "Descarte", updated_at: new Date().toISOString() })
+        .in("id", ids);
+
+      if (!cancelado && !erroUpdate) {
+        await queryClient.invalidateQueries({ queryKey: ["equipments", workspaceId] });
+      }
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [workspaceId, queryClient]);
 
   return (
     <RecursoCrud
@@ -24,17 +65,7 @@ function Equipamentos() {
       rotuloItem="Equipamento"
       campoTitulo="patrimonio"
       ordenarPor="patrimonio"
-      campoGrupo="tipo"
       atualizarACada={60000}
-      filtroExtra={{
-        opcoes: [
-          { valor: "online", rotulo: "Online" },
-          { valor: "offline", rotulo: "Offline" },
-          { valor: "manutencao", rotulo: "Em manutenção" },
-          { valor: "sem_agente", rotulo: "Sem agente" },
-        ],
-        predicado: (item, valor) => situacaoAgente(item as never) === valor,
-      }}
       colunasExtras={[
         {
           chave: "situacao_agente",
@@ -73,7 +104,12 @@ function Equipamentos() {
         { nome: "setor", label: "Setor" },
         { nome: "local", label: "Local" },
         { nome: "condicao", label: "Condição", placeholder: "Novo, Semi-novo..." },
-        { nome: "status", label: "Situação", placeholder: "Ativo, Estoque, Manutenção" },
+        {
+          nome: "status",
+          label: "Situação",
+          tipo: "select",
+          opcoes: situacoesEquipamento,
+        },
         { nome: "sistema_operacional", label: "Sistema operacional", naTabela: false },
         { nome: "cpu", label: "CPU", naTabela: false },
         { nome: "memoria", label: "Memória", naTabela: false },

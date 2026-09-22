@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { FilterX, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -59,6 +66,10 @@ export type ColunaExtra = {
   valorExport?: (item: Registro) => string;
 };
 
+const FILTRO_TODAS = "__todas__";
+const FILTRO_VAZIO = "__vazio__";
+const FILTRO_COLUNA_NENHUMA = "__nenhuma__";
+
 function formatarValor(valor: unknown, tipo: CampoTipo) {
   if (valor === null || valor === undefined || valor === "") return "—";
   if (tipo === "booleano") return valor ? "Sim" : "Não";
@@ -68,6 +79,27 @@ function formatarValor(valor: unknown, tipo: CampoTipo) {
   return String(valor);
 }
 
+function valorColuna(
+  item: Registro,
+  chave: string,
+  campos: Campo[],
+  colunasExtras: ColunaExtra[],
+) {
+  const extra = colunasExtras.find((c) => c.chave === chave);
+  if (extra) {
+    const exportado = extra.valorExport?.(item);
+    if (exportado !== undefined) return exportado.trim() === "" ? "" : exportado;
+  }
+  const campo = campos.find((c) => c.nome === chave);
+  const bruto = item[chave];
+  if (bruto === null || bruto === undefined || bruto === "") return "";
+  if (campo?.tipo === "booleano") return bruto ? "Sim" : "Não";
+  if (campo?.tipo === "numero")
+    return Number(bruto).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (campo?.tipo === "data") return new Date(String(bruto)).toLocaleDateString("pt-BR");
+  return String(bruto);
+}
+
 export function RecursoCrud({
   titulo,
   descricao,
@@ -75,11 +107,9 @@ export function RecursoCrud({
   campos,
   campoTitulo,
   ordenarPor,
-  campoGrupo,
   rotuloItem,
   colunasExtras = [],
   acoesExtras,
-  filtroExtra,
   atualizarACada,
 }: {
   titulo: string;
@@ -88,10 +118,12 @@ export function RecursoCrud({
   campos: Campo[];
   campoTitulo: string;
   ordenarPor: string;
+  /** @deprecated Mantido por compatibilidade; o filtro por coluna substituiu o agrupamento em pills. */
   campoGrupo?: string;
   rotuloItem: string;
   colunasExtras?: ColunaExtra[];
   acoesExtras?: (item: Registro) => React.ReactNode;
+  /** @deprecated Mantido por compatibilidade; o filtro por coluna substituiu as pills extras. */
   filtroExtra?: {
     opcoes: { valor: string; rotulo: string }[];
     predicado: (item: Registro, valor: string) => boolean;
@@ -105,13 +137,22 @@ export function RecursoCrud({
   const queryClient = useQueryClient();
 
   const [busca, setBusca] = useState("");
-  const [grupoAtivo, setGrupoAtivo] = useState<string>("todos");
-  const [filtroExtraAtivo, setFiltroExtraAtivo] = useState<string>("todos");
+  const [filtroColuna, setFiltroColuna] = useState<string>(FILTRO_COLUNA_NENHUMA);
+  const [filtroValor, setFiltroValor] = useState<string>(FILTRO_TODAS);
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<Registro | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>({});
 
   const chave = [tabela, workspaceId];
+  const colunas = campos.filter((c) => c.naTabela !== false);
+
+  const colunasFiltro = useMemo(
+    () => [
+      ...colunas.map((c) => ({ chave: c.nome, titulo: c.label })),
+      ...colunasExtras.map((c) => ({ chave: c.chave, titulo: c.titulo })),
+    ],
+    [colunas, colunasExtras],
+  );
 
   const lista = useQuery({
     queryKey: chave,
@@ -128,23 +169,30 @@ export function RecursoCrud({
     },
   });
 
-  const grupos = useMemo(() => {
-    if (!campoGrupo) return [];
+  const valoresFiltro = useMemo(() => {
+    if (!filtroColuna || filtroColuna === FILTRO_COLUNA_NENHUMA) return [];
     const set = new Set<string>();
+    let temVazio = false;
     for (const item of lista.data ?? []) {
-      const g = item[campoGrupo];
-      if (g) set.add(String(g));
+      const valor = valorColuna(item, filtroColuna, campos, colunasExtras);
+      if (!valor) temVazio = true;
+      else set.add(valor);
     }
-    return [...set].sort();
-  }, [lista.data, campoGrupo]);
+    const ordenados = [...set].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return temVazio ? [FILTRO_VAZIO, ...ordenados] : ordenados;
+  }, [lista.data, filtroColuna, campos, colunasExtras]);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return (lista.data ?? []).filter((item) => {
-      if (campoGrupo && grupoAtivo !== "todos" && String(item[campoGrupo] ?? "") !== grupoAtivo)
-        return false;
-      if (filtroExtra && filtroExtraAtivo !== "todos" && !filtroExtra.predicado(item, filtroExtraAtivo))
-        return false;
+      if (filtroColuna !== FILTRO_COLUNA_NENHUMA && filtroValor !== FILTRO_TODAS) {
+        const valor = valorColuna(item, filtroColuna, campos, colunasExtras);
+        if (filtroValor === FILTRO_VAZIO) {
+          if (valor) return false;
+        } else if (valor !== filtroValor) {
+          return false;
+        }
+      }
       if (!termo) return true;
       return campos.some((c) =>
         String(item[c.nome] ?? "")
@@ -152,9 +200,12 @@ export function RecursoCrud({
           .includes(termo),
       );
     });
-  }, [lista.data, busca, grupoAtivo, campoGrupo, campos, filtroExtra, filtroExtraAtivo]);
+  }, [lista.data, busca, campos, filtroColuna, filtroValor, colunasExtras]);
 
-  const colunas = campos.filter((c) => c.naTabela !== false);
+  function limparFiltroColuna() {
+    setFiltroColuna(FILTRO_COLUNA_NENHUMA);
+    setFiltroValor(FILTRO_TODAS);
+  }
 
   function abrirNovo() {
     setEditando(null);
@@ -242,7 +293,7 @@ export function RecursoCrud({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -252,46 +303,62 @@ export function RecursoCrud({
             className="pl-9"
           />
         </div>
-        <Badge variant="secondary">{filtrados.length} registros</Badge>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Filtrar por coluna</Label>
+          <Select
+            value={filtroColuna}
+            onValueChange={(valor) => {
+              setFiltroColuna(valor);
+              setFiltroValor(FILTRO_TODAS);
+            }}
+          >
+            <SelectTrigger className="w-[11rem]">
+              <SelectValue placeholder="Coluna..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={FILTRO_COLUNA_NENHUMA}>Coluna...</SelectItem>
+              {colunasFiltro.map((coluna) => (
+                <SelectItem key={coluna.chave} value={coluna.chave}>
+                  {coluna.titulo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Valor</Label>
+          <Select
+            value={filtroValor}
+            onValueChange={setFiltroValor}
+            disabled={filtroColuna === FILTRO_COLUNA_NENHUMA}
+          >
+            <SelectTrigger className="w-[12rem]">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={FILTRO_TODAS}>Todos</SelectItem>
+              {valoresFiltro.map((valor) => (
+                <SelectItem key={valor} value={valor}>
+                  {valor === FILTRO_VAZIO ? "(em branco)" : valor}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {filtroColuna !== FILTRO_COLUNA_NENHUMA && (
+          <Button type="button" variant="outline" size="sm" onClick={limparFiltroColuna}>
+            <FilterX className="mr-2 h-4 w-4" />
+            Limpar filtro
+          </Button>
+        )}
+
+        <Badge variant="secondary" className="mb-0.5">
+          {filtrados.length} registros
+        </Badge>
       </div>
-
-      {filtroExtra && (
-        <div className="flex flex-wrap gap-2">
-          {[{ valor: "todos", rotulo: "Todas as situações" }, ...filtroExtra.opcoes].map((op) => (
-            <button
-              key={op.valor}
-              onClick={() => setFiltroExtraAtivo(op.valor)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs transition-colors",
-                filtroExtraAtivo === op.valor
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {op.rotulo}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {grupos.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {["todos", ...grupos].map((g) => (
-            <button
-              key={g}
-              onClick={() => setGrupoAtivo(g)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs transition-colors",
-                grupoAtivo === g
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {g === "todos" ? "Todos" : g}
-            </button>
-          ))}
-        </div>
-      )}
 
       <Card className="rounded-xl">
         <CardContent className="p-0">
@@ -311,14 +378,20 @@ export function RecursoCrud({
               <TableBody>
                 {lista.isLoading && (
                   <TableRow>
-                    <TableCell colSpan={colunas.length + colunasExtras.length + 1} className="py-10 text-center text-sm text-muted-foreground">
+                    <TableCell
+                      colSpan={colunas.length + colunasExtras.length + 1}
+                      className="py-10 text-center text-sm text-muted-foreground"
+                    >
                       Carregando...
                     </TableCell>
                   </TableRow>
                 )}
                 {!lista.isLoading && filtrados.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={colunas.length + colunasExtras.length + 1} className="py-10 text-center text-sm text-muted-foreground">
+                    <TableCell
+                      colSpan={colunas.length + colunasExtras.length + 1}
+                      className="py-10 text-center text-sm text-muted-foreground"
+                    >
                       Nenhum registro encontrado.
                     </TableCell>
                   </TableRow>

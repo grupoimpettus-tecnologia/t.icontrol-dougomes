@@ -50,16 +50,41 @@ function Dashboard() {
     queryKey: ["dashboard-totais", workspaceId],
     enabled: !!workspaceId,
     queryFn: async () => {
-      const [equipamentos, linhas, acessos, monitores] = await Promise.all([
-        supabase.from("equipments").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
+      const baseEquip = () =>
+        supabase.from("equipments").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!);
+
+      const [
+        equipamentos,
+        equipaAtivos,
+        equipaEstoque,
+        equipaManut,
+        linhas,
+        acessos,
+        monitores,
+      ] = await Promise.all([
+        baseEquip(),
+        baseEquip().ilike("status", "ativo"),
+        baseEquip().ilike("status", "estoque"),
+        baseEquip().ilike("status", "manutenção"),
         supabase.from("phone_lines").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).ilike("status", "ativo"),
         supabase.from("access_entries").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
         supabase.from("monitors").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).eq("ativo", true),
       ]);
-      const erro = [equipamentos, linhas, acessos, monitores].find((resultado) => resultado.error)?.error;
+      const erro = [
+        equipamentos,
+        equipaAtivos,
+        equipaEstoque,
+        equipaManut,
+        linhas,
+        acessos,
+        monitores,
+      ].find((resultado) => resultado.error)?.error;
       if (erro) throw erro;
       return {
         equipamentos: equipamentos.count ?? 0,
+        equipaAtivos: equipaAtivos.count ?? 0,
+        equipaEstoque: equipaEstoque.count ?? 0,
+        equipaManut: equipaManut.count ?? 0,
         linhas: linhas.count ?? 0,
         acessos: acessos.count ?? 0,
         monitores: monitores.count ?? 0,
@@ -69,6 +94,9 @@ function Dashboard() {
 
   const kpis = [
     { label: "Equipamentos", icon: Cpu, valor: totais.data?.equipamentos ?? 0 },
+    { label: "Equipa. Ativos", icon: Cpu, valor: totais.data?.equipaAtivos ?? 0 },
+    { label: "Equipa. Estoque", icon: Cpu, valor: totais.data?.equipaEstoque ?? 0 },
+    { label: "Equipa. Manut.", icon: Cpu, valor: totais.data?.equipaManut ?? 0 },
     { label: "Linhas ativas", icon: Smartphone, valor: totais.data?.linhas ?? 0 },
     { label: "Acessos mapeados", icon: KeyRound, valor: totais.data?.acessos ?? 0 },
     { label: "Monitores ativos", icon: Activity, valor: totais.data?.monitores ?? 0 },
@@ -83,7 +111,7 @@ function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         <Card className="rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Empresa</CardTitle>
