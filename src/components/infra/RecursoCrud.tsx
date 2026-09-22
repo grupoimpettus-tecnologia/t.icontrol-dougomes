@@ -31,7 +31,14 @@ import { cn } from "@/lib/utils";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
 import { ExportarMenu } from "@/components/ExportarMenu";
 
-export type CampoTipo = "texto" | "textarea" | "editor" | "numero" | "booleano" | "data";
+export type CampoTipo =
+  | "texto"
+  | "textarea"
+  | "editor"
+  | "numero"
+  | "booleano"
+  | "data"
+  | "select";
 
 export type Campo = {
   nome: string;
@@ -40,9 +47,17 @@ export type Campo = {
   placeholder?: string;
   naTabela?: boolean;
   larguraCompleta?: boolean;
+  opcoes?: string[];
 };
 
-type Registro = Record<string, unknown> & { id: string };
+export type Registro = Record<string, unknown> & { id: string };
+
+export type ColunaExtra = {
+  chave: string;
+  titulo: string;
+  render: (item: Registro) => React.ReactNode;
+  valorExport?: (item: Registro) => string;
+};
 
 function formatarValor(valor: unknown, tipo: CampoTipo) {
   if (valor === null || valor === undefined || valor === "") return "—";
@@ -62,6 +77,8 @@ export function RecursoCrud({
   ordenarPor,
   campoGrupo,
   rotuloItem,
+  colunasExtras = [],
+  acoesExtras,
 }: {
   titulo: string;
   descricao: string;
@@ -71,6 +88,8 @@ export function RecursoCrud({
   ordenarPor: string;
   campoGrupo?: string;
   rotuloItem: string;
+  colunasExtras?: ColunaExtra[];
+  acoesExtras?: (item: Registro) => React.ReactNode;
 }) {
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
@@ -193,8 +212,15 @@ export function RecursoCrud({
         <div className="flex flex-wrap gap-2">
           <ExportarMenu
             titulo={titulo}
-            colunas={colunas.map((campo) => ({ chave: campo.nome, titulo: campo.label }))}
-            linhas={filtrados}
+            colunas={[
+              ...colunas.map((campo) => ({ chave: campo.nome, titulo: campo.label })),
+              ...colunasExtras.map((c) => ({ chave: c.chave, titulo: c.titulo })),
+            ]}
+            linhas={filtrados.map((item) => {
+              const extra: Record<string, unknown> = { ...item };
+              for (const c of colunasExtras) extra[c.chave] = c.valorExport?.(item) ?? "";
+              return extra as Registro;
+            })}
           />
           {podeEditar && (
             <Button onClick={abrirNovo}>
@@ -246,7 +272,10 @@ export function RecursoCrud({
                   {colunas.map((c) => (
                     <TableHead key={c.nome}>{c.label}</TableHead>
                   ))}
-                  <TableHead className="w-24 text-right">Ações</TableHead>
+                  {colunasExtras.map((c) => (
+                    <TableHead key={c.chave}>{c.titulo}</TableHead>
+                  ))}
+                  <TableHead className="w-32 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -278,8 +307,12 @@ export function RecursoCrud({
                         {formatarValor(item[c.nome], c.tipo ?? "texto")}
                       </TableCell>
                     ))}
+                    {colunasExtras.map((c) => (
+                      <TableCell key={c.chave}>{c.render(item)}</TableCell>
+                    ))}
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {acoesExtras?.(item)}
                         {podeEditar && (
                           <Button variant="ghost" size="icon" onClick={() => abrirEdicao(item)}>
                             <Pencil className="h-4 w-4" />
@@ -351,6 +384,20 @@ export function RecursoCrud({
                         onCheckedChange={(v) => setForm((f) => ({ ...f, [c.nome]: v }))}
                       />
                     </div>
+                  ) : tipo === "select" ? (
+                    <select
+                      id={c.nome}
+                      value={String(valor ?? "")}
+                      onChange={(e) => setForm((f) => ({ ...f, [c.nome]: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      <option value="">Selecione...</option>
+                      {(c.opcoes ?? []).map((op) => (
+                        <option key={op} value={op}>
+                          {op}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
                     <Input
                       id={c.nome}
