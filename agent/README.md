@@ -1,7 +1,8 @@
 # Agente de status — TIControl
 
-O agente roda na máquina monitorada e envia um sinal (heartbeat) a cada 60 segundos para o
-TIControl, com hostname, sistema operacional, CPU, memória, disco, IP e MAC.
+O agente roda continuamente em segundo plano na máquina monitorada e envia um sinal (heartbeat)
+a cada 60 segundos para o TIControl, com hostname, sistema operacional, CPU, memória, disco, IP
+e MAC. Se a internet cair, ele tenta novamente a cada 5 segundos até restabelecer a comunicação.
 
 ## 1. Gerar o token
 
@@ -20,9 +21,9 @@ Requisitos: Node.js 18 ou superior.
 
 Deixe os dois arquivos baixados na mesma pasta, clique com o botão direito no `.bat` e escolha
 **Executar como administrador**. Ele instala as dependências, copia o agente para
-`C:\ProgramData\TIControl\agente`, testa a comunicação e cria uma tarefa que envia um sinal novo
-a cada minuto, inclusive após reiniciar o computador. Se o teste ou o agendamento falhar, o
-diagnóstico fica salvo em
+`C:\ProgramData\TIControl\agente`, testa a comunicação e cria uma tarefa que mantém o agente
+rodando em segundo plano desde a inicialização do Windows. Se o processo parar inesperadamente,
+o Windows o inicia novamente. Se o teste ou a inicialização falhar, o diagnóstico fica salvo em
 `C:\ProgramData\TIControl\agente\ticontrol-agent.log`.
 
 > Nunca abra o arquivo `.cjs` com dois cliques: o Windows tenta executá-lo pelo Windows Script

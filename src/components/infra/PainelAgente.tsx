@@ -160,9 +160,9 @@ export function PainelAgente({ item, podeGerenciar }: { item: Registro; podeGere
               <p className="text-xs text-muted-foreground">
                 No Windows, salve os dois arquivos na mesma pasta e clique com o botão direito no
                 arquivo <strong>instalar-ticontrol…bat</strong> e escolha "Executar como
-                administrador". O instalador testa a comunicação, agenda um envio a cada minuto e
-                mostra a próxima execução na própria janela. Não abra o arquivo do agente com dois
-                cliques.
+                administrador". O instalador testa a comunicação e mantém o agente rodando em
+                segundo plano desde a inicialização do Windows. Se a internet cair, ele tenta se
+                reconectar automaticamente. Não abra o arquivo do agente com dois cliques.
               </p>
 
               {token ? (
