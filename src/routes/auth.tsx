@@ -20,7 +20,7 @@ export const Route = createFileRoute("/auth")({
       { property: "og:description", content: "Acesse a plataforma de gestão de T.I TIControl." },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>) => {
     const valor = s['next'];
     const seguro =
       typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//") ? valor : undefined;
