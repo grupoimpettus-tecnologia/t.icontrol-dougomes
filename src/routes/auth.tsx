@@ -21,10 +21,11 @@ export const Route = createFileRoute("/auth")({
     ],
   }),
   validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s['next'] === "string" && s['next'].startsWith("/") && !s['next'].startsWith("//")
-      ? s['next']
-      : undefined,
-  }),
+    const valor = s['next'];
+    const seguro =
+      typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//") ? valor : undefined;
+    return (seguro ? { next: seguro } : {}) as { next?: string };
+  },
   component: AuthPage,
 });
 
