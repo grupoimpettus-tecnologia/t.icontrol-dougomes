@@ -2,20 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Building2, Cpu, KeyRound, Smartphone, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/_painel/dashboard")({
+  head: () => ({ meta: [
+    { title: "Dashboard | TIControl" }, { name: "description", content: "Visão geral dos ativos e serviços de T.I da empresa." },
+    { property: "og:title", content: "Dashboard | TIControl" }, { property: "og:description", content: "Visão geral dos ativos e serviços de T.I da empresa." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: Dashboard,
 });
-
-const kpis = [
-  { label: "Equipamentos", icon: Cpu },
-  { label: "Linhas ativas", icon: Smartphone },
-  { label: "Acessos mapeados", icon: KeyRound },
-  { label: "Monitores ativos", icon: Activity },
-];
 
 function Dashboard() {
   const atual = useCurrentWorkspace();
@@ -48,6 +45,34 @@ function Dashboard() {
       return data ?? [];
     },
   });
+
+  const totais = useQuery({
+    queryKey: ["dashboard-totais", workspaceId],
+    enabled: !!workspaceId,
+    queryFn: async () => {
+      const [equipamentos, linhas, acessos, monitores] = await Promise.all([
+        supabase.from("equipments").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
+        supabase.from("phone_lines").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).ilike("status", "ativo"),
+        supabase.from("access_entries").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
+        supabase.from("monitors").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).eq("ativo", true),
+      ]);
+      const erro = [equipamentos, linhas, acessos, monitores].find((resultado) => resultado.error)?.error;
+      if (erro) throw erro;
+      return {
+        equipamentos: equipamentos.count ?? 0,
+        linhas: linhas.count ?? 0,
+        acessos: acessos.count ?? 0,
+        monitores: monitores.count ?? 0,
+      };
+    },
+  });
+
+  const kpis = [
+    { label: "Equipamentos", icon: Cpu, valor: totais.data?.equipamentos ?? 0 },
+    { label: "Linhas ativas", icon: Smartphone, valor: totais.data?.linhas ?? 0 },
+    { label: "Acessos mapeados", icon: KeyRound, valor: totais.data?.acessos ?? 0 },
+    { label: "Monitores ativos", icon: Activity, valor: totais.data?.monitores ?? 0 },
+  ];
 
   return (
     <div className="space-y-6">
@@ -87,11 +112,8 @@ function Dashboard() {
               </CardTitle>
               <kpi.icon className="h-4 w-4 text-primary" />
             </CardHeader>
-            <CardContent className="space-y-1">
-              <p className="text-2xl font-bold">0</p>
-              <Badge variant="secondary" className="text-xs">
-                Módulo em breve
-              </Badge>
+            <CardContent>
+              <p className="text-2xl font-bold">{kpi.valor}</p>
             </CardContent>
           </Card>
         ))}
@@ -109,7 +131,7 @@ function Dashboard() {
               {atividades.data?.map((log) => (
                 <li key={log.id} className="flex items-center justify-between gap-4 text-sm">
                   <span className="truncate">
-                    {log.acao} {log.entidade ? `· ${log.entidade}` : ""}
+                    {log.acao} {log.item_nome ? `· ${log.item_nome}` : log.entidade ? `· ${log.entidade}` : ""}
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {new Date(log.created_at).toLocaleString("pt-BR")}

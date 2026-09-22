@@ -315,5 +315,10 @@ export async function registrarResultado(monitor: Monitor, resultado: CheckResul
     }
   }
 
+  if (caiu || voltou) {
+    const { enviarAlertasMonitor } = await import("@/lib/notifications.server");
+    await enviarAlertasMonitor(monitor, resultado, caiu ? "indisponivel" : "recuperado");
+  }
+
   return { status: novoStatus, caiu, voltou };
 }

@@ -25,7 +25,7 @@ function PainelLayout() {
 
   useEffect(() => {
     if (!empresas.isSuccess) return;
-    const lista = empresas.data ?? [];
+    const lista = (empresas.data ?? []).filter((item) => item.workspace.ativo);
     if (lista.length === 0) {
       navigate({ to: "/selecionar-empresa", replace: true });
       return;

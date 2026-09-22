@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   Cpu,
   KeyRound,
+  History,
   LayoutDashboard,
   Package,
   Settings,
@@ -44,6 +45,7 @@ const adminItens: Item[] = [
   { to: "/admin-global/empresas", label: "Empresas", icon: Building2 },
   { to: "/admin-global/usuarios", label: "Usuários", icon: ShieldCheck },
   { to: "/admin-global/convites", label: "Convites", icon: KeyRound },
+  { to: "/admin-global/logs", label: "Logs", icon: History },
   { to: "/admin-global/metricas", label: "Métricas", icon: Activity },
 ];
 

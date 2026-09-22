@@ -22,6 +22,7 @@ import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_auth
 import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
 import { Route as AuthenticatedPainelAdminGlobalConvitesRouteImport } from './routes/_authenticated/_painel/admin-global/convites'
 import { Route as AuthenticatedPainelAdminGlobalEmpresasRouteImport } from './routes/_authenticated/_painel/admin-global/empresas'
+import { Route as AuthenticatedPainelAdminGlobalLogsRouteImport } from './routes/_authenticated/_painel/admin-global/logs'
 import { Route as AuthenticatedPainelAdminGlobalMetricasRouteImport } from './routes/_authenticated/_painel/admin-global/metricas'
 import { Route as AuthenticatedPainelAdminGlobalUsuariosRouteImport } from './routes/_authenticated/_painel/admin-global/usuarios'
 import { Route as AuthenticatedPainelInfraAccessMapRouteImport } from './routes/_authenticated/_painel/infra/access-map'
@@ -101,6 +102,12 @@ const AuthenticatedPainelAdminGlobalEmpresasRoute =
     path: '/admin-global/empresas',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelAdminGlobalLogsRoute =
+  AuthenticatedPainelAdminGlobalLogsRouteImport.update({
+    id: '/admin-global/logs',
+    path: '/admin-global/logs',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 const AuthenticatedPainelAdminGlobalMetricasRoute =
   AuthenticatedPainelAdminGlobalMetricasRouteImport.update({
     id: '/admin-global/metricas',
@@ -172,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/pdv': typeof AuthenticatedPainelPdvRoute
   '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  '/admin-global/logs': typeof AuthenticatedPainelAdminGlobalLogsRoute
   '/admin-global/metricas': typeof AuthenticatedPainelAdminGlobalMetricasRoute
   '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
@@ -195,6 +203,7 @@ export interface FileRoutesByTo {
   '/pdv': typeof AuthenticatedPainelPdvRoute
   '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  '/admin-global/logs': typeof AuthenticatedPainelAdminGlobalLogsRoute
   '/admin-global/metricas': typeof AuthenticatedPainelAdminGlobalMetricasRoute
   '/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
@@ -221,6 +230,7 @@ export interface FileRoutesById {
   '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
   '/_authenticated/_painel/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/_authenticated/_painel/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  '/_authenticated/_painel/admin-global/logs': typeof AuthenticatedPainelAdminGlobalLogsRoute
   '/_authenticated/_painel/admin-global/metricas': typeof AuthenticatedPainelAdminGlobalMetricasRoute
   '/_authenticated/_painel/admin-global/usuarios': typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   '/_authenticated/_painel/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/pdv'
     | '/admin-global/convites'
     | '/admin-global/empresas'
+    | '/admin-global/logs'
     | '/admin-global/metricas'
     | '/admin-global/usuarios'
     | '/infra/access-map'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/pdv'
     | '/admin-global/convites'
     | '/admin-global/empresas'
+    | '/admin-global/logs'
     | '/admin-global/metricas'
     | '/admin-global/usuarios'
     | '/infra/access-map'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/pdv'
     | '/_authenticated/_painel/admin-global/convites'
     | '/_authenticated/_painel/admin-global/empresas'
+    | '/_authenticated/_painel/admin-global/logs'
     | '/_authenticated/_painel/admin-global/metricas'
     | '/_authenticated/_painel/admin-global/usuarios'
     | '/_authenticated/_painel/infra/access-map'
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelAdminGlobalEmpresasRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/_painel/admin-global/logs': {
+      id: '/_authenticated/_painel/admin-global/logs'
+      path: '/admin-global/logs'
+      fullPath: '/admin-global/logs'
+      preLoaderRoute: typeof AuthenticatedPainelAdminGlobalLogsRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/_painel/admin-global/metricas': {
       id: '/_authenticated/_painel/admin-global/metricas'
       path: '/admin-global/metricas'
@@ -488,6 +508,7 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelPdvRoute: typeof AuthenticatedPainelPdvRoute
   AuthenticatedPainelAdminGlobalConvitesRoute: typeof AuthenticatedPainelAdminGlobalConvitesRoute
   AuthenticatedPainelAdminGlobalEmpresasRoute: typeof AuthenticatedPainelAdminGlobalEmpresasRoute
+  AuthenticatedPainelAdminGlobalLogsRoute: typeof AuthenticatedPainelAdminGlobalLogsRoute
   AuthenticatedPainelAdminGlobalMetricasRoute: typeof AuthenticatedPainelAdminGlobalMetricasRoute
   AuthenticatedPainelAdminGlobalUsuariosRoute: typeof AuthenticatedPainelAdminGlobalUsuariosRoute
   AuthenticatedPainelInfraAccessMapRoute: typeof AuthenticatedPainelInfraAccessMapRoute
@@ -506,6 +527,8 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
     AuthenticatedPainelAdminGlobalConvitesRoute,
   AuthenticatedPainelAdminGlobalEmpresasRoute:
     AuthenticatedPainelAdminGlobalEmpresasRoute,
+  AuthenticatedPainelAdminGlobalLogsRoute:
+    AuthenticatedPainelAdminGlobalLogsRoute,
   AuthenticatedPainelAdminGlobalMetricasRoute:
     AuthenticatedPainelAdminGlobalMetricasRoute,
   AuthenticatedPainelAdminGlobalUsuariosRoute:

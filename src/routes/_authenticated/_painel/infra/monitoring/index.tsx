@@ -23,8 +23,14 @@ import {
 } from "@/components/monitoramento/monitor-utils";
 import { verificarAgora } from "@/lib/monitors.functions";
 import { cn } from "@/lib/utils";
+import { ExportarMenu } from "@/components/ExportarMenu";
 
 export const Route = createFileRoute("/_authenticated/_painel/infra/monitoring/")({
+  head: () => ({ meta: [
+    { title: "Monitoramento | TIControl" }, { name: "description", content: "Disponibilidade e desempenho dos serviços monitorados." },
+    { property: "og:title", content: "Monitoramento | TIControl" }, { property: "og:description", content: "Disponibilidade e desempenho dos serviços monitorados." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: PaginaMonitoramento,
 });
 
@@ -102,7 +108,26 @@ function PaginaMonitoramento() {
             Acompanhe sites, servidores, portas e rotinas em tempo real.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <ExportarMenu
+            titulo="Monitoramento"
+            colunas={[
+              { chave: "nome", titulo: "Nome" },
+              { chave: "tipoLabel", titulo: "Tipo" },
+              { chave: "alvo", titulo: "Endereço" },
+              { chave: "statusLabel", titulo: "Situação" },
+              { chave: "latencia", titulo: "Latência" },
+              { chave: "intervalo", titulo: "Frequência" },
+            ]}
+            linhas={lista.map((monitor) => ({
+              ...monitor,
+              tipoLabel: tipoLabels[monitor.tipo],
+              alvo: alvoDoMonitor(monitor),
+              statusLabel: statusLabels[monitor.status],
+              latencia: monitor.ultima_latencia_ms == null ? "—" : `${monitor.ultima_latencia_ms} ms`,
+              intervalo: formatarIntervalo(monitor.intervalo_segundos),
+            }))}
+          />
           <Button
             variant="outline"
             onClick={() => {

@@ -41,8 +41,14 @@ import {
 } from "@/components/monitoramento/monitor-utils";
 import { verificarAgora } from "@/lib/monitors.functions";
 import { cn } from "@/lib/utils";
+import { ConfigurarAlertas } from "@/components/monitoramento/ConfigurarAlertas";
 
 export const Route = createFileRoute("/_authenticated/_painel/infra/monitoring/$id")({
+  head: () => ({ meta: [
+    { title: "Detalhes do monitor | TIControl" }, { name: "description", content: "Histórico, incidentes e alertas do monitor selecionado." },
+    { property: "og:title", content: "Detalhes do monitor | TIControl" }, { property: "og:description", content: "Histórico, incidentes e alertas do monitor selecionado." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: DetalheMonitor,
 });
 
@@ -266,6 +272,8 @@ function DetalheMonitor() {
           )}
         </CardContent>
       </Card>
+
+      {podeEditar && <ConfigurarAlertas monitorId={m.id} workspaceId={m.workspace_id} />}
 
       {grafico.length > 1 && (
         <Card className="rounded-xl">
