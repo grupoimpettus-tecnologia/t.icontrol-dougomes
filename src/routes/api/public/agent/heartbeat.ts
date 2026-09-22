@@ -47,10 +47,11 @@ async function receber(request: Request) {
     equipment_id: equipamento.id,
     workspace_id: equipamento.workspace_id,
     recebido_em: agora,
-    metricas: (corpo.metricas ?? {}) as Record<string, unknown>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metricas: (corpo.metricas ?? {}) as any,
   });
 
-  const atualizacao: Record<string, unknown> = {
+  const atualizacao: Record<string, string | null> = {
     ultimo_heartbeat: agora,
     agent_status: equipamento.manutencao ? "manutencao" : "online",
     updated_at: agora,
