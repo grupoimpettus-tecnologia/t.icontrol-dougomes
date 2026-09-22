@@ -57,6 +57,13 @@
       "when": 1790021921678,
       "tag": "0007_infraestrutura_modulos",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790038472540,
+      "tag": "0008_anexos_storage_policies",
+      "breakpoints": true
     }
   ]
 }
