@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useWorkspaces";
 import { useAuth } from "@/hooks/useAuth";
@@ -95,6 +96,10 @@ function AdminEmpresas() {
     onError: (error: Error) => toast.error("Erro ao atualizar", { description: error.message }),
   });
 
+  const todas = empresas.data ?? [];
+  const ativas = todas.filter((e) => e.ativo);
+  const inativas = todas.filter((e) => !e.ativo);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -154,13 +159,62 @@ function AdminEmpresas() {
         </Dialog>
       </div>
 
-      <Card className="rounded-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-primary" /> {empresas.data?.length ?? 0} empresa(s)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Tabs defaultValue="ativas">
+        <TabsList>
+          <TabsTrigger value="ativas">Ativas ({ativas.length})</TabsTrigger>
+          <TabsTrigger value="inativas">Inativas ({inativas.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="ativas" className="mt-4">
+          <TabelaEmpresas
+            titulo="empresa(s) ativa(s)"
+            lista={ativas}
+            vazio="Nenhuma empresa ativa."
+            onAlternar={(id, ativo) => alternarAtivo.mutate({ id, ativo })}
+          />
+        </TabsContent>
+        <TabsContent value="inativas" className="mt-4">
+          <TabelaEmpresas
+            titulo="empresa(s) inativa(s)"
+            lista={inativas}
+            vazio="Nenhuma empresa inativa."
+            onAlternar={(id, ativo) => alternarAtivo.mutate({ id, ativo })}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+type EmpresaLinha = {
+  id: string;
+  nome: string;
+  slug: string;
+  segmento: string | null;
+  ativo: boolean;
+};
+
+function TabelaEmpresas({
+  titulo,
+  lista,
+  vazio,
+  onAlternar,
+}: {
+  titulo: string;
+  lista: EmpresaLinha[];
+  vazio: string;
+  onAlternar: (id: string, ativo: boolean) => void;
+}) {
+  return (
+    <Card className="rounded-xl">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-primary" /> {lista.length} {titulo}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {lista.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">{vazio}</p>
+        ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -171,7 +225,7 @@ function AdminEmpresas() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {empresas.data?.map((empresa) => (
+              {lista.map((empresa) => (
                 <TableRow key={empresa.id}>
                   <TableCell className="font-medium">{empresa.nome}</TableCell>
                   <TableCell className="text-muted-foreground">{empresa.slug}</TableCell>
@@ -179,15 +233,15 @@ function AdminEmpresas() {
                   <TableCell className="text-right">
                     <Switch
                       checked={empresa.ativo}
-                      onCheckedChange={(ativo) => alternarAtivo.mutate({ id: empresa.id, ativo })}
+                      onCheckedChange={(ativo) => onAlternar(empresa.id, ativo)}
                     />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
