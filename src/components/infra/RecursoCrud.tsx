@@ -99,6 +99,7 @@ export function RecursoCrud({
 
   const [busca, setBusca] = useState("");
   const [grupoAtivo, setGrupoAtivo] = useState<string>("todos");
+  const [filtroExtraAtivo, setFiltroExtraAtivo] = useState<string>("todos");
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<Registro | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>({});
@@ -134,6 +135,8 @@ export function RecursoCrud({
     return (lista.data ?? []).filter((item) => {
       if (campoGrupo && grupoAtivo !== "todos" && String(item[campoGrupo] ?? "") !== grupoAtivo)
         return false;
+      if (filtroExtra && filtroExtraAtivo !== "todos" && !filtroExtra.predicado(item, filtroExtraAtivo))
+        return false;
       if (!termo) return true;
       return campos.some((c) =>
         String(item[c.nome] ?? "")
@@ -141,7 +144,7 @@ export function RecursoCrud({
           .includes(termo),
       );
     });
-  }, [lista.data, busca, grupoAtivo, campoGrupo, campos]);
+  }, [lista.data, busca, grupoAtivo, campoGrupo, campos, filtroExtra, filtroExtraAtivo]);
 
   const colunas = campos.filter((c) => c.naTabela !== false);
 
