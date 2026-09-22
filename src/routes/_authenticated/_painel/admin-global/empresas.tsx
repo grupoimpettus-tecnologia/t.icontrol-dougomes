@@ -96,6 +96,10 @@ function AdminEmpresas() {
     onError: (error: Error) => toast.error("Erro ao atualizar", { description: error.message }),
   });
 
+  const todas = empresas.data ?? [];
+  const ativas = todas.filter((e) => e.ativo);
+  const inativas = todas.filter((e) => !e.ativo);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
