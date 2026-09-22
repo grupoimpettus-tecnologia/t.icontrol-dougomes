@@ -98,7 +98,19 @@ function BotaoFerramenta({
   );
 }
 
+type AnexoSelecionado = { path: string; nome: string; tipo: string; tamanho: number };
+
 export function EditorFormatado({ id, value, onChange, placeholder }: EditorFormatadoProps) {
+  const atual = useCurrentWorkspace();
+  const workspaceId = atual?.workspace.id;
+  const workspaceRef = useRef<string | undefined>(workspaceId);
+  workspaceRef.current = workspaceId;
+
+  const [enviando, setEnviando] = useState(false);
+  const [selecionado, setSelecionado] = useState<AnexoSelecionado | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const enviarArquivosRef = useRef<(arquivos: File[]) => void>(() => {});
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -113,8 +125,9 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       TableKit.configure({ table: { resizable: true } }),
       Highlight,
+      Anexo,
       Placeholder.configure({
-        placeholder: placeholder ?? "Digite ou cole aqui uma descrição formatada...",
+        placeholder: placeholder ?? "Digite, cole ou anexe arquivos aqui...",
       }),
     ],
     content: value,
@@ -124,6 +137,20 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
         class:
           "rich-text-editor min-h-44 px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "aria-label": "Conteúdo da descrição",
+      },
+      handlePaste: (_view, event) => {
+        const arquivos = Array.from(event.clipboardData?.files ?? []);
+        if (arquivos.length === 0) return false;
+        event.preventDefault();
+        enviarArquivosRef.current(arquivos);
+        return true;
+      },
+      handleDrop: (_view, event) => {
+        const arquivos = Array.from((event as DragEvent).dataTransfer?.files ?? []);
+        if (arquivos.length === 0) return false;
+        event.preventDefault();
+        enviarArquivosRef.current(arquivos);
+        return true;
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
@@ -136,8 +163,45 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
     editor.commands.setContent(value, { emitUpdate: false });
   }, [editor, value]);
 
+  useEffect(() => {
+    enviarArquivosRef.current = async (arquivos: File[]) => {
+      const empresa = workspaceRef.current;
+      if (!editor) return;
+      if (!empresa) {
+        toast.error("Selecione uma empresa antes de anexar arquivos.");
+        return;
+      }
+      setEnviando(true);
+      try {
+        for (const arquivo of arquivos) {
+          const info = await enviarAnexo(empresa, arquivo);
+          editor.chain().focus().inserirAnexo(info).run();
+        }
+        toast.success(arquivos.length > 1 ? "Arquivos anexados" : "Arquivo anexado");
+      } catch (erro) {
+        toast.error("Não foi possível anexar o arquivo", {
+          description: erro instanceof Error ? erro.message : undefined,
+        });
+      } finally {
+        setEnviando(false);
+      }
+    };
+  }, [editor]);
+
   if (!editor) return null;
   const currentEditor = editor;
+
+  function aoClicarNoConteudo(event: React.MouseEvent<HTMLDivElement>) {
+    const alvo = (event.target as HTMLElement).closest<HTMLElement>("[data-anexo]");
+    if (!alvo) return;
+    event.preventDefault();
+    setSelecionado({
+      path: alvo.getAttribute("data-anexo") ?? "",
+      nome: alvo.getAttribute("data-nome") ?? "arquivo",
+      tipo: alvo.getAttribute("data-tipo") ?? "application/octet-stream",
+      tamanho: Number(alvo.getAttribute("data-tamanho") ?? 0),
+    });
+  }
 
   function definirLink() {
     const anterior = currentEditor.getAttributes("link")["href"] as string | undefined;
