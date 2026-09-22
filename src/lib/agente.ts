@@ -69,7 +69,7 @@ if errorlevel 1 (
 
 pushd "%DESTINO%"
 echo Instalando dependencias...
-call npm install --no-audit --no-fund --silent systeminformation node-os-utils
+call npm install --no-audit --no-fund --silent systeminformation
 if errorlevel 1 (
   echo Falha ao instalar as dependencias.
   popd
@@ -110,12 +110,11 @@ export function gerarScriptAgente(token: string, endpoint: string, nome: string)
  * Envia um sinal a cada 60 segundos com os dados da máquina.
  *
  * Requisitos: Node.js 18+ e as dependências:
- *   npm install systeminformation node-os-utils
+ *   npm install systeminformation
  *
  * Execução: node ticontrol-agent.cjs
  */
 const si = require("systeminformation");
-const osu = require("node-os-utils");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -135,17 +134,17 @@ function registrar(...partes) {
 }
 
 async function coletar() {
-  const [os, cpu, mem, fs, net, tempo] = await Promise.all([
+  const [os, cpu, mem, fs, net, tempo, carga] = await Promise.all([
     si.osInfo(),
     si.cpu(),
     si.mem(),
     si.fsSize(),
     si.networkInterfaces(),
     si.time(),
+    si.currentLoad(),
   ]);
   const principal = (Array.isArray(net) ? net : [net]).find((i) => !i.internal && i.ip4) || {};
   const disco = (fs || [])[0] || {};
-  const usoCpu = await osu.cpu.usage().catch(() => null);
 
   return {
     hostname: os.hostname,
@@ -156,7 +155,7 @@ async function coletar() {
     ip: principal.ip4 || null,
     mac: principal.mac || null,
     metricas: {
-      cpu_percent: usoCpu,
+      cpu_percent: Number.isFinite(carga.currentLoad) ? Math.round(carga.currentLoad) : null,
       memoria_percent: mem.total ? Math.round((mem.active / mem.total) * 100) : null,
       disco_percent: disco.use != null ? Math.round(disco.use) : null,
       uptime_segundos: tempo.uptime,
