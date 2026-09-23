@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/phone-lines"
   }),
   component: () => (
     <RecursoCrud
-      titulo="Linhas e celulares"
+      titulo="Linhas Móveis"
       descricao="Linhas móveis, planos, valores e aparelhos por responsável."
       tabela="phone_lines"
       rotuloItem="Linha"
