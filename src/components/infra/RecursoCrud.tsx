@@ -59,6 +59,8 @@ export type Campo = {
   larguraCompleta?: boolean;
   opcoes?: string[];
   render?: (item: Registro) => React.ReactNode;
+  /** Transforma o valor antes de salvar (ex.: máscara de telefone). */
+  normalizar?: (valor: unknown) => unknown;
 };
 
 export type ColunaExtra = {
@@ -229,7 +231,8 @@ export function RecursoCrud({
     mutationFn: async () => {
       const payload: Record<string, unknown> = {};
       for (const c of campos) {
-        const bruto = form[c.nome];
+        let bruto = form[c.nome];
+        if (c.normalizar) bruto = c.normalizar(bruto);
         if (c.tipo === "booleano") payload[c.nome] = !!bruto;
         else if (c.tipo === "numero" || c.tipo === "inteiro")
           payload[c.nome] = bruto === "" || bruto === undefined ? null : Number(bruto);
