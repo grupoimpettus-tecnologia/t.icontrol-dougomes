@@ -52,11 +52,14 @@ function Dashboard() {
     queryFn: async () => {
       const baseEquip = () =>
         supabase.from("equipments").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!);
+      const estoqueEquip = () => baseEquip().ilike("status", "estoque");
 
       const [
         equipamentos,
         equipaAtivos,
         equipaEstoque,
+        equipaEstoqueDesktop,
+        equipaEstoqueNotebook,
         equipaManut,
         linhas,
         acessos,
@@ -64,7 +67,9 @@ function Dashboard() {
       ] = await Promise.all([
         baseEquip(),
         baseEquip().ilike("status", "ativo"),
-        baseEquip().ilike("status", "estoque"),
+        estoqueEquip(),
+        estoqueEquip().ilike("tipo", "desktop"),
+        estoqueEquip().ilike("tipo", "notebook"),
         baseEquip().ilike("status", "manutenção"),
         supabase.from("phone_lines").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).ilike("status", "ativo"),
         supabase.from("access_entries").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
@@ -74,6 +79,8 @@ function Dashboard() {
         equipamentos,
         equipaAtivos,
         equipaEstoque,
+        equipaEstoqueDesktop,
+        equipaEstoqueNotebook,
         equipaManut,
         linhas,
         acessos,
@@ -84,6 +91,8 @@ function Dashboard() {
         equipamentos: equipamentos.count ?? 0,
         equipaAtivos: equipaAtivos.count ?? 0,
         equipaEstoque: equipaEstoque.count ?? 0,
+        equipaEstoqueDesktop: equipaEstoqueDesktop.count ?? 0,
+        equipaEstoqueNotebook: equipaEstoqueNotebook.count ?? 0,
         equipaManut: equipaManut.count ?? 0,
         linhas: linhas.count ?? 0,
         acessos: acessos.count ?? 0,
@@ -95,7 +104,6 @@ function Dashboard() {
   const kpis = [
     { label: "Equipamentos", icon: Cpu, valor: totais.data?.equipamentos ?? 0 },
     { label: "Equipa. Ativos", icon: Cpu, valor: totais.data?.equipaAtivos ?? 0 },
-    { label: "Equipa. Estoque", icon: Cpu, valor: totais.data?.equipaEstoque ?? 0 },
     { label: "Equipa. Manut.", icon: Cpu, valor: totais.data?.equipaManut ?? 0 },
     { label: "Linhas ativas", icon: Smartphone, valor: totais.data?.linhas ?? 0 },
     { label: "Acessos mapeados", icon: KeyRound, valor: totais.data?.acessos ?? 0 },
@@ -132,7 +140,47 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        {kpis.map((kpi) => (
+        {kpis.slice(0, 2).map((kpi) => (
+          <Card key={kpi.label} className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {kpi.label}
+              </CardTitle>
+              <kpi.icon className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{kpi.valor}</p>
+            </CardContent>
+          </Card>
+        ))}
+
+        <Card className="rounded-xl">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Equipa. Estoque
+            </CardTitle>
+            <Cpu className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-2xl font-bold">{totais.data?.equipaEstoque ?? 0}</p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <span>Desktop</span>
+                <span className="font-semibold text-foreground">
+                  {totais.data?.equipaEstoqueDesktop ?? 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Notebook</span>
+                <span className="font-semibold text-foreground">
+                  {totais.data?.equipaEstoqueNotebook ?? 0}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {kpis.slice(2).map((kpi) => (
           <Card key={kpi.label} className="rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
