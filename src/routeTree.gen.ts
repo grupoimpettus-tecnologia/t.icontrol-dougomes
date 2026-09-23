@@ -31,6 +31,7 @@ import { Route as AuthenticatedPainelAdminGlobalUsuariosRouteImport } from './ro
 import { Route as AuthenticatedPainelInfraAccessMapRouteImport } from './routes/_authenticated/_painel/infra/access-map'
 import { Route as AuthenticatedPainelInfraEquipmentsRouteImport } from './routes/_authenticated/_painel/infra/equipments'
 import { Route as AuthenticatedPainelInfraPhoneLinesRouteImport } from './routes/_authenticated/_painel/infra/phone-lines'
+import { Route as AuthenticatedPainelInfraPhoneStockRouteImport } from './routes/_authenticated/_painel/infra/phone-stock'
 import { Route as AuthenticatedPainelInfraServicesAssetsRouteImport } from './routes/_authenticated/_painel/infra/services-assets'
 import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicCronRunChecksRouteImport } from './routes/api/public/cron/run-checks'
@@ -158,6 +159,12 @@ const AuthenticatedPainelInfraPhoneLinesRoute =
     path: '/infra/phone-lines',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelInfraPhoneStockRoute =
+  AuthenticatedPainelInfraPhoneStockRouteImport.update({
+    id: '/infra/phone-stock',
+    path: '/infra/phone-stock',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 const AuthenticatedPainelInfraServicesAssetsRoute =
   AuthenticatedPainelInfraServicesAssetsRouteImport.update({
     id: '/infra/services-assets',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
+  '/infra/phone-stock': typeof AuthenticatedPainelInfraPhoneStockRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
@@ -241,6 +249,7 @@ export interface FileRoutesByTo {
   '/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
   '/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
+  '/infra/phone-stock': typeof AuthenticatedPainelInfraPhoneStockRoute
   '/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
@@ -272,6 +281,7 @@ export interface FileRoutesById {
   '/_authenticated/_painel/infra/access-map': typeof AuthenticatedPainelInfraAccessMapRoute
   '/_authenticated/_painel/infra/equipments': typeof AuthenticatedPainelInfraEquipmentsRoute
   '/_authenticated/_painel/infra/phone-lines': typeof AuthenticatedPainelInfraPhoneLinesRoute
+  '/_authenticated/_painel/infra/phone-stock': typeof AuthenticatedPainelInfraPhoneStockRoute
   '/_authenticated/_painel/infra/services-assets': typeof AuthenticatedPainelInfraServicesAssetsRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/cron/run-checks': typeof ApiPublicCronRunChecksRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/infra/access-map'
     | '/infra/equipments'
     | '/infra/phone-lines'
+    | '/infra/phone-stock'
     | '/infra/services-assets'
     | '/api/public/agent/heartbeat'
     | '/api/public/cron/run-checks'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/infra/access-map'
     | '/infra/equipments'
     | '/infra/phone-lines'
+    | '/infra/phone-stock'
     | '/infra/services-assets'
     | '/api/public/agent/heartbeat'
     | '/api/public/cron/run-checks'
@@ -360,6 +372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/infra/access-map'
     | '/_authenticated/_painel/infra/equipments'
     | '/_authenticated/_painel/infra/phone-lines'
+    | '/_authenticated/_painel/infra/phone-stock'
     | '/_authenticated/_painel/infra/services-assets'
     | '/api/public/agent/heartbeat'
     | '/api/public/cron/run-checks'
@@ -538,6 +551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelInfraPhoneLinesRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/_painel/infra/phone-stock': {
+      id: '/_authenticated/_painel/infra/phone-stock'
+      path: '/infra/phone-stock'
+      fullPath: '/infra/phone-stock'
+      preLoaderRoute: typeof AuthenticatedPainelInfraPhoneStockRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/_painel/infra/services-assets': {
       id: '/_authenticated/_painel/infra/services-assets'
       path: '/infra/services-assets'
@@ -595,6 +615,7 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelInfraAccessMapRoute: typeof AuthenticatedPainelInfraAccessMapRoute
   AuthenticatedPainelInfraEquipmentsRoute: typeof AuthenticatedPainelInfraEquipmentsRoute
   AuthenticatedPainelInfraPhoneLinesRoute: typeof AuthenticatedPainelInfraPhoneLinesRoute
+  AuthenticatedPainelInfraPhoneStockRoute: typeof AuthenticatedPainelInfraPhoneStockRoute
   AuthenticatedPainelInfraServicesAssetsRoute: typeof AuthenticatedPainelInfraServicesAssetsRoute
   AuthenticatedPainelInfraMonitoringIdRoute: typeof AuthenticatedPainelInfraMonitoringIdRoute
   AuthenticatedPainelInfraMonitoringIndexRoute: typeof AuthenticatedPainelInfraMonitoringIndexRoute
@@ -620,6 +641,8 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
     AuthenticatedPainelInfraEquipmentsRoute,
   AuthenticatedPainelInfraPhoneLinesRoute:
     AuthenticatedPainelInfraPhoneLinesRoute,
+  AuthenticatedPainelInfraPhoneStockRoute:
+    AuthenticatedPainelInfraPhoneStockRoute,
   AuthenticatedPainelInfraServicesAssetsRoute:
     AuthenticatedPainelInfraServicesAssetsRoute,
   AuthenticatedPainelInfraMonitoringIdRoute:
@@ -663,13 +686,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -92,6 +92,13 @@
       "when": 1790091000000,
       "tag": "0012_reposicao_pecas_para_descarte",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790100000000,
+      "tag": "0013_phone_stock_estoque_celulares",
+      "breakpoints": true
     }
   ]
 }

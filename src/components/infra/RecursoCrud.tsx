@@ -43,9 +43,12 @@ export type CampoTipo =
   | "textarea"
   | "editor"
   | "numero"
+  | "inteiro"
   | "booleano"
   | "data"
   | "select";
+
+export type Registro = Record<string, unknown> & { id: string };
 
 export type Campo = {
   nome: string;
@@ -55,9 +58,8 @@ export type Campo = {
   naTabela?: boolean;
   larguraCompleta?: boolean;
   opcoes?: string[];
+  render?: (item: Registro) => React.ReactNode;
 };
-
-export type Registro = Record<string, unknown> & { id: string };
 
 export type ColunaExtra = {
   chave: string;
@@ -75,6 +77,7 @@ function formatarValor(valor: unknown, tipo: CampoTipo) {
   if (tipo === "booleano") return valor ? "Sim" : "Não";
   if (tipo === "numero")
     return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (tipo === "inteiro") return Number(valor).toLocaleString("pt-BR");
   if (tipo === "data") return new Date(String(valor)).toLocaleDateString("pt-BR");
   return String(valor);
 }
@@ -96,6 +99,7 @@ function valorColuna(
   if (campo?.tipo === "booleano") return bruto ? "Sim" : "Não";
   if (campo?.tipo === "numero")
     return Number(bruto).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (campo?.tipo === "inteiro") return Number(bruto).toLocaleString("pt-BR");
   if (campo?.tipo === "data") return new Date(String(bruto)).toLocaleDateString("pt-BR");
   return String(bruto);
 }
@@ -114,7 +118,7 @@ export function RecursoCrud({
 }: {
   titulo: string;
   descricao: string;
-  tabela: "access_entries" | "service_assets" | "equipments" | "phone_lines";
+  tabela: "access_entries" | "service_assets" | "equipments" | "phone_lines" | "phone_stock";
   campos: Campo[];
   campoTitulo: string;
   ordenarPor: string;
@@ -227,7 +231,7 @@ export function RecursoCrud({
       for (const c of campos) {
         const bruto = form[c.nome];
         if (c.tipo === "booleano") payload[c.nome] = !!bruto;
-        else if (c.tipo === "numero")
+        else if (c.tipo === "numero" || c.tipo === "inteiro")
           payload[c.nome] = bruto === "" || bruto === undefined ? null : Number(bruto);
         else payload[c.nome] = bruto === "" || bruto === undefined ? null : String(bruto);
       }
@@ -407,7 +411,9 @@ export function RecursoCrud({
                         )}
                         title={String(item[c.nome] ?? "")}
                       >
-                        {formatarValor(item[c.nome], c.tipo ?? "texto")}
+                        {c.render
+                          ? c.render(item)
+                          : formatarValor(item[c.nome], c.tipo ?? "texto")}
                       </TableCell>
                     ))}
                     {colunasExtras.map((c) => (
@@ -504,8 +510,14 @@ export function RecursoCrud({
                   ) : (
                     <Input
                       id={c.nome}
-                      type={tipo === "numero" ? "number" : tipo === "data" ? "date" : "text"}
-                      step={tipo === "numero" ? "0.01" : undefined}
+                      type={
+                        tipo === "numero" || tipo === "inteiro"
+                          ? "number"
+                          : tipo === "data"
+                            ? "date"
+                            : "text"
+                      }
+                      step={tipo === "numero" ? "0.01" : tipo === "inteiro" ? "1" : undefined}
                       value={String(valor ?? "")}
                       onChange={(e) => setForm((f) => ({ ...f, [c.nome]: e.target.value }))}
                       placeholder={c.placeholder}

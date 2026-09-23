@@ -14,6 +14,14 @@ export const Route = createFileRoute("/_authenticated/_painel/dashboard")({
   component: Dashboard,
 });
 
+function normalizar(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
 function Dashboard() {
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
@@ -52,51 +60,87 @@ function Dashboard() {
     queryFn: async () => {
       const baseEquip = () =>
         supabase.from("equipments").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!);
-      const estoqueEquip = () => baseEquip().ilike("status", "estoque");
 
       const [
         equipamentos,
         equipaAtivos,
-        equipaEstoque,
-        equipaEstoqueDesktop,
-        equipaEstoqueNotebook,
         equipaManut,
+        equipamentosDetalhe,
         linhas,
         acessos,
         monitores,
+        celularesEstoque,
       ] = await Promise.all([
         baseEquip(),
         baseEquip().ilike("status", "ativo"),
-        estoqueEquip(),
-        estoqueEquip().ilike("tipo", "desktop"),
-        estoqueEquip().ilike("tipo", "notebook"),
         baseEquip().ilike("status", "manutenção"),
+        supabase.from("equipments").select("tipo, status").eq("workspace_id", workspaceId!),
         supabase.from("phone_lines").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).ilike("status", "ativo"),
         supabase.from("access_entries").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
         supabase.from("monitors").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).eq("ativo", true),
+        supabase.from("phone_stock").select("modelo, status, quantidade").eq("workspace_id", workspaceId!),
       ]);
+
       const erro = [
         equipamentos,
         equipaAtivos,
-        equipaEstoque,
-        equipaEstoqueDesktop,
-        equipaEstoqueNotebook,
         equipaManut,
+        equipamentosDetalhe,
         linhas,
         acessos,
         monitores,
       ].find((resultado) => resultado.error)?.error;
       if (erro) throw erro;
+
+      if (
+        celularesEstoque.error &&
+        !/phone_stock|schema cache|does not exist|não existe/i.test(celularesEstoque.error.message)
+      ) {
+        throw celularesEstoque.error;
+      }
+
+      const emEstoque = (equipamentosDetalhe.data ?? []).filter(
+        (item) => normalizar(String(item.status ?? "")) === "estoque",
+      );
+      const equipaEstoqueDesktop = emEstoque.filter(
+        (item) => normalizar(String(item.tipo ?? "")) === "desktop",
+      ).length;
+      const equipaEstoqueNotebook = emEstoque.filter(
+        (item) => normalizar(String(item.tipo ?? "")) === "notebook",
+      ).length;
+
+      const celulares = celularesEstoque.error ? [] : (celularesEstoque.data ?? []);
+      const celularesTotal = celulares.reduce((acc, item) => acc + Number(item.quantidade ?? 0), 0);
+
+      const agregarPorStatus = (statusAlvo: string) => {
+        const mapa = new Map<string, number>();
+        let total = 0;
+        for (const item of celulares) {
+          if (normalizar(String(item.status ?? "")) !== normalizar(statusAlvo)) continue;
+          const qtd = Number(item.quantidade ?? 0);
+          total += qtd;
+          const modelo = String(item.modelo ?? "Sem modelo");
+          mapa.set(modelo, (mapa.get(modelo) ?? 0) + qtd);
+        }
+        return {
+          total,
+          modelos: [...mapa.entries()].map(([modelo, quantidade]) => ({ modelo, quantidade })),
+        };
+      };
+
       return {
         equipamentos: equipamentos.count ?? 0,
         equipaAtivos: equipaAtivos.count ?? 0,
-        equipaEstoque: equipaEstoque.count ?? 0,
-        equipaEstoqueDesktop: equipaEstoqueDesktop.count ?? 0,
-        equipaEstoqueNotebook: equipaEstoqueNotebook.count ?? 0,
+        equipaEstoque: emEstoque.length,
+        equipaEstoqueDesktop,
+        equipaEstoqueNotebook,
         equipaManut: equipaManut.count ?? 0,
         linhas: linhas.count ?? 0,
         acessos: acessos.count ?? 0,
         monitores: monitores.count ?? 0,
+        celularesTotal,
+        celularesFuncionando: agregarPorStatus("Funcionando"),
+        celularesManutencao: agregarPorStatus("Manutenção"),
       };
     },
   });
@@ -180,7 +224,63 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        {kpis.slice(2).map((kpi) => (
+        {kpis.slice(2, 4).map((kpi) => (
+          <Card key={kpi.label} className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {kpi.label}
+              </CardTitle>
+              <kpi.icon className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{kpi.valor}</p>
+            </CardContent>
+          </Card>
+        ))}
+
+        <Card className="rounded-xl">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Celulares Estoque
+            </CardTitle>
+            <Smartphone className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-2xl font-bold">{totais.data?.celularesTotal ?? 0}</p>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-foreground">Funcionando</span>
+                  <span className="font-semibold text-foreground">
+                    {totais.data?.celularesFuncionando.total ?? 0}
+                  </span>
+                </div>
+                {(totais.data?.celularesFuncionando.modelos ?? []).map((item) => (
+                  <div key={`func-${item.modelo}`} className="flex items-start justify-between gap-2 pl-2">
+                    <span className="truncate" title={item.modelo}>{item.modelo}</span>
+                    <span className="shrink-0 font-semibold text-foreground">{item.quantidade}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-foreground">Manutenção</span>
+                  <span className="font-semibold text-foreground">
+                    {totais.data?.celularesManutencao.total ?? 0}
+                  </span>
+                </div>
+                {(totais.data?.celularesManutencao.modelos ?? []).map((item) => (
+                  <div key={`manut-${item.modelo}`} className="flex items-start justify-between gap-2 pl-2">
+                    <span className="truncate" title={item.modelo}>{item.modelo}</span>
+                    <span className="shrink-0 font-semibold text-foreground">{item.quantidade}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {kpis.slice(4).map((kpi) => (
           <Card key={kpi.label} className="rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
