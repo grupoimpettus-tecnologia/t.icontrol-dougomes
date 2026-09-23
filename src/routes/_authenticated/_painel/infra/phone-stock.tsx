@@ -99,7 +99,7 @@ function EstoqueCelulares() {
           tipo: "select",
           opcoes: statusOpcoes,
           render: (item: Registro) => {
-            const status = String(item.status ?? "");
+            const status = String(item["status"] ?? "");
             return (
               <Badge variant="secondary" className={cn(coresStatus[status])}>
                 {status || "—"}
@@ -113,7 +113,7 @@ function EstoqueCelulares() {
           tipo: "select",
           opcoes: estadoOpcoes,
           render: (item: Registro) => (
-            <Badge variant="secondary">{String(item.estado ?? "—")}</Badge>
+            <Badge variant="secondary">{String(item["estado"] ?? "—")}</Badge>
           ),
         },
         { nome: "quantidade", label: "Quanti. Estoque", tipo: "inteiro" },
