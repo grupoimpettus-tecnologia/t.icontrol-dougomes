@@ -28,7 +28,7 @@ const modulos: { titulo: string; itens: Item[] }[] = [
       { to: "/infra/access-map", label: "Mapa de acessos", icon: KeyRound },
       { to: "/infra/services-assets", label: "Serviços & ativos", icon: Package },
       { to: "/infra/equipments", label: "Equipamentos", icon: Cpu },
-      { to: "/infra/phone-lines", label: "Linhas e celulares", icon: Smartphone },
+      { to: "/infra/phone-lines", label: "Linhas Móveis", icon: Smartphone },
       { to: "/infra/phone-stock", label: "Estoque Celulares", icon: Smartphone },
       { to: "/infra/monitoring", label: "Monitoramento", icon: Activity },
     ],

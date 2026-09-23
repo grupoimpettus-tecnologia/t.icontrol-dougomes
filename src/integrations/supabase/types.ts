@@ -725,57 +725,6 @@ export type Database = {
           },
         ]
       }
-      phone_stock: {
-        Row: {
-          created_at: string
-          criado_por: string | null
-          estado: string
-          id: string
-          modelo: string
-          quantidade: number
-          status: string
-          updated_at: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          criado_por?: string | null
-          estado?: string
-          id?: string
-          modelo: string
-          quantidade?: number
-          status?: string
-          updated_at?: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          criado_por?: string | null
-          estado?: string
-          id?: string
-          modelo?: string
-          quantidade?: number
-          status?: string
-          updated_at?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "phone_stock_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "phone_stock_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
