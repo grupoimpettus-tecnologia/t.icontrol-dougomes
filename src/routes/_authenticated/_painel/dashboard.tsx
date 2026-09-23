@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/_painel/dashboard")({
   head: () => ({ meta: [
-    { title: "Dashboard | TIControl" }, { name: "description", content: "Visão geral dos ativos e serviços de T.I da empresa." },
-    { property: "og:title", content: "Dashboard | TIControl" }, { property: "og:description", content: "Visão geral dos ativos e serviços de T.I da empresa." },
+    { title: "Dashboard de Infra | TIControl" }, { name: "description", content: "Visão geral dos ativos e serviços de T.I da empresa." },
+    { property: "og:title", content: "Dashboard de Infra | TIControl" }, { property: "og:description", content: "Visão geral dos ativos e serviços de T.I da empresa." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
   component: Dashboard,
@@ -157,7 +157,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard de Infra</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Visão geral de {atual?.workspace.nome ?? "sua empresa"}.
         </p>

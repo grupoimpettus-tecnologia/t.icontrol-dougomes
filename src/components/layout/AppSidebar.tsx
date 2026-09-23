@@ -20,7 +20,7 @@ type Item = { to: string; label: string; icon: React.ElementType };
 const modulos: { titulo: string; itens: Item[] }[] = [
   {
     titulo: "Geral",
-    itens: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    itens: [{ to: "/dashboard", label: "Dashboard de Infra", icon: LayoutDashboard }],
   },
   {
     titulo: "Infraestrutura",
