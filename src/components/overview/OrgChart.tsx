@@ -54,16 +54,19 @@ function Ramo({
 export function OrgChart({
   nos,
   onSelect,
+  fullWidth = false,
 }: {
   nos: NoOrg[];
   onSelect?: (no: NoOrg) => void;
+  /** Usa largura disponível (útil para fluxogramas com muitos passos empilhados). */
+  fullWidth?: boolean;
 }) {
   const ids = new Set(nos.map((n) => n.id));
   const raizes = nos.filter((n) => !n.parent || !ids.has(n.parent));
   if (!nos.length) return <p className="py-10 text-center text-sm text-muted-foreground">Nada para exibir.</p>;
   return (
-    <div className="overflow-x-auto py-6">
-      <div className="org-tree mx-auto w-max">
+    <div className={fullWidth ? "py-4" : "overflow-x-auto py-6"}>
+      <div className={`org-tree mx-auto ${fullWidth ? "w-full max-w-4xl" : "w-max"}`}>
         <ul>
           {raizes.map((r) => (
             <Ramo key={r.id} no={r} todos={nos} onSelect={onSelect} />

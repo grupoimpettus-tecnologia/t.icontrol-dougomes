@@ -497,7 +497,7 @@ function AbaMacroFranqueado() {
       <CardContent>
         {grafico ? (
           <div className="org-franqueado">
-            <OrgChart nos={NOS_MACRO_FRANQUEADO} />
+            <OrgChart nos={NOS_MACRO_FRANQUEADO} fullWidth />
           </div>
         ) : (
           <ListaHierarquica nos={NOS_MACRO_FRANQUEADO} />

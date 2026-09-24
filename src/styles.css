@@ -310,4 +310,86 @@
 .org-tree ul ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 1.25rem; border-left: 2px solid var(--muted-foreground); }
 .org-box { min-width: 9rem; max-width: 14rem; border: 2px solid var(--primary); border-radius: 0.5rem; background: var(--card); color: var(--card-foreground); padding: 0.5rem 0.75rem; text-align: center; font: inherit; appearance: none; }
 button.org-box:disabled { opacity: 1; }
-.org-franqueado .org-box { min-width: 11rem; max-width: 18rem; }
+
+/* Fluxograma franqueado: ramos lado a lado, passos empilhados */
+.org-franqueado .org-tree > ul,
+.org-franqueado .org-tree > ul > li {
+  width: 100%;
+}
+.org-franqueado .org-tree > ul > li {
+  align-items: stretch;
+}
+.org-franqueado .org-box { min-width: 0; max-width: none; width: 100%; }
+.org-franqueado .org-tree > ul > li > .org-box {
+  width: auto;
+  max-width: 16rem;
+  align-self: center;
+}
+.org-franqueado .org-tree > ul > li > ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+  width: 100%;
+  padding-top: 1.5rem;
+}
+.org-franqueado .org-tree > ul > li > ul::before {
+  left: 50%;
+  height: 1.5rem;
+}
+.org-franqueado .org-tree > ul > li > ul > li {
+  width: 100%;
+  padding: 1.5rem 0 0;
+  align-items: stretch;
+}
+.org-franqueado .org-tree > ul > li > ul > li::before,
+.org-franqueado .org-tree > ul > li > ul > li::after {
+  top: 0;
+  height: 1.5rem;
+}
+.org-franqueado .org-tree > ul > li > ul > li > ul {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding-top: 0.75rem;
+  gap: 0;
+}
+.org-franqueado .org-tree > ul > li > ul > li > ul::before {
+  display: none;
+}
+.org-franqueado .org-tree > ul > li > ul > li > ul > li {
+  width: 100%;
+  padding: 0.75rem 0 0;
+  align-items: stretch;
+}
+.org-franqueado .org-tree > ul > li > ul > li > ul > li::before {
+  display: none;
+}
+.org-franqueado .org-tree > ul > li > ul > li > ul > li::after {
+  left: 50%;
+  width: 0;
+  height: 0.75rem;
+  border-top: 0;
+  border-left: 2px solid var(--muted-foreground);
+}
+@media (max-width: 640px) {
+  .org-franqueado .org-tree > ul > li > ul {
+    grid-template-columns: 1fr;
+  }
+  .org-franqueado .org-tree > ul > li > ul > li::before,
+  .org-franqueado .org-tree > ul > li > ul > li::after {
+    display: none;
+  }
+  .org-franqueado .org-tree > ul > li > ul > li {
+    padding-top: 1rem;
+  }
+  .org-franqueado .org-tree > ul > li > ul > li::after {
+    display: block;
+    left: 50%;
+    width: 0;
+    height: 1rem;
+    border-top: 0;
+    border-left: 2px solid var(--muted-foreground);
+  }
+}
+
