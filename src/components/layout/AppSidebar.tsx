@@ -7,6 +7,7 @@ import {
   KeyRound,
   History,
   LayoutDashboard,
+  Network,
   Package,
   Settings,
   ShieldCheck,
@@ -20,7 +21,10 @@ type Item = { to: string; label: string; icon: React.ElementType };
 const modulos: { titulo: string; itens: Item[] }[] = [
   {
     titulo: "Geral",
-    itens: [{ to: "/dashboard", label: "Dashboard de Infra", icon: LayoutDashboard }],
+    itens: [
+      { to: "/dashboard", label: "Dashboard de Infra", icon: LayoutDashboard },
+      { to: "/overview", label: "Overviewer do time", icon: Network },
+    ],
   },
   {
     titulo: "Infraestrutura",

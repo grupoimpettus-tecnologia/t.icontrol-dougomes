@@ -7,3 +7,4 @@
 - [x] Fase 2 — Agente de status: token por equipamento, endpoint de heartbeat, status online/offline, painel do agente e pacote /agent com instaladores
 - [ ] Validar no equipamento L0039 o agente contínuo em segundo plano e a reconexão automática
 - [ ] Validar telas autenticadas e arquivos exportados — bloqueado: ainda não há usuário de teste cadastrado
+- [x] Overviewer do time (categoria Geral): colaboradores, macro/micro com versões, por colaborador, botão Gráfico e modo apresentação
