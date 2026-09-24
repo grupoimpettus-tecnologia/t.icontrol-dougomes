@@ -290,9 +290,12 @@ function DetalheMonitor() {
                 <Line
                   type="monotone"
                   dataKey="latencia"
-                  stroke="hsl(var(--primary))"
+                  name="latencia"
+                  stroke="var(--primary)"
                   strokeWidth={2}
                   dot={false}
+                  activeDot={{ r: 4, fill: "var(--primary)" }}
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>
