@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ExportarMenu } from "@/components/ExportarMenu";
 import { OrgChart, type NoOrg } from "@/components/overview/OrgChart";
+import { EditorFormatado } from "@/components/infra/EditorFormatado";
+import { ConteudoRico } from "@/components/infra/ConteudoRico";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -240,13 +242,30 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
   const [grafico, setGrafico] = useState(true);
   const [selecionada, setSelecionada] = useState<string | null>(null);
   const [editando, setEditando] = useState<Omit<Versao, "id"> & { id?: string } | null>(null);
+  const [blocoAberto, setBlocoAberto] = useState<NoOrg | null>(null);
   const versao = versoes.find((v) => v.id === selecionada) ?? versoes.find((v) => v.atual) ?? versoes[versoes.length - 1];
   const rotulo = tipo === "macro" ? "Macro área" : "Micro área";
 
   const salvar = useMutation({
     mutationFn: async (v: Omit<Versao, "id"> & { id?: string }) => {
       if (v.atual) await db.from("org_versions").update({ atual: false }).eq("workspace_id", ws).eq("tipo", tipo);
-      const payload = { workspace_id: ws, tipo, nome: v.nome.trim(), periodo: v.periodo || null, atual: v.atual, nodes: v.nodes.filter((n) => n.titulo.trim()), updated_at: new Date().toISOString() };
+      const payload = {
+        workspace_id: ws,
+        tipo,
+        nome: v.nome.trim(),
+        periodo: v.periodo || null,
+        atual: v.atual,
+        nodes: v.nodes
+          .filter((n) => n.titulo.trim())
+          .map((n) => ({
+            id: n.id,
+            titulo: n.titulo.trim(),
+            subtitulo: n.subtitulo || null,
+            parent: n.parent,
+            conteudo: n.conteudo || null,
+          })),
+        updated_at: new Date().toISOString(),
+      };
       const res = v.id ? await db.from("org_versions").update(payload).eq("id", v.id).select("id").single() : await db.from("org_versions").insert(payload).select("id").single();
       if (res.error) throw res.error;
       return res.data.id as string;
@@ -259,7 +278,13 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
     onSuccess: () => { toast.success("Versão removida"); setSelecionada(null); qc.invalidateQueries({ queryKey: ["org_versions"] }); },
   });
 
-  const novoNo = (): NoOrg => ({ id: crypto.randomUUID().slice(0, 8), titulo: "", subtitulo: "", parent: null });
+  const novoNo = (): NoOrg => ({
+    id: crypto.randomUUID().slice(0, 8),
+    titulo: "",
+    subtitulo: "",
+    parent: null,
+    conteudo: "",
+  });
 
   return (
     <Card>
@@ -268,8 +293,8 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
           <CardTitle>Organograma — {rotulo}</CardTitle>
           <div className="flex flex-wrap gap-2">
             <BotaoGrafico grafico={grafico} onChange={setGrafico} />
-            {podeEditar && versao && <Button size="sm" variant="outline" onClick={() => setEditando({ id: versao.id, tipo, nome: versao.nome, periodo: versao.periodo, atual: versao.atual, nodes: versao.nodes })}><Pencil className="mr-2 h-4 w-4" /> Editar</Button>}
-            {podeEditar && versao && <Button size="sm" variant="outline" onClick={() => setEditando({ tipo, nome: `Nova visão`, periodo: String(new Date().getFullYear()), atual: true, nodes: versao.nodes })}><Copy className="mr-2 h-4 w-4" /> Nova versão a partir desta</Button>}
+            {podeEditar && versao && <Button size="sm" variant="outline" onClick={() => setEditando({ id: versao.id, tipo, nome: versao.nome, periodo: versao.periodo, atual: versao.atual, nodes: versao.nodes.map((n) => ({ ...n, conteudo: n.conteudo ?? "" })) })}><Pencil className="mr-2 h-4 w-4" /> Editar</Button>}
+            {podeEditar && versao && <Button size="sm" variant="outline" onClick={() => setEditando({ tipo, nome: `Nova visão`, periodo: String(new Date().getFullYear()), atual: true, nodes: versao.nodes.map((n) => ({ ...n, id: crypto.randomUUID().slice(0, 8), conteudo: n.conteudo ?? "" })) })}><Copy className="mr-2 h-4 w-4" /> Nova versão a partir desta</Button>}
             {podeEditar && <Button size="sm" onClick={() => setEditando({ tipo, nome: "", periodo: "", atual: !versoes.length, nodes: [novoNo()] })}><Plus className="mr-2 h-4 w-4" /> Versão</Button>}
           </div>
         </div>
@@ -284,11 +309,17 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
         )}
       </CardHeader>
       <CardContent>
-        {!versao ? <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma versão cadastrada.</p> : grafico ? <OrgChart nos={versao.nodes} /> : (
+        {!versao ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma versão cadastrada.</p>
+        ) : grafico ? (
+          <OrgChart nos={versao.nodes} onSelect={setBlocoAberto} />
+        ) : (
           <ul className="space-y-1 text-sm">
             {versao.nodes.map((n) => (
-              <li key={n.id} className="flex flex-wrap gap-2 border-b py-2 last:border-0">
-                <span className="font-medium">{n.titulo}</span>
+              <li key={n.id} className="flex flex-wrap items-center gap-2 border-b py-2 last:border-0">
+                <button type="button" className="font-medium text-primary hover:underline" onClick={() => setBlocoAberto(n)}>
+                  {n.titulo}
+                </button>
                 {n.subtitulo && <span className="text-muted-foreground">— {n.subtitulo}</span>}
                 {n.parent && <Badge variant="secondary">abaixo de {versao.nodes.find((p) => p.id === n.parent)?.titulo}</Badge>}
               </li>
@@ -298,7 +329,7 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
       </CardContent>
 
       <Dialog open={!!editando} onOpenChange={(o) => !o && setEditando(null)}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader><DialogTitle>{editando?.id ? "Editar versão" : "Nova versão"} — {rotulo}</DialogTitle></DialogHeader>
           {editando && (
             <div className="space-y-4">
@@ -307,17 +338,34 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
                 <div><Label>Período</Label><Input placeholder="Ex.: 2024" value={editando.periodo ?? ""} onChange={(e) => setEditando({ ...editando, periodo: e.target.value })} /></div>
               </div>
               <label className="flex items-center gap-2 text-sm"><Switch checked={editando.atual} onCheckedChange={(c) => setEditando({ ...editando, atual: c })} /> Marcar como visão atual</label>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>Blocos do organograma</Label>
                 {editando.nodes.map((n, i) => (
-                  <div key={n.id} className="grid gap-2 rounded-md border p-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
-                    <Input placeholder="Título" value={n.titulo} onChange={(e) => { const nodes = [...editando.nodes]; nodes[i] = { ...n, titulo: e.target.value }; setEditando({ ...editando, nodes }); }} />
-                    <Input placeholder="Detalhe (opcional)" value={n.subtitulo ?? ""} onChange={(e) => { const nodes = [...editando.nodes]; nodes[i] = { ...n, subtitulo: e.target.value }; setEditando({ ...editando, nodes }); }} />
-                    <select className="h-9 rounded-md border bg-background px-2 text-sm" value={n.parent ?? ""} onChange={(e) => { const nodes = [...editando.nodes]; nodes[i] = { ...n, parent: e.target.value || null }; setEditando({ ...editando, nodes }); }}>
-                      <option value="">— Topo —</option>
-                      {editando.nodes.filter((p) => p.id !== n.id && p.titulo).map((p) => <option key={p.id} value={p.id}>Abaixo de {p.titulo}</option>)}
-                    </select>
-                    <Button variant="ghost" size="icon" onClick={() => setEditando({ ...editando, nodes: editando.nodes.filter((x) => x.id !== n.id).map((x) => (x.parent === n.id ? { ...x, parent: n.parent } : x)) })}><Trash2 className="h-4 w-4" /></Button>
+                  <div key={n.id} className="space-y-3 rounded-md border p-3">
+                    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
+                      <Input placeholder="Título" value={n.titulo} onChange={(e) => { const nodes = [...editando.nodes]; nodes[i] = { ...n, titulo: e.target.value }; setEditando({ ...editando, nodes }); }} />
+                      <Input placeholder="Detalhe (opcional)" value={n.subtitulo ?? ""} onChange={(e) => { const nodes = [...editando.nodes]; nodes[i] = { ...n, subtitulo: e.target.value }; setEditando({ ...editando, nodes }); }} />
+                      <select className="h-9 rounded-md border bg-background px-2 text-sm" value={n.parent ?? ""} onChange={(e) => { const nodes = [...editando.nodes]; nodes[i] = { ...n, parent: e.target.value || null }; setEditando({ ...editando, nodes }); }}>
+                        <option value="">— Topo —</option>
+                        {editando.nodes.filter((p) => p.id !== n.id && p.titulo).map((p) => <option key={p.id} value={p.id}>Abaixo de {p.titulo}</option>)}
+                      </select>
+                      <Button variant="ghost" size="icon" onClick={() => setEditando({ ...editando, nodes: editando.nodes.filter((x) => x.id !== n.id).map((x) => (x.parent === n.id ? { ...x, parent: n.parent } : x)) })}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">
+                        Conteúdo de {n.titulo.trim() || "bloco"} (texto formatado e anexos)
+                      </Label>
+                      <EditorFormatado
+                        id={`org-bloco-${n.id}`}
+                        value={n.conteudo ?? ""}
+                        onChange={(conteudo) => {
+                          const nodes = [...editando.nodes];
+                          nodes[i] = { ...n, conteudo };
+                          setEditando({ ...editando, nodes });
+                        }}
+                        placeholder="Descreva a área, cole imagens ou anexe PDF/Excel..."
+                      />
+                    </div>
                   </div>
                 ))}
                 <Button variant="outline" size="sm" onClick={() => setEditando({ ...editando, nodes: [...editando.nodes, novoNo()] })}><Plus className="mr-2 h-4 w-4" /> Bloco</Button>
@@ -329,6 +377,18 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
             <Button variant="outline" onClick={() => setEditando(null)}>Cancelar</Button>
             <Button disabled={!editando?.nome.trim() || salvar.isPending} onClick={() => editando && salvar.mutate(editando)}>Salvar</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!blocoAberto} onOpenChange={(o) => !o && setBlocoAberto(null)}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{blocoAberto?.titulo ?? "Bloco"}</DialogTitle>
+            {blocoAberto?.subtitulo && (
+              <p className="text-sm text-muted-foreground">{blocoAberto.subtitulo}</p>
+            )}
+          </DialogHeader>
+          <ConteudoRico html={blocoAberto?.conteudo ?? ""} />
         </DialogContent>
       </Dialog>
     </Card>

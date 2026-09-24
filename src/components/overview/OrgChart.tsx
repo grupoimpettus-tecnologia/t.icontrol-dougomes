@@ -1,17 +1,49 @@
-export type NoOrg = { id: string; titulo: string; subtitulo?: string | null; parent: string | null };
+export type NoOrg = {
+  id: string;
+  titulo: string;
+  subtitulo?: string | null;
+  parent: string | null;
+  /** HTML do editor rico (texto formatado + anexos). */
+  conteudo?: string | null;
+};
 
-function Ramo({ no, todos }: { no: NoOrg; todos: NoOrg[] }) {
+function temConteudo(html: string | null | undefined) {
+  if (!html?.trim()) return false;
+  const texto = html.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+  return Boolean(texto) || /data-anexo/.test(html);
+}
+
+function Ramo({
+  no,
+  todos,
+  onSelect,
+}: {
+  no: NoOrg;
+  todos: NoOrg[];
+  onSelect?: (no: NoOrg) => void;
+}) {
   const filhos = todos.filter((n) => n.parent === no.id);
+  const clicavel = Boolean(onSelect);
   return (
     <li>
-      <div className="org-box">
+      <button
+        type="button"
+        className={`org-box text-left ${clicavel ? "cursor-pointer transition hover:border-primary/60 hover:shadow-md" : "cursor-default"}`}
+        onClick={() => onSelect?.(no)}
+        disabled={!clicavel}
+      >
         <p className="text-sm font-semibold leading-tight">{no.titulo}</p>
         {no.subtitulo && <p className="mt-0.5 text-xs text-muted-foreground">{no.subtitulo}</p>}
-      </div>
+        {temConteudo(no.conteudo) && (
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-primary/80">
+            Ver detalhes
+          </p>
+        )}
+      </button>
       {filhos.length > 0 && (
         <ul>
           {filhos.map((f) => (
-            <Ramo key={f.id} no={f} todos={todos} />
+            <Ramo key={f.id} no={f} todos={todos} onSelect={onSelect} />
           ))}
         </ul>
       )}
@@ -19,7 +51,13 @@ function Ramo({ no, todos }: { no: NoOrg; todos: NoOrg[] }) {
   );
 }
 
-export function OrgChart({ nos }: { nos: NoOrg[] }) {
+export function OrgChart({
+  nos,
+  onSelect,
+}: {
+  nos: NoOrg[];
+  onSelect?: (no: NoOrg) => void;
+}) {
   const ids = new Set(nos.map((n) => n.id));
   const raizes = nos.filter((n) => !n.parent || !ids.has(n.parent));
   if (!nos.length) return <p className="py-10 text-center text-sm text-muted-foreground">Nada para exibir.</p>;
@@ -28,7 +66,7 @@ export function OrgChart({ nos }: { nos: NoOrg[] }) {
       <div className="org-tree mx-auto w-max">
         <ul>
           {raizes.map((r) => (
-            <Ramo key={r.id} no={r} todos={nos} />
+            <Ramo key={r.id} no={r} todos={nos} onSelect={onSelect} />
           ))}
         </ul>
       </div>

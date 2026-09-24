@@ -308,4 +308,5 @@
 .org-tree li:last-child:not(:only-child)::after { border-left: 0; }
 .org-tree > ul > li::before, .org-tree > ul > li::after { display: none; }
 .org-tree ul ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 1.25rem; border-left: 2px solid var(--muted-foreground); }
-.org-box { min-width: 9rem; max-width: 14rem; border: 2px solid var(--primary); border-radius: 0.5rem; background: var(--card); color: var(--card-foreground); padding: 0.5rem 0.75rem; text-align: center; }
+.org-box { min-width: 9rem; max-width: 14rem; border: 2px solid var(--primary); border-radius: 0.5rem; background: var(--card); color: var(--card-foreground); padding: 0.5rem 0.75rem; text-align: center; font: inherit; appearance: none; }
+button.org-box:disabled { opacity: 1; }

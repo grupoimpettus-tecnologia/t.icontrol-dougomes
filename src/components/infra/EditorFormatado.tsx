@@ -66,6 +66,7 @@ type EditorFormatadoProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string | undefined;
+  accept?: string | undefined;
 };
 
 function BotaoFerramenta({
@@ -100,7 +101,7 @@ function BotaoFerramenta({
 
 type AnexoSelecionado = { path: string; nome: string; tipo: string; tamanho: number };
 
-export function EditorFormatado({ id, value, onChange, placeholder }: EditorFormatadoProps) {
+export function EditorFormatado({ id, value, onChange, placeholder, accept }: EditorFormatadoProps) {
   const atual = useCurrentWorkspace();
   const workspaceId = atual?.workspace.id;
   const workspaceRef = useRef<string | undefined>(workspaceId);
@@ -333,6 +334,10 @@ export function EditorFormatado({ id, value, onChange, placeholder }: EditorForm
           ref={inputRef}
           type="file"
           multiple
+          accept={
+            accept ??
+            "image/*,.pdf,.xls,.xlsx,.csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          }
           className="hidden"
           onChange={(e) => {
             const arquivos = Array.from(e.target.files ?? []);
