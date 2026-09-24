@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Construction, Copy, Maximize, Network, Pencil, Plus, Table2, Trash2, X } from "lucide-react";
+import { Copy, Maximize, Network, Pencil, Plus, Table2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ExportarMenu } from "@/components/ExportarMenu";
 import { OrgChart, type NoOrg } from "@/components/overview/OrgChart";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
@@ -509,22 +510,271 @@ function AbaMacroFranqueado() {
 
 /* ---------------- Micro área p/ franqueado ---------------- */
 
+type PassoMicroFranqueado = {
+  id: string;
+  codigo: string;
+  titulo: string;
+  tiIntro?: string;
+  tiItens?: string[];
+  tiTexto?: string;
+  entregavel?: string;
+  pontoAtencao?: string;
+};
+
+type FaseMicroFranqueado = {
+  id: string;
+  codigo: string;
+  titulo: string;
+  subtitulo: string;
+  passos: PassoMicroFranqueado[];
+};
+
+const FASES_MICRO_FRANQUEADO: FaseMicroFranqueado[] = [
+  {
+    id: "nova-loja",
+    codigo: "1",
+    titulo: "Nova Loja",
+    subtitulo: "Fase de Implantação e Go-Live",
+    passos: [
+      {
+        id: "nl-1",
+        codigo: "1.1",
+        titulo: "Fornece acesso ao e-mail corporativo",
+        tiIntro: "T.I da Franqueadora:",
+        tiItens: [
+          "Criar a conta no provedor de e-mail corporativo, seguindo o padrão de nomenclatura da rede (ex: nomeloja@franquia.com.br).",
+          "Credenciais de acesso enviadas ao franqueado, através do consultor responsável pela unidade ou para o time que esteja apoiando nesta etapa de interação com a unidade, com manual de primeiros passos e políticas de uso.",
+          "Garantir que o franqueado entenda que o e-mail é uma ferramenta de trabalho e que a matriz pode auditar o uso para segurança da informação.",
+        ],
+      },
+      {
+        id: "nl-2",
+        codigo: "1.2",
+        titulo: "Fornece modelo padrão para aquisição de equipamentos da loja",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          'Entregar uma "Cartilha de Hardware" contendo as especificações mínimas (Processador, RAM, SSD, Sistema Operacional, requisitos de rede) para:',
+        tiItens: [
+          "Servidor local (caixa), terminais de PDV (lançamento), impressoras fiscais/não fiscais e explicação de como os equipamentos devem estar conectados na rede/internet",
+        ],
+        entregavel:
+          "Documento PDF ou planilha com especificações técnicas e, se possível, uma lista de fornecedores homologados.",
+        pontoAtencao:
+          "Evitar que o franqueado compre equipamentos baratos ou incompatíveis que gerarão gargalos e chamados de suporte futuros.",
+      },
+      {
+        id: "nl-3",
+        codigo: "1.3",
+        titulo: "Acompanha e explica ao time de TI da loja durante a construção da unidade",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Reuniões de alinhamento (kick-off) com o responsável de TI da obra ou o franqueado. Explicar a topologia de rede necessária (cabeamento estruturado, pontos de rede, elétrica estabilizada, localização do rack).",
+        entregavel: "Checklist de infraestrutura validado (pontos de rede, tomadas, espaço físico para servidores).",
+        pontoAtencao:
+          "Atrasos na obra ou falta de infraestrutura de rede (ex: passar cabo depois do drywall pronto) geram custos altíssimos e atrasam a abertura.",
+      },
+      {
+        id: "nl-4",
+        codigo: "1.4",
+        titulo: "Valida junto ao time de TI da loja layout de equipamentos instalados e configurados",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Vistoria (remota via fotos/vídeo) para confirmar se os equipamentos estão instalados conforme o padrão (ex: terminal de PDV não exposto ao calor, cabos organizados, roteador em local ventilado).",
+        entregavel: "Termo de Validação de Infraestrutura assinado (ou e-mail de aprovação).",
+        pontoAtencao:
+          "Verificar se a rede elétrica está devidamente aterrada e se os nobreaks estão dimensionados corretamente para evitar queima de equipamentos.",
+      },
+      {
+        id: "nl-5",
+        codigo: "1.5",
+        titulo: "Apoia implantação do sistema de venda (PDV)",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Suporte remoto ou presencial para instalar o software de PDV, configurar o banco de dados local, apontar para o servidor da matriz (se for nuvem/híbrido) e configurar os periféricos (impressora, balança, leitor).",
+        entregavel: "Sistema de PDV instalado e comunicando com a retaguarda.",
+        pontoAtencao:
+          "Garantir que a conectividade com a internet esteja estável antes de iniciar a implantação do PDV.",
+      },
+      {
+        id: "nl-6",
+        codigo: "1.6",
+        titulo: "Valida implantação do sistema de venda (PDV)",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Realizar testes de mesa (simular uma venda, emitir cupom fiscal, cancelar item, fechar caixa) para garantir que todas as regras de negócio estão funcionando.",
+        entregavel: "Checklist de Testes de Aceite (UAT) preenchido e aprovado.",
+        pontoAtencao:
+          "Nunca validar sem antes testar a emissão fiscal (SAT/NFC-e) e a integração com meios de pagamento (TEF).",
+      },
+      {
+        id: "nl-7",
+        codigo: "1.7",
+        titulo: "Solicita treinamento de sistema de venda (PDV) para o time operacional da unidade",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Agendar e intermediar o treinamento com a equipe de Treinamento da aplicação de PDV oficial. Fornecer manuais rápidos (Quick Reference Guides) para os operadores de caixa.",
+        entregavel: "Turma agendada e material de apoio entregue.",
+        pontoAtencao:
+          'O treinamento deve focar no "como fazer" e não no "porquê" técnico, para não confundir os operadores.',
+      },
+    ],
+  },
+  {
+    id: "pos",
+    codigo: "2",
+    titulo: "Pós-Implantação",
+    subtitulo: "Fase de Estabilização e Autonomia",
+    passos: [
+      {
+        id: "pos-1",
+        codigo: "2.1",
+        titulo:
+          "Solicita treinamento de retaguarda de sistema de venda (PDV) para o time de gestão da unidade (gerente, operador e franqueado)",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Agendar treinamento focado em relatórios gerenciais, cadastro de produtos, controle de estoque, fechamento de caixa e parametrização do sistema.",
+        entregavel: "Treinamento realizado e acesso liberado para os perfis de gestão.",
+        pontoAtencao:
+          "O franqueado precisa entender que ele é o responsável pela gestão dos dados da loja; a matriz fornece a ferramenta, mas a operação é dele.",
+      },
+      {
+        id: "pos-2",
+        codigo: "2.2",
+        titulo: "Apresenta fluxo de atendimento do sistema de vendas",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Explicar claramente o fluxo de abertura de chamados (Helpdesk). Definir o que é responsabilidade da loja (ex: trocar cabo de rede), o que é do suporte da aplicação de PDV e o que é do TI da franqueadora. Explicar sobre os SLAs (prazos de atendimento).",
+        entregavel: 'Documento ou apresentação com o "Fluxo de Atendimento" e contatos de suporte.',
+        pontoAtencao:
+          "Deixar claro que problemas de infraestrutura local (internet caindo, computador queimado) não são responsabilidade do suporte do sistema, a menos que haja contrato de infraestrutura.",
+      },
+      {
+        id: "pos-3",
+        codigo: "2.3",
+        titulo: "Apoia dúvidas sobre cardápio no sistema",
+        tiIntro: "T.I da Franqueadora:",
+        tiTexto:
+          "Auxiliar o franqueado nas dúvidas iniciais sobre cardápio (cadastro de produtos, preços, dinâmica, combos, promoções) dentro do sistema de PDV.",
+        entregavel: "Cardápio configurado e validado.",
+        pontoAtencao:
+          "Fora o padrão de cardápio definido pela franqueadora atualmente, o TI da franqueadora não terá autorização de atualizações de novos produtos, preços, adicionar combos, promoções e dinâmica desejadas pelo franqueado. Essa prática precisa ser realizada através de uma solicitação para o consultor da unidade.",
+      },
+    ],
+  },
+];
+
+const NOS_MICRO_FRANQUEADO: NoOrg[] = [
+  { id: "raiz", titulo: "Para o franqueado", parent: null },
+  ...FASES_MICRO_FRANQUEADO.flatMap((fase) => [
+    { id: fase.id, titulo: fase.titulo, subtitulo: fase.subtitulo, parent: "raiz" as string | null },
+    ...fase.passos.map((p) => ({
+      id: p.id,
+      titulo: `${p.codigo} ${p.titulo}`,
+      parent: fase.id,
+      conteudo: "detalhe",
+    })),
+  ]),
+];
+
+const PASSOS_MICRO_POR_ID = new Map(
+  FASES_MICRO_FRANQUEADO.flatMap((f) => f.passos.map((p) => [p.id, { ...p, fase: f }] as const)),
+);
+
+function DetalhePassoMicro({ passo }: { passo: PassoMicroFranqueado }) {
+  return (
+    <div className="space-y-4 text-sm">
+      <div className="space-y-2">
+        <p className="font-semibold text-foreground">{passo.tiIntro ?? "T.I da Franqueadora:"}</p>
+        {passo.tiTexto && <p className="leading-relaxed text-muted-foreground">{passo.tiTexto}</p>}
+        {passo.tiItens && passo.tiItens.length > 0 && (
+          <ul className="list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
+            {passo.tiItens.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {passo.entregavel && (
+        <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">Entregável</p>
+          <p className="leading-relaxed text-muted-foreground">{passo.entregavel}</p>
+        </div>
+      )}
+      {passo.pontoAtencao && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            Ponto de atenção
+          </p>
+          <p className="leading-relaxed text-muted-foreground">{passo.pontoAtencao}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AbaMicroFranqueado() {
+  const [grafico, setGrafico] = useState(true);
+  const [passoAberto, setPassoAberto] = useState<PassoMicroFranqueado | null>(null);
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex flex-wrap items-center gap-3">
-          Micro área p/ franqueado
-          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
-            <Construction className="h-3 w-3" /> Em desenvolvimento
-          </span>
-        </CardTitle>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+        <CardTitle>Micro área p/ franqueado</CardTitle>
+        <BotaoGrafico grafico={grafico} onChange={setGrafico} />
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Esta visão ainda está em desenvolvimento e será disponibilizada em breve.
-        </p>
+        {grafico ? (
+          <div className="org-franqueado">
+            <OrgChart
+              nos={NOS_MICRO_FRANQUEADO}
+              fullWidth
+              onSelect={(no) => {
+                const passo = PASSOS_MICRO_POR_ID.get(no.id);
+                if (passo) setPassoAberto(passo);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {FASES_MICRO_FRANQUEADO.map((fase) => (
+              <section key={fase.id} className="space-y-3">
+                <div>
+                  <h3 className="text-base font-semibold">
+                    {fase.codigo}. {fase.titulo}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{fase.subtitulo}</p>
+                </div>
+                <Accordion type="multiple" className="rounded-lg border px-4">
+                  {fase.passos.map((passo) => (
+                    <AccordionItem key={passo.id} value={passo.id}>
+                      <AccordionTrigger>
+                        <span className="pr-2">
+                          <span className="mr-2 text-primary">{passo.codigo}</span>
+                          {passo.titulo}
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <DetalhePassoMicro passo={passo} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </section>
+            ))}
+          </div>
+        )}
       </CardContent>
+
+      <Dialog open={!!passoAberto} onOpenChange={(o) => !o && setPassoAberto(null)}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {passoAberto ? `${passoAberto.codigo} ${passoAberto.titulo}` : "Detalhe"}
+            </DialogTitle>
+          </DialogHeader>
+          {passoAberto && <DetalhePassoMicro passo={passoAberto} />}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
