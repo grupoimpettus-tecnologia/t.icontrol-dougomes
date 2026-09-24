@@ -133,7 +133,7 @@ function Overview() {
 
 const membroVazio = { nome: "", cargo: "", nivel: "", area: "", gestor_id: "", atribuicoes: "", ordem: 0 };
 
-function AbaColaboradores({ ws, membros, podeEditar }: { ws?: string; membros: Membro[]; podeEditar: boolean }) {
+function AbaColaboradores({ ws, membros, podeEditar }: { ws: string | undefined; membros: Membro[]; podeEditar: boolean }) {
   const qc = useQueryClient();
   const [grafico, setGrafico] = useState(false);
   const [editando, setEditando] = useState<(typeof membroVazio & { id?: string }) | null>(null);
@@ -235,7 +235,7 @@ function AbaColaboradores({ ws, membros, podeEditar }: { ws?: string; membros: M
 
 /* ---------------- Macro / Micro (versões) ---------------- */
 
-function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"; ws?: string; versoes: Versao[]; podeEditar: boolean }) {
+function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"; ws: string | undefined; versoes: Versao[]; podeEditar: boolean }) {
   const qc = useQueryClient();
   const [grafico, setGrafico] = useState(true);
   const [selecionada, setSelecionada] = useState<string | null>(null);

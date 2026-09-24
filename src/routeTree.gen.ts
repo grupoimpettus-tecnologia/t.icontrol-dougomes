@@ -22,6 +22,7 @@ import { Route as StatusSlugRouteImport } from './routes/status.$slug'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/_painel/configuracoes'
 import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_authenticated/_painel/dashboard'
+import { Route as AuthenticatedPainelOverviewRouteImport } from './routes/_authenticated/_painel/overview'
 import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
 import { Route as AuthenticatedPainelAdminGlobalConvitesRouteImport } from './routes/_authenticated/_painel/admin-global/convites'
 import { Route as AuthenticatedPainelAdminGlobalEmpresasRouteImport } from './routes/_authenticated/_painel/admin-global/empresas'
@@ -104,6 +105,12 @@ const AuthenticatedPainelDashboardRoute =
   AuthenticatedPainelDashboardRouteImport.update({
     id: '/dashboard',
     path: '/dashboard',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelOverviewRoute =
+  AuthenticatedPainelOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
 const AuthenticatedPainelPdvRoute = AuthenticatedPainelPdvRouteImport.update({
@@ -211,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
+  '/overview': typeof AuthenticatedPainelOverviewRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
   '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
+  '/overview': typeof AuthenticatedPainelOverviewRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
   '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -272,6 +281,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/_painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/_authenticated/_painel/dashboard': typeof AuthenticatedPainelDashboardRoute
+  '/_authenticated/_painel/overview': typeof AuthenticatedPainelOverviewRoute
   '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
   '/_authenticated/_painel/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/_authenticated/_painel/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/configuracoes'
     | '/dashboard'
+    | '/overview'
     | '/pdv'
     | '/admin-global/convites'
     | '/admin-global/empresas'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/configuracoes'
     | '/dashboard'
+    | '/overview'
     | '/pdv'
     | '/admin-global/convites'
     | '/admin-global/empresas'
@@ -363,6 +375,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/_authenticated/_painel/configuracoes'
     | '/_authenticated/_painel/dashboard'
+    | '/_authenticated/_painel/overview'
     | '/_authenticated/_painel/pdv'
     | '/_authenticated/_painel/admin-global/convites'
     | '/_authenticated/_painel/admin-global/empresas'
@@ -488,6 +501,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelDashboardRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/_painel/overview': {
+      id: '/_authenticated/_painel/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof AuthenticatedPainelOverviewRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/_painel/pdv': {
       id: '/_authenticated/_painel/pdv'
       path: '/pdv'
@@ -606,6 +626,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelConfiguracoesRoute: typeof AuthenticatedPainelConfiguracoesRoute
   AuthenticatedPainelDashboardRoute: typeof AuthenticatedPainelDashboardRoute
+  AuthenticatedPainelOverviewRoute: typeof AuthenticatedPainelOverviewRoute
   AuthenticatedPainelPdvRoute: typeof AuthenticatedPainelPdvRoute
   AuthenticatedPainelAdminGlobalConvitesRoute: typeof AuthenticatedPainelAdminGlobalConvitesRoute
   AuthenticatedPainelAdminGlobalEmpresasRoute: typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -624,6 +645,7 @@ interface AuthenticatedPainelRouteChildren {
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
   AuthenticatedPainelConfiguracoesRoute: AuthenticatedPainelConfiguracoesRoute,
   AuthenticatedPainelDashboardRoute: AuthenticatedPainelDashboardRoute,
+  AuthenticatedPainelOverviewRoute: AuthenticatedPainelOverviewRoute,
   AuthenticatedPainelPdvRoute: AuthenticatedPainelPdvRoute,
   AuthenticatedPainelAdminGlobalConvitesRoute:
     AuthenticatedPainelAdminGlobalConvitesRoute,
