@@ -13,12 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ExportarMenu } from "@/components/ExportarMenu";
+import { ExportarDocumentoMenu, ExportarMenu } from "@/components/ExportarMenu";
 import { OrgChart, type NoOrg } from "@/components/overview/OrgChart";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
 import { ConteudoRico } from "@/components/infra/ConteudoRico";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
+import { textoExportacao, type SecaoExportacao } from "@/lib/exportar";
 
 // Tabelas novas ainda não presentes nos tipos gerados.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,6 +54,59 @@ function BotaoGrafico({ grafico, onChange }: { grafico: boolean; onChange: (v: b
   );
 }
 
+const COLUNAS_COLABORADORES = [
+  { chave: "nome", titulo: "Nome" },
+  { chave: "cargo", titulo: "Cargo" },
+  { chave: "nivel", titulo: "Nível" },
+  { chave: "area", titulo: "Área" },
+  { chave: "gestor", titulo: "Reporta a" },
+  { chave: "atribuicoes", titulo: "Atribuições" },
+];
+
+const COLUNAS_ORGANOGRAMA = [
+  { chave: "bloco", titulo: "Bloco" },
+  { chave: "detalhe", titulo: "Detalhe" },
+  { chave: "abaixo_de", titulo: "Abaixo de" },
+  { chave: "detalhes", titulo: "Conteúdo / detalhes" },
+];
+
+const COLUNAS_MICRO_FRANQUEADO = [
+  { chave: "fase", titulo: "Fase" },
+  { chave: "codigo", titulo: "Código" },
+  { chave: "passo", titulo: "Passo" },
+  { chave: "ti", titulo: "T.I. da Franqueadora" },
+  { chave: "entregavel", titulo: "Entregável" },
+  { chave: "ponto_atencao", titulo: "Ponto de atenção" },
+];
+
+function linhasOrganograma(nos: NoOrg[]) {
+  const porId = new Map(nos.map((n) => [n.id, n]));
+  return nos.map((n) => ({
+    bloco: n.titulo,
+    detalhe: n.subtitulo ?? "",
+    abaixo_de: n.parent ? (porId.get(n.parent)?.titulo ?? "") : "Topo",
+    detalhes: textoExportacao(n.conteudo),
+  }));
+}
+
+function linhasColaboradores(membros: Membro[]) {
+  const nomePorId = new Map(membros.map((m) => [m.id, m.nome]));
+  return membros.map((m) => ({
+    ...m,
+    gestor: m.gestor_id ? nomePorId.get(m.gestor_id) ?? "" : "",
+  }));
+}
+
+function textoPassoMicro(passo: {
+  tiTexto?: string;
+  tiItens?: string[];
+}) {
+  const partes: string[] = [];
+  if (passo.tiTexto) partes.push(passo.tiTexto);
+  if (passo.tiItens?.length) partes.push(passo.tiItens.map((item) => `• ${item}`).join("\n"));
+  return partes.join("\n\n");
+}
+
 function Overview() {
   const atual = useCurrentWorkspace();
   const ws = atual?.workspace.id;
@@ -76,6 +130,60 @@ function Overview() {
     },
   });
 
+  const listaMembros = membros.data ?? [];
+  const listaVersoes = versoes.data ?? [];
+  const versaoMacro = listaVersoes.find((v) => v.tipo === "macro" && v.atual) ?? listaVersoes.filter((v) => v.tipo === "macro").at(-1);
+  const versaoMicro = listaVersoes.find((v) => v.tipo === "micro" && v.atual) ?? listaVersoes.filter((v) => v.tipo === "micro").at(-1);
+
+  const secoesExportacaoCompleta = useMemo((): SecaoExportacao[] => {
+    const secoes: SecaoExportacao[] = [
+      {
+        titulo: "Colaboradores",
+        colunas: COLUNAS_COLABORADORES,
+        linhas: linhasColaboradores(listaMembros),
+      },
+    ];
+    if (versaoMacro) {
+      secoes.push({
+        titulo: `Macro área — ${versaoMacro.nome}`,
+        colunas: COLUNAS_ORGANOGRAMA,
+        linhas: linhasOrganograma(versaoMacro.nodes),
+      });
+    }
+    if (versaoMicro) {
+      secoes.push({
+        titulo: `Micro área — ${versaoMicro.nome}`,
+        colunas: COLUNAS_ORGANOGRAMA,
+        linhas: linhasOrganograma(versaoMicro.nodes),
+      });
+    }
+    secoes.push({
+      titulo: "Por colaborador",
+      colunas: COLUNAS_COLABORADORES,
+      linhas: linhasColaboradores(listaMembros),
+    });
+    secoes.push({
+      titulo: "Macro área p/ franqueado",
+      colunas: COLUNAS_ORGANOGRAMA.filter((c) => c.chave !== "detalhes"),
+      linhas: linhasOrganograma(NOS_MACRO_FRANQUEADO).map(({ detalhes: _d, ...resto }) => resto),
+    });
+    secoes.push({
+      titulo: "Micro área p/ franqueado",
+      colunas: COLUNAS_MICRO_FRANQUEADO,
+      linhas: FASES_MICRO_FRANQUEADO.flatMap((fase) =>
+        fase.passos.map((passo) => ({
+          fase: `${fase.codigo}. ${fase.titulo} — ${fase.subtitulo}`,
+          codigo: passo.codigo,
+          passo: passo.titulo,
+          ti: textoPassoMicro(passo),
+          entregavel: passo.entregavel ?? "",
+          ponto_atencao: passo.pontoAtencao ?? "",
+        })),
+      ),
+    });
+    return secoes;
+  }, [listaMembros, versaoMacro, versaoMicro]);
+
   function alternarApresentacao() {
     const v = !apresentacao;
     setApresentacao(v);
@@ -94,16 +202,16 @@ function Overview() {
         <TabsTrigger value="micro-franqueado">Micro área p/ franqueado</TabsTrigger>
       </TabsList>
       <TabsContent value="colaboradores">
-        <AbaColaboradores ws={ws} membros={membros.data ?? []} podeEditar={podeEditar && !apresentacao} />
+        <AbaColaboradores ws={ws} membros={listaMembros} podeEditar={podeEditar && !apresentacao} />
       </TabsContent>
       <TabsContent value="macro">
-        <AbaVersoes tipo="macro" ws={ws} versoes={(versoes.data ?? []).filter((v) => v.tipo === "macro")} podeEditar={podeEditar && !apresentacao} />
+        <AbaVersoes tipo="macro" ws={ws} versoes={listaVersoes.filter((v) => v.tipo === "macro")} podeEditar={podeEditar && !apresentacao} />
       </TabsContent>
       <TabsContent value="micro">
-        <AbaVersoes tipo="micro" ws={ws} versoes={(versoes.data ?? []).filter((v) => v.tipo === "micro")} podeEditar={podeEditar && !apresentacao} />
+        <AbaVersoes tipo="micro" ws={ws} versoes={listaVersoes.filter((v) => v.tipo === "micro")} podeEditar={podeEditar && !apresentacao} />
       </TabsContent>
       <TabsContent value="individual">
-        <AbaIndividual membros={membros.data ?? []} />
+        <AbaIndividual membros={listaMembros} />
       </TabsContent>
       <TabsContent value="macro-franqueado">
         <AbaMacroFranqueado />
@@ -133,7 +241,15 @@ function Overview() {
           <h1 className="text-2xl font-bold">Overviewer do time</h1>
           <p className="text-sm text-muted-foreground">Visão da área: colaboradores, estrutura macro e micro e atribuições.</p>
         </div>
-        <Button onClick={alternarApresentacao}><Maximize className="mr-2 h-4 w-4" /> Modo apresentação</Button>
+        <div className="flex flex-wrap gap-2">
+          <ExportarDocumentoMenu
+            titulo={`Overviewer do time — ${atual?.workspace.nome ?? "TI"}`}
+            secoes={secoesExportacaoCompleta}
+            label="Exportar tudo"
+            formatos={["pdf", "xlsx", "pptx"]}
+          />
+          <Button onClick={alternarApresentacao}><Maximize className="mr-2 h-4 w-4" /> Modo apresentação</Button>
+        </div>
       </div>
       {conteudo}
     </div>
@@ -181,8 +297,9 @@ function AbaColaboradores({ ws, membros, podeEditar }: { ws: string | undefined;
           <BotaoGrafico grafico={grafico} onChange={setGrafico} />
           <ExportarMenu
             titulo="Colaboradores da T.I."
-            colunas={[{ chave: "nome", titulo: "Nome" }, { chave: "cargo", titulo: "Cargo" }, { chave: "nivel", titulo: "Nível" }, { chave: "area", titulo: "Área" }, { chave: "gestor", titulo: "Reporta a" }, { chave: "atribuicoes", titulo: "Atribuições" }]}
-            linhas={membros.map((m) => ({ ...m, gestor: m.gestor_id ? nomePorId.get(m.gestor_id) : "" }))}
+            colunas={COLUNAS_COLABORADORES}
+            linhas={linhasColaboradores(membros)}
+            size="sm"
           />
           {podeEditar && <Button size="sm" onClick={() => setEditando({ ...membroVazio })}><Plus className="mr-2 h-4 w-4" /> Colaborador</Button>}
         </div>
@@ -302,6 +419,12 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
           <CardTitle>Organograma — {rotulo}</CardTitle>
           <div className="flex flex-wrap gap-2">
             <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+            <ExportarMenu
+              titulo={`${rotulo}${versao ? ` — ${versao.nome}` : ""}`}
+              colunas={COLUNAS_ORGANOGRAMA}
+              linhas={versao ? linhasOrganograma(versao.nodes) : []}
+              size="sm"
+            />
             {podeEditar && versao && <Button size="sm" variant="outline" onClick={() => setEditando({ id: versao.id, tipo, nome: versao.nome, periodo: versao.periodo, atual: versao.atual, nodes: versao.nodes.map((n) => ({ ...n, conteudo: n.conteudo ?? "" })) })}><Pencil className="mr-2 h-4 w-4" /> Editar</Button>}
             {podeEditar && versao && <Button size="sm" variant="outline" onClick={() => setEditando({ tipo, nome: `Nova visão`, periodo: String(new Date().getFullYear()), atual: true, nodes: versao.nodes.map((n) => ({ ...n, id: crypto.randomUUID().slice(0, 8), conteudo: n.conteudo ?? "" })) })}><Copy className="mr-2 h-4 w-4" /> Nova versão a partir desta</Button>}
             {podeEditar && <Button size="sm" onClick={() => setEditando({ tipo, nome: "", periodo: "", atual: !versoes.length, nodes: [novoNo()] })}><Plus className="mr-2 h-4 w-4" /> Versão</Button>}
@@ -428,6 +551,12 @@ function AbaIndividual({ membros }: { membros: Membro[] }) {
             {membros.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
           </select>
           <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+          <ExportarMenu
+            titulo="Por colaborador"
+            colunas={COLUNAS_COLABORADORES}
+            linhas={linhasColaboradores(membros)}
+            size="sm"
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -493,7 +622,15 @@ function AbaMacroFranqueado() {
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
         <CardTitle>Macro área p/ franqueado</CardTitle>
-        <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+        <div className="flex flex-wrap gap-2">
+          <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+          <ExportarMenu
+            titulo="Macro área p/ franqueado"
+            colunas={COLUNAS_ORGANOGRAMA.filter((c) => c.chave !== "detalhes")}
+            linhas={linhasOrganograma(NOS_MACRO_FRANQUEADO).map(({ detalhes: _d, ...resto }) => resto)}
+            size="sm"
+          />
+        </div>
       </CardHeader>
       <CardContent>
         {grafico ? (
@@ -720,7 +857,24 @@ function AbaMicroFranqueado() {
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
         <CardTitle>Micro área p/ franqueado</CardTitle>
-        <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+        <div className="flex flex-wrap gap-2">
+          <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+          <ExportarMenu
+            titulo="Micro área p/ franqueado"
+            colunas={COLUNAS_MICRO_FRANQUEADO}
+            linhas={FASES_MICRO_FRANQUEADO.flatMap((fase) =>
+              fase.passos.map((passo) => ({
+                fase: `${fase.codigo}. ${fase.titulo} — ${fase.subtitulo}`,
+                codigo: passo.codigo,
+                passo: passo.titulo,
+                ti: textoPassoMicro(passo),
+                entregavel: passo.entregavel ?? "",
+                ponto_atencao: passo.pontoAtencao ?? "",
+              })),
+            )}
+            size="sm"
+          />
+        </div>
       </CardHeader>
       <CardContent>
         {grafico ? (

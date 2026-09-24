@@ -43,7 +43,7 @@ function Ramo({
       {filhos.length > 0 && (
         <ul>
           {filhos.map((f) => (
-            <Ramo key={f.id} no={f} todos={todos} onSelect={onSelect} />
+            <Ramo key={f.id} no={f} todos={todos} {...(onSelect ? { onSelect } : {})} />
           ))}
         </ul>
       )}
@@ -69,7 +69,7 @@ export function OrgChart({
       <div className={`org-tree mx-auto ${fullWidth ? "w-full max-w-4xl" : "w-max"}`}>
         <ul>
           {raizes.map((r) => (
-            <Ramo key={r.id} no={r} todos={nos} onSelect={onSelect} />
+            <Ramo key={r.id} no={r} todos={nos} {...(onSelect ? { onSelect } : {})} />
           ))}
         </ul>
       </div>
