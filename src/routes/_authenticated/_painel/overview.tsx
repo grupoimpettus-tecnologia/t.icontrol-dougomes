@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Maximize, Network, Pencil, Plus, Table2, Trash2, X } from "lucide-react";
+import { Construction, Copy, Maximize, Network, Pencil, Plus, Table2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -84,11 +84,13 @@ function Overview() {
 
   const conteudo = (
     <Tabs defaultValue="colaboradores" className="space-y-4">
-      <TabsList className="flex-wrap">
+      <TabsList className="flex-wrap h-auto">
         <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
         <TabsTrigger value="macro">Macro área</TabsTrigger>
         <TabsTrigger value="micro">Micro área</TabsTrigger>
         <TabsTrigger value="individual">Por colaborador</TabsTrigger>
+        <TabsTrigger value="macro-franqueado">Macro área p/ franqueado</TabsTrigger>
+        <TabsTrigger value="micro-franqueado">Micro área p/ franqueado</TabsTrigger>
       </TabsList>
       <TabsContent value="colaboradores">
         <AbaColaboradores ws={ws} membros={membros.data ?? []} podeEditar={podeEditar && !apresentacao} />
@@ -101,6 +103,12 @@ function Overview() {
       </TabsContent>
       <TabsContent value="individual">
         <AbaIndividual membros={membros.data ?? []} />
+      </TabsContent>
+      <TabsContent value="macro-franqueado">
+        <AbaMacroFranqueado />
+      </TabsContent>
+      <TabsContent value="micro-franqueado">
+        <AbaMicroFranqueado />
       </TabsContent>
     </Tabs>
   );
@@ -439,6 +447,83 @@ function AbaIndividual({ membros }: { membros: Membro[] }) {
             </div>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ---------------- Macro área p/ franqueado ---------------- */
+
+const NOS_MACRO_FRANQUEADO: NoOrg[] = [
+  { id: "raiz", titulo: "Para o franqueado", parent: null },
+  { id: "nova-loja", titulo: "Nova Loja", parent: "raiz" },
+  { id: "pos", titulo: "Pós", parent: "raiz" },
+  { id: "nl-1", titulo: "Fornece acesso ao e-mail corporativo", parent: "nova-loja" },
+  { id: "nl-2", titulo: "Fornece modelo padrão para aquisição de equipamentos da loja", parent: "nova-loja" },
+  { id: "nl-3", titulo: "Acompanha e explica ao time de TI da loja durante a construção da unidade", parent: "nova-loja" },
+  { id: "nl-4", titulo: "Valida junto ao time de TI da loja layout de equipamentos instalados e configurados", parent: "nova-loja" },
+  { id: "nl-5", titulo: "Apoia implantação do sistema de venda (PDV)", parent: "nova-loja" },
+  { id: "nl-6", titulo: "Valida implantação do sistema de venda (PDV)", parent: "nova-loja" },
+  { id: "nl-7", titulo: "Solicita treinamento de sistema de venda (PDV) para o time operacional da unidade", parent: "nova-loja" },
+  { id: "pos-1", titulo: "Solicita treinamento de retaguarda de sistema de venda (PDV) para o time de gestão da unidade (gerente, operador e franqueado)", parent: "pos" },
+  { id: "pos-2", titulo: "Apresenta fluxo de atendimento do sistema de vendas", parent: "pos" },
+  { id: "pos-3", titulo: "Apoia dúvidas de sobre cardápio no sistema", parent: "pos" },
+];
+
+function ListaHierarquica({ nos, parent = null, nivel = 0 }: { nos: NoOrg[]; parent?: string | null; nivel?: number }) {
+  const filhos = nos.filter((n) => n.parent === parent);
+  if (!filhos.length) return null;
+  return (
+    <ul className={nivel === 0 ? "space-y-3 text-sm" : "mt-2 space-y-1.5 border-l border-border pl-4"}>
+      {filhos.map((n) => (
+        <li key={n.id}>
+          <p className={nivel <= 1 ? "font-semibold" : "text-muted-foreground"}>{n.titulo}</p>
+          <ListaHierarquica nos={nos} parent={n.id} nivel={nivel + 1} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AbaMacroFranqueado() {
+  const [grafico, setGrafico] = useState(true);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+        <CardTitle>Macro área p/ franqueado</CardTitle>
+        <BotaoGrafico grafico={grafico} onChange={setGrafico} />
+      </CardHeader>
+      <CardContent>
+        {grafico ? (
+          <div className="org-franqueado">
+            <OrgChart nos={NOS_MACRO_FRANQUEADO} />
+          </div>
+        ) : (
+          <ListaHierarquica nos={NOS_MACRO_FRANQUEADO} />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ---------------- Micro área p/ franqueado ---------------- */
+
+function AbaMicroFranqueado() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-3">
+          Micro área p/ franqueado
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+            <Construction className="h-3 w-3" /> Em desenvolvimento
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Esta visão ainda está em desenvolvimento e será disponibilizada em breve.
+        </p>
       </CardContent>
     </Card>
   );
