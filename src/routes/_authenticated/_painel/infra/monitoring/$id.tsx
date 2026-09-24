@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Loader2,
   Pause,
@@ -43,6 +45,8 @@ import { verificarAgora } from "@/lib/monitors.functions";
 import { cn } from "@/lib/utils";
 import { ConfigurarAlertas } from "@/components/monitoramento/ConfigurarAlertas";
 
+const INCIDENTES_POR_PAGINA = 5;
+
 export const Route = createFileRoute("/_authenticated/_painel/infra/monitoring/$id")({
   head: () => ({ meta: [
     { title: "Detalhes do monitor | TIControl" }, { name: "description", content: "Histórico, incidentes e alertas do monitor selecionado." },
@@ -54,12 +58,13 @@ export const Route = createFileRoute("/_authenticated/_painel/infra/monitoring/$
 
 function DetalheMonitor() {
   const { id } = Route.useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const atual = useCurrentWorkspace();
   const podeEditar = atual ? ["master", "admin", "tecnico"].includes(atual.role) : false;
-  const [editando, setEditando] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const executar = useServerFn(verificarAgora);
+  const [editando, setEditando] = useState(false);
+  const [paginaIncidentes, setPaginaIncidentes] = useState(1);
 
   const monitor = useQuery({
     queryKey: ["monitor", id],
@@ -95,7 +100,7 @@ function DetalheMonitor() {
         .select("*")
         .eq("monitor_id", id)
         .order("iniciado_em", { ascending: false })
-        .limit(20);
+        .limit(100);
       if (error) throw error;
       return data ?? [];
     },
@@ -180,6 +185,15 @@ function DetalheMonitor() {
     typeof window !== "undefined"
       ? `${window.location.origin}/api/public/heartbeat/${m.heartbeat_token}`
       : "";
+
+  const listaIncidentes = incidentes.data ?? [];
+  const totalPaginasIncidentes = Math.max(1, Math.ceil(listaIncidentes.length / INCIDENTES_POR_PAGINA));
+  const paginaAtualIncidentes = Math.min(paginaIncidentes, totalPaginasIncidentes);
+  const inicioIncidentes = (paginaAtualIncidentes - 1) * INCIDENTES_POR_PAGINA;
+  const incidentesPagina = listaIncidentes.slice(
+    inicioIncidentes,
+    inicioIncidentes + INCIDENTES_POR_PAGINA,
+  );
 
   return (
     <div className="space-y-6">
@@ -331,33 +345,84 @@ function DetalheMonitor() {
           <CardTitle className="text-base">Incidentes</CardTitle>
         </CardHeader>
         <CardContent>
-          {!incidentes.data?.length ? (
+          {!listaIncidentes.length ? (
             <p className="text-sm text-muted-foreground">Nenhum incidente registrado.</p>
           ) : (
-            <ul className="space-y-3">
-              {incidentes.data.map((inc) => (
-                <li key={inc.id} className="flex flex-wrap items-center justify-between gap-2 border-b pb-3 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {new Date(inc.iniciado_em).toLocaleString("pt-BR")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{inc.causa ?? "Falha"}</p>
-                  </div>
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-medium",
-                      inc.resolvido_em
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                        : "bg-destructive/15 text-destructive",
-                    )}
+            <div className="space-y-4">
+              <ul className="space-y-3">
+                {incidentesPagina.map((inc) => (
+                  <li
+                    key={inc.id}
+                    className="flex flex-wrap items-center justify-between gap-2 border-b pb-3 last:border-0"
                   >
-                    {inc.resolvido_em
-                      ? `Resolvido em ${formatarDuracao(inc.duracao_segundos)}`
-                      : "Em aberto"}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {new Date(inc.iniciado_em).toLocaleString("pt-BR")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{inc.causa ?? "Falha"}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-medium",
+                        inc.resolvido_em
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          : "bg-destructive/15 text-destructive",
+                      )}
+                    >
+                      {inc.resolvido_em
+                        ? `Resolvido em ${formatarDuracao(inc.duracao_segundos)}`
+                        : "Em aberto"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              {totalPaginasIncidentes > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <p className="text-xs text-muted-foreground">
+                    Página {paginaAtualIncidentes} de {totalPaginasIncidentes}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={paginaAtualIncidentes <= 1}
+                      onClick={() => setPaginaIncidentes((p) => Math.max(1, p - 1))}
+                      aria-label="Página anterior"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPaginasIncidentes }, (_, i) => i + 1).map((pagina) => (
+                      <Button
+                        key={pagina}
+                        type="button"
+                        variant={pagina === paginaAtualIncidentes ? "default" : "outline"}
+                        size="icon"
+                        className="h-8 w-8 text-xs"
+                        onClick={() => setPaginaIncidentes(pagina)}
+                      >
+                        {pagina}
+                      </Button>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={paginaAtualIncidentes >= totalPaginasIncidentes}
+                      onClick={() =>
+                        setPaginaIncidentes((p) => Math.min(totalPaginasIncidentes, p + 1))
+                      }
+                      aria-label="Próxima página"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
