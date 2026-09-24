@@ -99,6 +99,13 @@
       "when": 1790100000000,
       "tag": "0013_phone_stock_estoque_celulares",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790110000000,
+      "tag": "0014_email_padrao_alertas_monitores",
+      "breakpoints": true
     }
   ]
 }

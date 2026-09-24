@@ -11,9 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { simularQuedaMonitor } from "@/lib/monitors.functions";
 
+const EMAIL_PADRAO_ALERTA = "ti@grupoimpettus.com.br";
+
 export function ConfigurarAlertas({ monitorId, workspaceId }: { monitorId: string; workspaceId: string }) {
   const queryClient = useQueryClient();
-  const [emails, setEmails] = useState("");
+  const [emails, setEmails] = useState(EMAIL_PADRAO_ALERTA);
   const [perfis, setPerfis] = useState<string[]>([]);
   const simularQueda = useServerFn(simularQuedaMonitor);
 
@@ -35,10 +37,35 @@ export function ConfigurarAlertas({ monitorId, workspaceId }: { monitorId: strin
   });
 
   useEffect(() => {
-    if (!destinos.data) return;
-    setEmails(destinos.data.filter((item) => item.canal === "email").map((item) => item.email).filter(Boolean).join(", "));
-    setPerfis(destinos.data.filter((item) => item.canal === "push" && item.profile_id).map((item) => item.profile_id as string));
-  }, [destinos.data]);
+    if (!destinos.data || destinos.isFetching) return;
+
+    const cadastrados = destinos.data
+      .filter((item) => item.canal === "email")
+      .map((item) => item.email)
+      .filter(Boolean)
+      .join(", ");
+
+    setEmails(cadastrados || EMAIL_PADRAO_ALERTA);
+    setPerfis(
+      destinos.data
+        .filter((item) => item.canal === "push" && item.profile_id)
+        .map((item) => item.profile_id as string),
+    );
+
+    if (cadastrados) return;
+
+    void (async () => {
+      const { error } = await supabase.from("monitor_notification_recipients").insert({
+        monitor_id: monitorId,
+        workspace_id: workspaceId,
+        canal: "email",
+        email: EMAIL_PADRAO_ALERTA,
+      });
+      if (!error) {
+        await queryClient.invalidateQueries({ queryKey: ["destinos-alerta", monitorId] });
+      }
+    })();
+  }, [destinos.data, destinos.isFetching, monitorId, workspaceId, queryClient]);
 
   const salvar = useMutation({
     mutationFn: async () => {
@@ -99,7 +126,7 @@ export function ConfigurarAlertas({ monitorId, workspaceId }: { monitorId: strin
             id="emails-alerta"
             value={emails}
             onChange={(evento) => setEmails(evento.target.value)}
-            placeholder="ti@empresa.com.br, plantao@empresa.com.br"
+            placeholder={EMAIL_PADRAO_ALERTA}
           />
           <p className="text-xs text-muted-foreground">Separe vários endereços por vírgula.</p>
         </div>

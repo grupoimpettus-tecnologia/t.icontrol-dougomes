@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -24,6 +24,8 @@ import {
 import { verificarAgora } from "@/lib/monitors.functions";
 import { cn } from "@/lib/utils";
 import { ExportarMenu } from "@/components/ExportarMenu";
+
+const EMAIL_PADRAO_ALERTA = "ti@grupoimpettus.com.br";
 
 export const Route = createFileRoute("/_authenticated/_painel/infra/monitoring/")({
   head: () => ({ meta: [
@@ -57,6 +59,46 @@ function PaginaMonitoramento() {
       return data as Monitor[];
     },
   });
+
+  useEffect(() => {
+    if (!workspaceId || !podeEditar || !monitores.data?.length) return;
+    let cancelado = false;
+
+    void (async () => {
+      const ids = monitores.data.map((m) => m.id);
+      const { data: destinatarios, error } = await supabase
+        .from("monitor_notification_recipients")
+        .select("monitor_id")
+        .eq("workspace_id", workspaceId)
+        .eq("canal", "email")
+        .in("monitor_id", ids);
+
+      if (cancelado || error) return;
+
+      const comEmail = new Set((destinatarios ?? []).map((item) => item.monitor_id));
+      const faltantes = monitores.data.filter((m) => !comEmail.has(m.id));
+      if (!faltantes.length) return;
+
+      const { error: erroInsert } = await supabase.from("monitor_notification_recipients").insert(
+        faltantes.map((m) => ({
+          monitor_id: m.id,
+          workspace_id: workspaceId,
+          canal: "email" as const,
+          email: EMAIL_PADRAO_ALERTA,
+        })),
+      );
+
+      if (!cancelado && !erroInsert) {
+        toast.success("E-mail padrão de alerta aplicado", {
+          description: `${EMAIL_PADRAO_ALERTA} em ${faltantes.length} monitor(es).`,
+        });
+      }
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [workspaceId, podeEditar, monitores.data]);
 
   const checks = useQuery({
     queryKey: ["monitor-checks-resumo", workspaceId],
