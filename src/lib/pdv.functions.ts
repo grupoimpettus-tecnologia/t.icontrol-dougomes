@@ -207,3 +207,104 @@ export const enviarConfirmacaoImplantacao = createServerFn({ method: "POST" })
 
     return { ok: true, destinatarios, assunto };
   });
+
+const EMAIL_TESTE_PADRAO = "ti@grupoimpettus.com.br";
+
+/** Envia um e-mail de demonstração da confirmação de implantação (fase Nova Loja). */
+export const enviarTesteConfirmacaoImplantacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        email: z.string().email().default(EMAIL_TESTE_PADRAO),
+      })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { smtpConfigurado, enviarEmailSmtp } = await import("@/lib/notifications.server");
+    if (!smtpConfigurado()) {
+      throw new Error("SMTP não configurado no servidor (DEFAULT_SMTP_HOST/USER/PASSWORD/FROM).");
+    }
+
+    const fase = FASES_MICRO_FRANQUEADO.find((f) => f.id === "nova-loja");
+    if (!fase) throw new Error("Fase não encontrada");
+
+    const lojaDemo = {
+      nome: "Loja Teste — Espetto Carioca",
+      marca: "Espetto Carioca",
+      cnpj: "53.011.112/0001-04",
+    };
+
+    const evidenciasDemo = new Map<string, string | null>([
+      [
+        "nl-1",
+        "Conta criada: lojateste@espettocarioca.com.br. Credenciais enviadas ao consultor e manual de primeiros passos compartilhado.",
+      ],
+      [
+        "nl-2",
+        "Cartilha de Hardware entregue em PDF com lista de fornecedores homologados.",
+      ],
+    ]);
+
+    const destinatario = data.email.trim() || EMAIL_TESTE_PADRAO;
+    const assunto = `[TIControl] Entrega Implantação de loja - ${lojaDemo.nome}`;
+
+    const intro =
+      "Oi pessoal, tudo bem?\n\n" +
+      "A loja está implantada, segue todo resumo que foi seguido por parte de T.I da franqueadora e em conjunto com o t.i da loja para realizar a entrega:";
+
+    const cabecalhoLoja = [
+      `Loja: ${lojaDemo.nome}`,
+      `Marca: ${lojaDemo.marca}`,
+      `CNPJ: ${lojaDemo.cnpj}`,
+      `Fase: ${fase.codigo}. ${fase.titulo} — ${fase.subtitulo}`,
+      "",
+      "(Este é um e-mail de TESTE da jornada de confirmação de implantação.)",
+    ].join("\n");
+
+    const checklistTexto = fase.passos
+      .map((passo) => {
+        const status = evidenciasDemo.has(passo.id) ? "Concluída" : "Pendente";
+        return (
+          `${montarDetalhePassoTexto(passo, evidenciasDemo.get(passo.id))}\n` +
+          `Status no checklist: ${status}`
+        );
+      })
+      .join("\n\n------------------------------\n\n");
+
+    const texto = `${intro}\n\n${cabecalhoLoja}\n\n${checklistTexto}`;
+
+    const checklistHtml = fase.passos
+      .map((passo) => {
+        const status = evidenciasDemo.has(passo.id) ? "Concluída" : "Pendente";
+        return (
+          `<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">` +
+          montarDetalhePassoHtml(passo, evidenciasDemo.get(passo.id)) +
+          `<p style="margin:10px 0 0;font-size:13px;"><strong>Status no checklist:</strong> ${escaparHtml(status)}</p>` +
+          `</div>`
+        );
+      })
+      .join("");
+
+    const html =
+      `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#0f172a;">` +
+      `<p style="display:inline-block;padding:4px 10px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:600;">E-MAIL DE TESTE</p>` +
+      `<p>Oi pessoal, tudo bem?</p>` +
+      `<p>A loja está implantada, segue todo resumo que foi seguido por parte de T.I da franqueadora e em conjunto com o t.i da loja para realizar a entrega:</p>` +
+      `<p><strong>Loja:</strong> ${escaparHtml(lojaDemo.nome)}<br/>` +
+      `<strong>Marca:</strong> ${escaparHtml(lojaDemo.marca)}<br/>` +
+      `<strong>CNPJ:</strong> ${escaparHtml(lojaDemo.cnpj)}<br/>` +
+      `<strong>Fase:</strong> ${escaparHtml(`${fase.codigo}. ${fase.titulo} — ${fase.subtitulo}`)}</p>` +
+      `<hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0;" />` +
+      checklistHtml +
+      `</div>`;
+
+    await enviarEmailSmtp({
+      to: destinatario,
+      subject: assunto,
+      text: texto,
+      html,
+    });
+
+    return { ok: true, destinatarios: [destinatario], assunto };
+  });

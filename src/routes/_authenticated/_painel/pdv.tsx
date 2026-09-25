@@ -19,7 +19,7 @@ import { DetalhePassoMicro } from "@/components/overview/DetalhePassoMicro";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { enviarConfirmacaoImplantacao } from "@/lib/pdv.functions";
+import { enviarConfirmacaoImplantacao, enviarTesteConfirmacaoImplantacao } from "@/lib/pdv.functions";
 import {
   FASES_MICRO_FRANQUEADO,
   TOTAL_PASSOS_MICRO,
@@ -129,6 +129,7 @@ function AbaImplantacaoLoja() {
   const ws = atual?.workspace.id;
   const podeEditar = atual?.role === "master" || atual?.role === "admin" || atual?.role === "tecnico";
   const qc = useQueryClient();
+  const enviarTesteFn = useServerFn(enviarTesteConfirmacaoImplantacao);
   const [cadastro, setCadastro] = useState<typeof lojaVazia | null>(null);
   const [editando, setEditando] = useState<(typeof lojaVazia & { id: string; status: StatusLoja }) | null>(null);
   const [checklistLoja, setChecklistLoja] = useState<LojaPdv | null>(null);
@@ -168,6 +169,18 @@ function AbaImplantacaoLoja() {
     }
     return mapa;
   }, [etapas.data]);
+
+  const enviarTeste = useMutation({
+    mutationFn: async () =>
+      enviarTesteFn({ data: { email: "ti@grupoimpettus.com.br" } }),
+    onSuccess: (res) => {
+      toast.success("E-mail de teste enviado", {
+        description: `Enviado para ${res.destinatarios.join(", ")}`,
+      });
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível enviar o e-mail de teste", { description: e.message }),
+  });
 
   const criar = useMutation({
     mutationFn: async (dados: typeof lojaVazia) => {
@@ -238,11 +251,24 @@ function AbaImplantacaoLoja() {
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <CardTitle>Implantação de loja</CardTitle>
-          {podeEditar && (
-            <Button size="sm" onClick={() => setCadastro({ ...lojaVazia })}>
-              <Plus className="mr-2 h-4 w-4" /> Nova loja
-            </Button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {podeEditar && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={enviarTeste.isPending}
+                onClick={() => enviarTeste.mutate()}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                {enviarTeste.isPending ? "Enviando teste..." : "Enviar e-mail de teste"}
+              </Button>
+            )}
+            {podeEditar && (
+              <Button size="sm" onClick={() => setCadastro({ ...lojaVazia })}>
+                <Plus className="mr-2 h-4 w-4" /> Nova loja
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
