@@ -37,6 +37,59 @@ function montarAlerta(
   return { assunto, texto, html, tituloPush, corpoPush, textoLog: texto };
 }
 
+export function smtpConfigurado() {
+  return Boolean(
+    process.env["DEFAULT_SMTP_HOST"] &&
+      process.env["DEFAULT_SMTP_USER"] &&
+      process.env["DEFAULT_SMTP_PASSWORD"] &&
+      process.env["DEFAULT_SMTP_FROM"],
+  );
+}
+
+/** Envia e-mail usando o SMTP já configurado no servidor (DEFAULT_SMTP_*). */
+export async function enviarEmailSmtp(opcoes: {
+  to: string | string[];
+  subject: string;
+  text: string;
+  html: string;
+}) {
+  if (!smtpConfigurado()) {
+    throw new Error("SMTP não configurado no servidor (DEFAULT_SMTP_HOST/USER/PASSWORD/FROM).");
+  }
+
+  const nodemailer = await import("nodemailer");
+  const configurada = Number(process.env["DEFAULT_SMTP_PORT"] ?? 587);
+  const portas = Array.from(new Set([465, configurada, 587]));
+  let ultimoErro = "Falha no envio";
+
+  for (const porta of portas) {
+    try {
+      const transporte = nodemailer.createTransport({
+        host: process.env["DEFAULT_SMTP_HOST"],
+        port: porta,
+        secure: porta === 465,
+        requireTLS: porta !== 465,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        tls: { servername: process.env["DEFAULT_SMTP_HOST"] },
+        auth: { user: process.env["DEFAULT_SMTP_USER"], pass: process.env["DEFAULT_SMTP_PASSWORD"] },
+      });
+      await transporte.sendMail({
+        from: process.env["DEFAULT_SMTP_FROM"],
+        to: opcoes.to,
+        subject: opcoes.subject,
+        text: opcoes.text,
+        html: opcoes.html,
+      });
+      return;
+    } catch (erro) {
+      ultimoErro = `porta ${porta}: ${erro instanceof Error ? erro.message : "falha"}`;
+    }
+  }
+
+  throw new Error(ultimoErro);
+}
+
 export async function enviarAlertasMonitor(monitor: Monitor, resultado: Resultado, evento: "indisponivel" | "recuperado") {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [{ data: destinos }, { data: workspace }] = await Promise.all([
@@ -51,37 +104,16 @@ export async function enviarAlertasMonitor(monitor: Monitor, resultado: Resultad
   const perfis = destinos.filter((item) => item.canal === "push" && item.profile_id).map((item) => item.profile_id as string);
 
   if (emails.length) {
-    let ultimoErro = "Falha no envio";
     let enviado = false;
+    let ultimoErro = "Falha no envio";
     try {
-      const nodemailer = await import("nodemailer");
-      const configurada = Number(process.env["DEFAULT_SMTP_PORT"] ?? 587);
-      const portas = Array.from(new Set([465, configurada, 587]));
-      for (const porta of portas) {
-        try {
-          const transporte = nodemailer.createTransport({
-            host: process.env["DEFAULT_SMTP_HOST"],
-            port: porta,
-            secure: porta === 465,
-            requireTLS: porta !== 465,
-            connectionTimeout: 15000,
-            greetingTimeout: 15000,
-            tls: { servername: process.env["DEFAULT_SMTP_HOST"] },
-            auth: { user: process.env["DEFAULT_SMTP_USER"], pass: process.env["DEFAULT_SMTP_PASSWORD"] },
-          });
-          await transporte.sendMail({
-            from: process.env["DEFAULT_SMTP_FROM"],
-            to: emails,
-            subject: alerta.assunto,
-            text: alerta.texto,
-            html: alerta.html,
-          });
-          enviado = true;
-          break;
-        } catch (erro) {
-          ultimoErro = `porta ${porta}: ${erro instanceof Error ? erro.message : "falha"}`;
-        }
-      }
+      await enviarEmailSmtp({
+        to: emails,
+        subject: alerta.assunto,
+        text: alerta.texto,
+        html: alerta.html,
+      });
+      enviado = true;
     } catch (erro) {
       ultimoErro = erro instanceof Error ? erro.message : "Falha no envio";
     }

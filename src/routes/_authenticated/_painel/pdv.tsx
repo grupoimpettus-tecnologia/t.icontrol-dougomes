@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ClipboardList, Pencil, Plus, Trash2 } from "lucide-react";
+import { ClipboardList, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,9 +19,11 @@ import { DetalhePassoMicro } from "@/components/overview/DetalhePassoMicro";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { enviarConfirmacaoImplantacao } from "@/lib/pdv.functions";
 import {
   FASES_MICRO_FRANQUEADO,
   TOTAL_PASSOS_MICRO,
+  type FaseMicroFranqueado,
   type PassoMicroFranqueado,
 } from "@/data/micro-franqueado";
 
@@ -182,7 +185,17 @@ function AbaImplantacaoLoja() {
       setCadastro(null);
       qc.invalidateQueries({ queryKey: ["pdv_lojas"] });
     },
-    onError: (e: Error) => toast.error("Não foi possível cadastrar", { description: e.message }),
+    onError: (e: Error) => {
+      const msg = e.message || "";
+      if (/pdv_lojas|schema cache|Could not find the table/i.test(msg)) {
+        toast.error("Tabela ainda não criada no banco", {
+          description:
+            "Execute a migration 0015_pdv_implantacao_lojas.sql no SQL Editor do Supabase e tente novamente.",
+        });
+        return;
+      }
+      toast.error("Não foi possível cadastrar", { description: msg });
+    },
   });
 
   const atualizar = useMutation({
@@ -446,8 +459,15 @@ function ModalChecklistLoja({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const enviarConfirmacaoFn = useServerFn(enviarConfirmacaoImplantacao);
   const [evidenciaPasso, setEvidenciaPasso] = useState<PassoMicroFranqueado | null>(null);
   const [evidenciaHtml, setEvidenciaHtml] = useState("");
+  const [confirmacaoFase, setConfirmacaoFase] = useState<FaseMicroFranqueado | null>(null);
+  const [emailsConfirmacao, setEmailsConfirmacao] = useState({
+    emailLoja: "",
+    emailArea: "",
+    emailTi: "",
+  });
 
   const etapaPorId = useMemo(() => new Map(etapas.map((e) => [e.etapa_id, e])), [etapas]);
   const feitos = etapas.filter((e) => e.concluida).length;
@@ -504,6 +524,29 @@ function ModalChecklistLoja({
     onError: (e: Error) => toast.error("Não foi possível atualizar", { description: e.message }),
   });
 
+  const enviarConfirmacao = useMutation({
+    mutationFn: async () => {
+      if (!confirmacaoFase) throw new Error("Fase não selecionada");
+      return enviarConfirmacaoFn({
+        data: {
+          lojaId: loja.id,
+          faseId: confirmacaoFase.id as "nova-loja" | "pos",
+          emailLoja: emailsConfirmacao.emailLoja.trim(),
+          emailArea: emailsConfirmacao.emailArea.trim(),
+          emailTi: emailsConfirmacao.emailTi.trim(),
+        },
+      });
+    },
+    onSuccess: (res) => {
+      toast.success("Confirmação enviada", {
+        description: `E-mail enviado para ${res.destinatarios.join(", ")}`,
+      });
+      setConfirmacaoFase(null);
+      setEmailsConfirmacao({ emailLoja: "", emailArea: "", emailTi: "" });
+    },
+    onError: (e: Error) => toast.error("Não foi possível enviar a confirmação", { description: e.message }),
+  });
+
   function aoAlternarCheck(passo: PassoMicroFranqueado, marcado: boolean) {
     if (!podeEditar) return;
     if (marcado) {
@@ -516,6 +559,11 @@ function ModalChecklistLoja({
       desmarcar.mutate(passo.id);
     }
   }
+
+  const emailsOk =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailsConfirmacao.emailLoja.trim()) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailsConfirmacao.emailArea.trim()) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailsConfirmacao.emailTi.trim());
 
   return (
     <>
@@ -593,6 +641,18 @@ function ModalChecklistLoja({
                     );
                   })}
                 </Accordion>
+                {podeEditar && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setConfirmacaoFase(fase);
+                      setEmailsConfirmacao({ emailLoja: "", emailArea: "", emailTi: "" });
+                    }}
+                  >
+                    <Mail className="mr-2 h-4 w-4" /> Gerar Confirmação
+                  </Button>
+                )}
               </section>
             ))}
           </div>
@@ -646,6 +706,76 @@ function ModalChecklistLoja({
               onClick={() => evidenciaPasso && salvarEvidencia.mutate({ passo: evidenciaPasso, html: evidenciaHtml })}
             >
               Concluir etapa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!confirmacaoFase}
+        onOpenChange={(o) => {
+          if (!o) {
+            setConfirmacaoFase(null);
+            setEmailsConfirmacao({ emailLoja: "", emailArea: "", emailTi: "" });
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gerar Confirmação</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {confirmacaoFase
+                ? `Enviar resumo da fase ${confirmacaoFase.codigo}. ${confirmacaoFase.titulo} — ${loja.nome}`
+                : ""}
+            </p>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>E-mail da loja</Label>
+              <Input
+                type="email"
+                placeholder="loja@franquia.com.br"
+                value={emailsConfirmacao.emailLoja}
+                onChange={(e) => setEmailsConfirmacao({ ...emailsConfirmacao, emailLoja: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>E-mail da área envolvida</Label>
+              <Input
+                type="email"
+                placeholder="area@empresa.com.br"
+                value={emailsConfirmacao.emailArea}
+                onChange={(e) => setEmailsConfirmacao({ ...emailsConfirmacao, emailArea: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>E-mail do time de T.I.</Label>
+              <Input
+                type="email"
+                placeholder="ti@grupoimpettus.com.br"
+                value={emailsConfirmacao.emailTi}
+                onChange={(e) => setEmailsConfirmacao({ ...emailsConfirmacao, emailTi: e.target.value })}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Assunto: [TIControl] Entrega Implantação de loja - {loja.nome}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmacaoFase(null);
+                setEmailsConfirmacao({ emailLoja: "", emailArea: "", emailTi: "" });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              disabled={!emailsOk || enviarConfirmacao.isPending}
+              onClick={() => enviarConfirmacao.mutate()}
+            >
+              {enviarConfirmacao.isPending ? "Enviando..." : "Enviar"}
             </Button>
           </DialogFooter>
         </DialogContent>
