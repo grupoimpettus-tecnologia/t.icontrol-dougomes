@@ -632,6 +632,50 @@ export type Database = {
           },
         ]
       }
+      org_versions: {
+        Row: {
+          atual: boolean
+          created_at: string
+          id: string
+          nodes: Json
+          nome: string
+          periodo: string | null
+          tipo: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome: string
+          periodo?: string | null
+          tipo?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome?: string
+          periodo?: string | null
+          tipo?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phone_lines: {
         Row: {
           condicoes: string | null
@@ -903,6 +947,63 @@ export type Database = {
           },
           {
             foreignKeyName: "service_assets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          area: string | null
+          atribuicoes: string | null
+          cargo: string | null
+          created_at: string
+          gestor_id: string | null
+          id: string
+          nivel: string | null
+          nome: string
+          ordem: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          area?: string | null
+          atribuicoes?: string | null
+          cargo?: string | null
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nivel?: string | null
+          nome: string
+          ordem?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          area?: string | null
+          atribuicoes?: string | null
+          cargo?: string | null
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nivel?: string | null
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
