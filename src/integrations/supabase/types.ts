@@ -632,6 +632,162 @@ export type Database = {
           },
         ]
       }
+      org_versions: {
+        Row: {
+          atual: boolean
+          created_at: string
+          id: string
+          nodes: Json
+          nome: string
+          periodo: string | null
+          tipo: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome: string
+          periodo?: string | null
+          tipo?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome?: string
+          periodo?: string | null
+          tipo?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdv_loja_etapas: {
+        Row: {
+          concluida: boolean
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          etapa_id: string
+          evidencia_html: string | null
+          id: string
+          loja_id: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          etapa_id: string
+          evidencia_html?: string | null
+          id?: string
+          loja_id: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          concluida?: boolean
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          etapa_id?: string
+          evidencia_html?: string | null
+          id?: string
+          loja_id?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_loja_etapas_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdv_loja_etapas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "pdv_lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdv_loja_etapas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdv_lojas: {
+        Row: {
+          cnpj: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          marca: string
+          nome: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          cnpj: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          marca: string
+          nome: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          cnpj?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          marca?: string
+          nome?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_lojas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdv_lojas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phone_lines: {
         Row: {
           condicoes: string | null
@@ -903,6 +1059,63 @@ export type Database = {
           },
           {
             foreignKeyName: "service_assets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          area: string | null
+          atribuicoes: string | null
+          cargo: string | null
+          created_at: string
+          gestor_id: string | null
+          id: string
+          nivel: string | null
+          nome: string
+          ordem: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          area?: string | null
+          atribuicoes?: string | null
+          cargo?: string | null
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nivel?: string | null
+          nome: string
+          ordem?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          area?: string | null
+          atribuicoes?: string | null
+          cargo?: string | null
+          created_at?: string
+          gestor_id?: string | null
+          id?: string
+          nivel?: string | null
+          nome?: string
+          ordem?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_gestor_id_fkey"
+            columns: ["gestor_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"

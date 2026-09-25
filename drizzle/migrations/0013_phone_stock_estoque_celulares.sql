@@ -1,4 +1,4 @@
-CREATE TABLE public.phone_stock (
+CREATE TABLE IF NOT EXISTS public.phone_stock (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id uuid NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
   modelo text NOT NULL,
@@ -14,16 +14,21 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.phone_stock TO authenticated;
 GRANT ALL ON public.phone_stock TO service_role;
 ALTER TABLE public.phone_stock ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "estoque celulares visiveis" ON public.phone_stock;
 CREATE POLICY "estoque celulares visiveis" ON public.phone_stock FOR SELECT TO authenticated
   USING (public.is_master(auth.uid()) OR workspace_id IN (SELECT public.my_workspace_ids(auth.uid())));
+DROP POLICY IF EXISTS "estoque celulares insert" ON public.phone_stock;
 CREATE POLICY "estoque celulares insert" ON public.phone_stock FOR INSERT TO authenticated
   WITH CHECK (public.workspace_role(auth.uid(), workspace_id) = ANY (ARRAY['master','admin','tecnico']::public.app_role[]));
+DROP POLICY IF EXISTS "estoque celulares update" ON public.phone_stock;
 CREATE POLICY "estoque celulares update" ON public.phone_stock FOR UPDATE TO authenticated
   USING (public.workspace_role(auth.uid(), workspace_id) = ANY (ARRAY['master','admin','tecnico']::public.app_role[]))
   WITH CHECK (public.workspace_role(auth.uid(), workspace_id) = ANY (ARRAY['master','admin','tecnico']::public.app_role[]));
+DROP POLICY IF EXISTS "estoque celulares delete" ON public.phone_stock;
 CREATE POLICY "estoque celulares delete" ON public.phone_stock FOR DELETE TO authenticated
   USING (public.workspace_role(auth.uid(), workspace_id) = ANY (ARRAY['master','admin']::public.app_role[]));
 
+DROP TRIGGER IF EXISTS audit_phone_stock ON public.phone_stock;
 CREATE TRIGGER audit_phone_stock
 AFTER INSERT OR UPDATE OR DELETE ON public.phone_stock
 FOR EACH ROW EXECUTE FUNCTION public.registrar_auditoria();
