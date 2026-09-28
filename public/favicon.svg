@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TIControl">
+  <rect width="64" height="64" rx="14" fill="#0B1C2C"/>
+
+  <!-- T -->
+  <path fill="#F8FAFC" d="M10 14h28v8H31v28H17V22H10z"/>
+
+  <!-- I stem -->
+  <rect x="43" y="22" width="9" height="28" rx="2.5" fill="#F8FAFC"/>
+  <!-- I monitoring node -->
+  <circle cx="47.5" cy="15" r="5.2" fill="#14B8C6"/>
+
+  <!-- Pulse / control signal across the mark -->
+  <path
+    d="M8 34h6l3-8 5 16 4-12 3 6h8l3-7 4 11 3-4h9"
+    fill="none"
+    stroke="#14B8C6"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
