@@ -29,12 +29,12 @@ const modulos: { titulo: string; itens: Item[] }[] = [
   {
     titulo: "Infraestrutura",
     itens: [
+      { to: "/infra/monitoring", label: "Monitoramento", icon: Activity },
       { to: "/infra/access-map", label: "Mapa de acessos", icon: KeyRound },
       { to: "/infra/services-assets", label: "Serviços & ativos", icon: Package },
       { to: "/infra/equipments", label: "Equipamentos", icon: Cpu },
       { to: "/infra/phone-lines", label: "Linhas Móveis", icon: Smartphone },
       { to: "/infra/phone-stock", label: "Estoque Celulares", icon: Smartphone },
-      { to: "/infra/monitoring", label: "Monitoramento", icon: Activity },
     ],
   },
   {
