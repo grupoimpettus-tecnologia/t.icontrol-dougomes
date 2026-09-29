@@ -1,5 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+async function fecharIncidentesAbertos(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabaseAdmin: any,
+  monitorId: string,
+  agoraIso: string,
+) {
+  const { data: abertos } = await supabaseAdmin
+    .from("monitor_incidents")
+    .select("id, iniciado_em")
+    .eq("monitor_id", monitorId)
+    .is("resolvido_em", null);
+  for (const aberto of abertos ?? []) {
+    const duracao = Math.round((Date.now() - new Date(aberto.iniciado_em).getTime()) / 1000);
+    await supabaseAdmin
+      .from("monitor_incidents")
+      .update({ resolvido_em: agoraIso, duracao_segundos: duracao })
+      .eq("id", aberto.id);
+  }
+}
+
 async function bater(token: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: monitor } = await supabaseAdmin
@@ -12,6 +32,7 @@ async function bater(token: string) {
   if (!monitor) return new Response("Monitor não encontrado", { status: 404 });
 
   const agora = new Date().toISOString();
+  const estavaFora = monitor.status === "fora";
 
   await supabaseAdmin.from("monitor_checks").insert({
     monitor_id: monitor.id,
@@ -20,27 +41,8 @@ async function bater(token: string) {
     mensagem: "Sinal recebido",
   });
 
-  if (monitor.status === "fora") {
-    const { data: aberto } = await supabaseAdmin
-      .from("monitor_incidents")
-      .select("id, iniciado_em")
-      .eq("monitor_id", monitor.id)
-      .is("resolvido_em", null)
-      .order("iniciado_em", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (aberto) {
-      await supabaseAdmin
-        .from("monitor_incidents")
-        .update({
-          resolvido_em: agora,
-          duracao_segundos: Math.round(
-            (Date.now() - new Date(aberto.iniciado_em).getTime()) / 1000,
-          ),
-        })
-        .eq("id", aberto.id);
-    }
-  }
+  // Fecha todos os incidentes abertos (evita ficar "Em aberto" após recuperação).
+  await fecharIncidentesAbertos(supabaseAdmin, monitor.id, agora);
 
   await supabaseAdmin
     .from("monitors")
@@ -53,6 +55,19 @@ async function bater(token: string) {
       updated_at: agora,
     })
     .eq("id", monitor.id);
+
+  if (estavaFora) {
+    try {
+      const { enviarAlertasMonitor } = await import("@/lib/notifications.server");
+      await enviarAlertasMonitor(
+        monitor,
+        { mensagem: "Sinal recebido", latencia_ms: null },
+        "recuperado",
+      );
+    } catch {
+      // alerta opcional
+    }
+  }
 
   return Response.json({ ok: true });
 }

@@ -253,7 +253,8 @@ export function MonitorFormDialog({
           {form.tipo === "heartbeat" && (
             <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
               Depois de salvar, copie o endereço de sinal na página do monitor e configure o
-              servidor ou rotina para chamá-lo periodicamente.
+              servidor ou rotina para chamá-lo periodicamente. Use Frequência de pelo menos 120s
+              se a tarefa no Windows repetir a cada 1 minuto.
             </p>
           )}
 

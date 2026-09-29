@@ -26,6 +26,8 @@ async function executar(request: Request) {
 
   const agora = Date.now();
   const devidos = (monitores ?? []).filter((m) => {
+    // Heartbeat "fora" precisa reavaliar todo ciclo para recuperar sozinho após novo sinal.
+    if (m.tipo === "heartbeat" && m.status === "fora") return true;
     if (!m.ultima_verificacao) return true;
     const proximo =
       new Date(m.ultima_verificacao).getTime() + (m.intervalo_segundos || 300) * 1000;

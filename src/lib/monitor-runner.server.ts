@@ -213,6 +213,26 @@ function checarHeartbeat(monitor: Monitor): CheckResult {
   };
 }
 
+async function fecharIncidentesAbertos(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabaseAdmin: any,
+  monitorId: string,
+  agoraIso: string,
+) {
+  const { data: abertos } = await supabaseAdmin
+    .from("monitor_incidents")
+    .select("id, iniciado_em")
+    .eq("monitor_id", monitorId)
+    .is("resolvido_em", null);
+  for (const aberto of abertos ?? []) {
+    const duracao = Math.round((Date.now() - new Date(aberto.iniciado_em).getTime()) / 1000);
+    await supabaseAdmin
+      .from("monitor_incidents")
+      .update({ resolvido_em: agoraIso, duracao_segundos: duracao })
+      .eq("id", aberto.id);
+  }
+}
+
 export async function executarCheck(monitor: Monitor): Promise<CheckResult> {
   switch (monitor.tipo) {
     case "http":
@@ -236,30 +256,53 @@ export async function executarCheck(monitor: Monitor): Promise<CheckResult> {
 export async function registrarResultado(monitor: Monitor, resultado: CheckResult) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const falhas = resultado.ok ? 0 : monitor.falhas_consecutivas + 1;
-  const sucessos = resultado.ok ? monitor.sucessos_consecutivos + 1 : 0;
+  let resultadoFinal = resultado;
+  let statusAtual = monitor.status;
+  let falhasBase = monitor.falhas_consecutivas;
+  let sucessosBase = monitor.sucessos_consecutivos;
+
+  // Evita corrida: o sinal real pode chegar enquanto o cron ainda avalia dados antigos.
+  // Sem isso, o status fica "fora" com ultima_verificacao fresca e só volta no "Verificar agora".
+  if (monitor.tipo === "heartbeat") {
+    const { data: fresco } = await supabaseAdmin
+      .from("monitors")
+      .select("ultima_verificacao, status, falhas_consecutivas, sucessos_consecutivos")
+      .eq("id", monitor.id)
+      .maybeSingle();
+    if (fresco) {
+      statusAtual = fresco.status;
+      falhasBase = fresco.falhas_consecutivas;
+      sucessosBase = fresco.sucessos_consecutivos;
+      resultadoFinal = checarHeartbeat({
+        ...monitor,
+        ultima_verificacao: fresco.ultima_verificacao,
+      });
+    }
+  }
+
+  const falhas = resultadoFinal.ok ? 0 : falhasBase + 1;
+  const sucessos = resultadoFinal.ok ? sucessosBase + 1 : 0;
   const limite = Math.max(1, monitor.falhas_para_alerta);
 
-  let novoStatus = monitor.status;
-  if (resultado.ok) novoStatus = "ativo";
+  let novoStatus = statusAtual;
+  if (resultadoFinal.ok) novoStatus = "ativo";
   else if (falhas >= limite) novoStatus = "fora";
-  else if (monitor.status === "pendente") novoStatus = "pendente";
+  else if (statusAtual === "pendente") novoStatus = "pendente";
 
   await supabaseAdmin.from("monitor_checks").insert({
     monitor_id: monitor.id,
     workspace_id: monitor.workspace_id,
-    ok: resultado.ok,
-    latencia_ms: resultado.latencia_ms,
-    status_code: resultado.status_code,
-    mensagem: resultado.mensagem,
+    ok: resultadoFinal.ok,
+    latencia_ms: resultadoFinal.latencia_ms,
+    status_code: resultadoFinal.status_code,
+    mensagem: resultadoFinal.mensagem,
   });
 
   // No heartbeat, ultima_verificacao só muda no endpoint de sinal real.
-  // Se o cron atualizar aqui, o prazo da Frequência nunca expira de verdade.
   const atualizacao: Record<string, unknown> = {
     status: novoStatus,
-    ultima_latencia_ms: resultado.latencia_ms,
-    ultima_mensagem: resultado.mensagem,
+    ultima_latencia_ms: resultadoFinal.latencia_ms,
+    ultima_mensagem: resultadoFinal.mensagem,
     falhas_consecutivas: falhas,
     sucessos_consecutivos: sucessos,
     updated_at: new Date().toISOString(),
@@ -270,33 +313,20 @@ export async function registrarResultado(monitor: Monitor, resultado: CheckResul
 
   await supabaseAdmin.from("monitors").update(atualizacao).eq("id", monitor.id);
 
-  const caiu = novoStatus === "fora" && monitor.status !== "fora";
-  const voltou = novoStatus === "ativo" && monitor.status === "fora";
+  const caiu = novoStatus === "fora" && statusAtual !== "fora";
+  const voltou = novoStatus === "ativo" && statusAtual === "fora";
+  const agoraIso = new Date().toISOString();
 
   if (caiu) {
     await supabaseAdmin.from("monitor_incidents").insert({
       monitor_id: monitor.id,
       workspace_id: monitor.workspace_id,
-      causa: resultado.mensagem,
+      causa: resultadoFinal.mensagem,
     });
   }
 
   if (voltou) {
-    const { data: aberto } = await supabaseAdmin
-      .from("monitor_incidents")
-      .select("id, iniciado_em")
-      .eq("monitor_id", monitor.id)
-      .is("resolvido_em", null)
-      .order("iniciado_em", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (aberto) {
-      const duracao = Math.round((Date.now() - new Date(aberto.iniciado_em).getTime()) / 1000);
-      await supabaseAdmin
-        .from("monitor_incidents")
-        .update({ resolvido_em: new Date().toISOString(), duracao_segundos: duracao })
-        .eq("id", aberto.id);
-    }
+    await fecharIncidentesAbertos(supabaseAdmin, monitor.id, agoraIso);
   }
 
   if ((caiu || voltou) && monitor.webhook_url) {
@@ -307,8 +337,8 @@ export async function registrarResultado(monitor: Monitor, resultado: CheckResul
         body: JSON.stringify({
           monitor: monitor.nome,
           status: novoStatus === "fora" ? "fora do ar" : "no ar",
-          mensagem: resultado.mensagem,
-          latencia_ms: resultado.latencia_ms,
+          mensagem: resultadoFinal.mensagem,
+          latencia_ms: resultadoFinal.latencia_ms,
           em: new Date().toISOString(),
         }),
         signal: AbortSignal.timeout(10000),
@@ -320,7 +350,7 @@ export async function registrarResultado(monitor: Monitor, resultado: CheckResul
 
   if (caiu || voltou) {
     const { enviarAlertasMonitor } = await import("@/lib/notifications.server");
-    await enviarAlertasMonitor(monitor, resultado, caiu ? "indisponivel" : "recuperado");
+    await enviarAlertasMonitor(monitor, resultadoFinal, caiu ? "indisponivel" : "recuperado");
   }
 
   return { status: novoStatus, caiu, voltou };
