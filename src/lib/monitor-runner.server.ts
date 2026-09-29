@@ -254,18 +254,21 @@ export async function registrarResultado(monitor: Monitor, resultado: CheckResul
     mensagem: resultado.mensagem,
   });
 
-  await supabaseAdmin
-    .from("monitors")
-    .update({
-      status: novoStatus,
-      ultima_latencia_ms: resultado.latencia_ms,
-      ultima_mensagem: resultado.mensagem,
-      ultima_verificacao: new Date().toISOString(),
-      falhas_consecutivas: falhas,
-      sucessos_consecutivos: sucessos,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", monitor.id);
+  // No heartbeat, ultima_verificacao só muda no endpoint de sinal real.
+  // Se o cron atualizar aqui, o prazo da Frequência nunca expira de verdade.
+  const atualizacao: Record<string, unknown> = {
+    status: novoStatus,
+    ultima_latencia_ms: resultado.latencia_ms,
+    ultima_mensagem: resultado.mensagem,
+    falhas_consecutivas: falhas,
+    sucessos_consecutivos: sucessos,
+    updated_at: new Date().toISOString(),
+  };
+  if (monitor.tipo !== "heartbeat") {
+    atualizacao.ultima_verificacao = new Date().toISOString();
+  }
+
+  await supabaseAdmin.from("monitors").update(atualizacao).eq("id", monitor.id);
 
   const caiu = novoStatus === "fora" && monitor.status !== "fora";
   const voltou = novoStatus === "ativo" && monitor.status === "fora";
