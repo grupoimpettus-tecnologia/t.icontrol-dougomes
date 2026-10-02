@@ -120,6 +120,13 @@
       "when": 1790344520735,
       "tag": "0016_reload_schema_pdv",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790350000000,
+      "tag": "0017_impressoras",
+      "breakpoints": true
     }
   ]
 }

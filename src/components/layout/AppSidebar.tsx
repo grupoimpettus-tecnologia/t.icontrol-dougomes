@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Network,
   Package,
+  Printer,
   Settings,
   ShieldCheck,
   Smartphone,
@@ -35,6 +36,7 @@ const modulos: { titulo: string; itens: Item[] }[] = [
       { to: "/infra/equipments", label: "Equipamentos", icon: Cpu },
       { to: "/infra/phone-lines", label: "Linhas Móveis", icon: Smartphone },
       { to: "/infra/phone-stock", label: "Estoque Celulares", icon: Smartphone },
+      { to: "/infra/printers", label: "Impressoras", icon: Printer },
     ],
   },
   {
