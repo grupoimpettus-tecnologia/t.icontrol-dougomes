@@ -54,7 +54,7 @@ type Impressora = {
   ip: string | null;
 };
 
-type Estoque = { printer_id: string; cor: string; quantidade: number };
+type Estoque = { id: string; printer_id: string; cor: string; quantidade: number };
 type Troca = { id: string; cor: string; ocorrido_em: string };
 
 const formVazio = { nome: "", local: "", modelo: "", tipo_contrato: "", ip: "" };
@@ -79,6 +79,11 @@ function Impressoras() {
   const [corEntrada, setCorEntrada] = useState<CorToner>("Preto");
   const [quantidadeEntrada, setQuantidadeEntrada] = useState("1");
   const [corTroca, setCorTroca] = useState<CorToner>("Preto");
+  const [correcao, setCorrecao] = useState<{
+    corOriginal: CorToner;
+    cor: CorToner;
+    quantidade: string;
+  } | null>(null);
 
   const lista = useQuery({
     queryKey: ["printers", workspaceId],
@@ -100,7 +105,7 @@ function Impressoras() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("printer_toner_stock")
-        .select("printer_id, cor, quantidade")
+        .select("id, printer_id, cor, quantidade")
         .eq("workspace_id", workspaceId!);
       if (error) throw error;
       return (data ?? []) as Estoque[];
@@ -124,11 +129,15 @@ function Impressoras() {
 
   const selecionada = lista.data?.find((item) => item.id === selecionadaId) ?? null;
   const estoqueDaSelecionada = useMemo(() => {
-    const porCor = new Map<string, number>();
+    const porCor = new Map<string, { id: string; quantidade: number }>();
     for (const item of estoque.data ?? []) {
-      if (item.printer_id === selecionadaId) porCor.set(item.cor, item.quantidade);
+      if (item.printer_id === selecionadaId) porCor.set(item.cor, { id: item.id, quantidade: item.quantidade });
     }
-    return CORES.map((cor) => ({ cor, quantidade: porCor.get(cor) ?? 0 }));
+    return CORES.map((cor) => ({
+      cor,
+      quantidade: porCor.get(cor)?.quantidade ?? 0,
+      id: porCor.get(cor)?.id,
+    }));
   }, [estoque.data, selecionadaId]);
 
   const filtradas = useMemo(() => {
@@ -201,7 +210,16 @@ function Impressoras() {
       setFormAberto(false);
       toast.success(editando ? "Impressora atualizada" : "Impressora cadastrada");
     },
-    onError: (erro: Error) => toast.error("Não foi possível salvar", { description: erro.message }),
+    onError: (erro: Error) => {
+      if (/printers|schema cache|Could not find the table/i.test(erro.message)) {
+        toast.error("Tabela ainda não criada no banco", {
+          description:
+            "Execute a migration 0017_impressoras.sql no SQL Editor do Supabase e tente salvar de novo.",
+        });
+        return;
+      }
+      toast.error("Não foi possível salvar", { description: erro.message });
+    },
   });
 
   const excluir = useMutation({
@@ -235,6 +253,63 @@ function Impressoras() {
       toast.success(movimento.tipo === "entrada" ? "Entrada de toner registrada" : "Troca de toner registrada");
     },
     onError: (erro: Error) => toast.error("Não foi possível registrar", { description: erro.message }),
+  });
+
+  const corrigirEstoque = useMutation({
+    mutationFn: async () => {
+      if (!correcao || !selecionadaId) throw new Error("Selecione o estoque que deseja corrigir.");
+      const quantidade = Number(correcao.quantidade);
+      if (!Number.isInteger(quantidade) || quantidade < 0) {
+        throw new Error("Informe uma quantidade inteira igual ou maior que zero.");
+      }
+      const linhas = (estoque.data ?? []).filter((item) => item.printer_id === selecionadaId);
+      const origem = linhas.find((item) => item.cor === correcao.corOriginal);
+      const agora = new Date().toISOString();
+      if (!origem) {
+        if (!workspaceId) throw new Error("Selecione uma empresa.");
+        const { error } = await supabase.from("printer_toner_stock").insert({
+          workspace_id: workspaceId,
+          printer_id: selecionadaId,
+          cor: correcao.cor,
+          quantidade,
+        });
+        if (error) throw error;
+        return;
+      }
+      if (correcao.cor === correcao.corOriginal) {
+        const { error } = await supabase
+          .from("printer_toner_stock")
+          .update({ quantidade, updated_at: agora })
+          .eq("id", origem.id);
+        if (error) throw error;
+        return;
+      }
+      const destino = linhas.find((item) => item.cor === correcao.cor);
+      if (!destino) {
+        const { error } = await supabase
+          .from("printer_toner_stock")
+          .update({ cor: correcao.cor, quantidade, updated_at: agora })
+          .eq("id", origem.id);
+        if (error) throw error;
+        return;
+      }
+      const { error: erroDestino } = await supabase
+        .from("printer_toner_stock")
+        .update({ quantidade: destino.quantidade + quantidade, updated_at: agora })
+        .eq("id", destino.id);
+      if (erroDestino) throw erroDestino;
+      const { error: erroOrigem } = await supabase
+        .from("printer_toner_stock")
+        .update({ quantidade: 0, updated_at: agora })
+        .eq("id", origem.id);
+      if (erroOrigem) throw erroOrigem;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["printer-toner-stock", workspaceId] });
+      setCorrecao(null);
+      toast.success("Estoque corrigido");
+    },
+    onError: (erro: Error) => toast.error("Não foi possível corrigir", { description: erro.message }),
   });
 
   function registrarEntrada() {
@@ -348,7 +423,15 @@ function Impressoras() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selecionada} onOpenChange={(aberto) => !aberto && setSelecionadaId(null)}>
+      <Dialog
+        open={!!selecionada}
+        onOpenChange={(aberto) => {
+          if (!aberto) {
+            setSelecionadaId(null);
+            setCorrecao(null);
+          }
+        }}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           {selecionada && (
             <>
@@ -389,9 +472,77 @@ function Impressoras() {
                     >
                       <p className="text-3xl font-bold leading-none">{item.quantidade}</p>
                       <p className="mt-2 text-xs font-medium uppercase tracking-wide">{item.cor}</p>
+                      {podeEditar && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="mt-3 h-7 w-full bg-white/20 text-inherit hover:bg-white/30"
+                          onClick={() =>
+                            setCorrecao({
+                              corOriginal: item.cor,
+                              cor: item.cor,
+                              quantidade: String(item.quantidade),
+                            })
+                          }
+                        >
+                          Corrigir
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
+                {correcao && (
+                  <div className="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
+                    <div className="space-y-2">
+                      <Label>Cor</Label>
+                      <Select
+                        value={correcao.cor}
+                        onValueChange={(valor) =>
+                          setCorrecao((atual) => (atual ? { ...atual, cor: valor as CorToner } : atual))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CORES.map((cor) => (
+                            <SelectItem key={cor} value={cor}>
+                              {cor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="correcao-quantidade">Quantidade</Label>
+                      <Input
+                        id="correcao-quantidade"
+                        type="number"
+                        min={0}
+                        value={correcao.quantidade}
+                        onChange={(evento) =>
+                          setCorrecao((atual) => (atual ? { ...atual, quantidade: evento.target.value } : atual))
+                        }
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCorrecao(null)}
+                        disabled={corrigirEstoque.isPending}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button onClick={() => corrigirEstoque.mutate()} disabled={corrigirEstoque.isPending}>
+                        {corrigirEstoque.isPending ? "Salvando..." : "Salvar correção"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground sm:col-span-3">
+                      Corrige a cor {correcao.corOriginal} se o lançamento ficou incorreto. Isso ajusta o saldo e não entra no histórico de trocas.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {podeEditar && (
