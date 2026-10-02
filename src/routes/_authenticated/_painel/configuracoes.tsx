@@ -11,6 +11,7 @@ import { RoleBadge } from "@/components/empresa/RoleBadge";
 import { useCurrentWorkspace, useProfile, roleLabels } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { BackupEmpresaCard } from "@/components/configuracoes/BackupEmpresaCard";
 import { obterChavePush, removerAssinaturasPush, salvarAssinaturaPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_painel/configuracoes")({
@@ -123,6 +124,13 @@ function Configuracoes() {
           </ul>
         </CardContent>
       </Card>
+
+      <BackupEmpresaCard
+        workspaceId={workspaceId}
+        nome={atual?.workspace.nome ?? ""}
+        slug={atual?.workspace.slug ?? ""}
+        podeGerir={atual?.role === "master" || atual?.role === "admin"}
+      />
 
       <Card className="rounded-xl">
         <CardHeader>
