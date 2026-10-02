@@ -299,7 +299,7 @@ export async function registrarResultado(monitor: Monitor, resultado: CheckResul
   });
 
   // No heartbeat, ultima_verificacao só muda no endpoint de sinal real.
-  const atualizacao: Record<string, unknown> = {
+  const atualizacao: Database["public"]["Tables"]["monitors"]["Update"] = {
     status: novoStatus,
     ultima_latencia_ms: resultadoFinal.latencia_ms,
     ultima_mensagem: resultadoFinal.mensagem,
