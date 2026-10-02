@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Building2, Cpu, KeyRound, Smartphone, Users } from "lucide-react";
+import { Activity, Building2, Cpu, KeyRound, Printer, Smartphone, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,15 @@ export const Route = createFileRoute("/_authenticated/_painel/dashboard")({
   ] }),
   component: Dashboard,
 });
+
+const CORES_TONER = ["Preto", "Ciano", "Magenta", "Amarelo"] as const;
+
+const corTonerPonto: Record<(typeof CORES_TONER)[number], string> = {
+  Preto: "bg-neutral-900",
+  Ciano: "bg-cyan-500",
+  Magenta: "bg-fuchsia-600",
+  Amarelo: "bg-amber-300",
+};
 
 function normalizar(texto: string) {
   return texto
@@ -70,6 +79,8 @@ function Dashboard() {
         acessos,
         monitores,
         celularesEstoque,
+        impressorasLista,
+        tonerEstoque,
       ] = await Promise.all([
         baseEquip(),
         baseEquip().ilike("status", "ativo"),
@@ -79,6 +90,8 @@ function Dashboard() {
         supabase.from("access_entries").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!),
         supabase.from("monitors").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId!).eq("ativo", true),
         supabase.from("phone_stock").select("modelo, status, quantidade").eq("workspace_id", workspaceId!),
+        supabase.from("printers").select("id, nome").eq("workspace_id", workspaceId!).order("nome"),
+        supabase.from("printer_toner_stock").select("printer_id, cor, quantidade").eq("workspace_id", workspaceId!),
       ]);
 
       const erro = [
@@ -97,6 +110,18 @@ function Dashboard() {
         !/phone_stock|schema cache|does not exist|não existe/i.test(celularesEstoque.error.message)
       ) {
         throw celularesEstoque.error;
+      }
+      if (
+        impressorasLista.error &&
+        !/printers|schema cache|does not exist|não existe/i.test(impressorasLista.error.message)
+      ) {
+        throw impressorasLista.error;
+      }
+      if (
+        tonerEstoque.error &&
+        !/printer_toner_stock|schema cache|does not exist|não existe/i.test(tonerEstoque.error.message)
+      ) {
+        throw tonerEstoque.error;
       }
 
       const emEstoque = (equipamentosDetalhe.data ?? []).filter(
@@ -128,6 +153,23 @@ function Dashboard() {
         };
       };
 
+      const impressorasBase = impressorasLista.error ? [] : (impressorasLista.data ?? []);
+      const toner = tonerEstoque.error ? [] : (tonerEstoque.data ?? []);
+      const impressoras = impressorasBase.map((impressora) => {
+        const cores: Record<(typeof CORES_TONER)[number], number> = {
+          Preto: 0,
+          Ciano: 0,
+          Magenta: 0,
+          Amarelo: 0,
+        };
+        for (const item of toner) {
+          if (item.printer_id !== impressora.id) continue;
+          const cor = item.cor as (typeof CORES_TONER)[number];
+          if (cor in cores) cores[cor] += Number(item.quantidade ?? 0);
+        }
+        return { id: impressora.id, nome: impressora.nome, cores };
+      });
+
       return {
         equipamentos: equipamentos.count ?? 0,
         equipaAtivos: equipaAtivos.count ?? 0,
@@ -141,6 +183,7 @@ function Dashboard() {
         celularesTotal,
         celularesFuncionando: agregarPorStatus("Funcionando"),
         celularesManutencao: agregarPorStatus("Manutenção"),
+        impressoras,
       };
     },
   });
@@ -276,6 +319,37 @@ function Dashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl sm:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Impressoras</CardTitle>
+            <Printer className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-2xl font-bold">{totais.data?.impressoras.length ?? 0}</p>
+            <div className="space-y-3 text-xs text-muted-foreground">
+              {(totais.data?.impressoras.length ?? 0) === 0 && (
+                <p>Nenhuma impressora cadastrada.</p>
+              )}
+              {(totais.data?.impressoras ?? []).map((impressora) => (
+                <div key={impressora.id} className="space-y-1">
+                  <p className="truncate font-medium text-foreground" title={impressora.nome}>
+                    {impressora.nome}
+                  </p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 pl-2">
+                    {CORES_TONER.map((cor) => (
+                      <span key={cor} className="inline-flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${corTonerPonto[cor]}`} />
+                        <span>{cor}</span>
+                        <span className="font-semibold text-foreground">{impressora.cores[cor]}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
