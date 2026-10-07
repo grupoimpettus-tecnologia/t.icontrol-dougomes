@@ -1,3 +1,4 @@
+-- Campos da OS na baixa de manutenção (após 0020_printer_maintenances).
 ALTER TABLE public.printer_maintenances
   ADD COLUMN IF NOT EXISTS os_numero text,
   ADD COLUMN IF NOT EXISTS os_foto_path text;

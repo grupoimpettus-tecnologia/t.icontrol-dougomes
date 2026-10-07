@@ -474,7 +474,7 @@ function Impressoras() {
     onError: (erro: Error) => {
       if (/os_numero|os_foto_path|schema cache|Could not find/i.test(erro.message)) {
         toast.error("Campos da OS ainda não estão no banco", {
-          description: "Execute a migration 0020_printer_maintenance_os.sql no SQL Editor do Supabase.",
+          description: "Execute a migration 0021_printer_maintenance_os.sql no SQL Editor do Supabase.",
         });
         return;
       }
