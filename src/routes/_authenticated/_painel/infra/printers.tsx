@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -56,12 +57,36 @@ type Impressora = {
 
 type Estoque = { id: string; printer_id: string; cor: string; quantidade: number };
 type Troca = { id: string; cor: string; ocorrido_em: string };
+type Manutencao = {
+  id: string;
+  status: "agendada" | "concluida";
+  problema: string;
+  agendado_em: string;
+  tecnico_nome: string | null;
+  responsavel_nome: string | null;
+  resolvido_em: string | null;
+  resolucao: string | null;
+  created_at: string;
+};
 
 const formVazio = { nome: "", local: "", modelo: "", tipo_contrato: "", ip: "" };
+const solicitacaoVazia = { problema: "", agendado_em: "" };
+const baixaVazia = {
+  tecnico_nome: "",
+  responsavel_nome: "",
+  resolvido_em: "",
+  resolucao: "",
+};
 
 function texto(valor: string | null | undefined) {
   const limpo = valor?.trim();
   return limpo ? limpo : "—";
+}
+
+function formatarData(valor: string | null | undefined) {
+  if (!valor) return "—";
+  const data = valor.includes("T") ? new Date(valor) : new Date(`${valor}T12:00:00`);
+  return data.toLocaleDateString("pt-BR");
 }
 
 function Impressoras() {
@@ -84,6 +109,10 @@ function Impressoras() {
     cor: CorToner;
     quantidade: string;
   } | null>(null);
+  const [mostrarSolicitacao, setMostrarSolicitacao] = useState(false);
+  const [mostrarBaixa, setMostrarBaixa] = useState(false);
+  const [solicitacao, setSolicitacao] = useState(solicitacaoVazia);
+  const [baixa, setBaixa] = useState(baixaVazia);
 
   const lista = useQuery({
     queryKey: ["printers", workspaceId],
@@ -127,7 +156,25 @@ function Impressoras() {
     },
   });
 
+  const manutencoes = useQuery({
+    queryKey: ["printer-maintenances", selecionadaId],
+    enabled: !!selecionadaId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("printer_maintenances")
+        .select(
+          "id, status, problema, agendado_em, tecnico_nome, responsavel_nome, resolvido_em, resolucao, created_at",
+        )
+        .eq("printer_id", selecionadaId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Manutencao[];
+    },
+  });
+
   const selecionada = lista.data?.find((item) => item.id === selecionadaId) ?? null;
+  const manutencaoAberta = manutencoes.data?.find((item) => item.status === "agendada") ?? null;
+  const emManutencao = !!manutencaoAberta;
   const estoqueDaSelecionada = useMemo(() => {
     const porCor = new Map<string, { id: string; quantidade: number }>();
     for (const item of estoque.data ?? []) {
@@ -321,6 +368,76 @@ function Impressoras() {
     movimentar.mutate({ tipo: "entrada", cor: corEntrada, quantidade });
   }
 
+  function limparFormulariosManutencao() {
+    setMostrarSolicitacao(false);
+    setMostrarBaixa(false);
+    setSolicitacao(solicitacaoVazia);
+    setBaixa(baixaVazia);
+  }
+
+  const solicitarManutencao = useMutation({
+    mutationFn: async () => {
+      if (!workspaceId || !selecionadaId) throw new Error("Selecione uma impressora.");
+      if (manutencaoAberta) throw new Error("Já existe uma visita técnica agendada para esta impressora.");
+      const problema = solicitacao.problema.trim();
+      const agendadoEm = solicitacao.agendado_em.trim();
+      if (!problema || !agendadoEm) throw new Error("Informe o problema e a data do agendamento.");
+      const { error } = await supabase.from("printer_maintenances").insert({
+        workspace_id: workspaceId,
+        printer_id: selecionadaId,
+        status: "agendada",
+        problema,
+        agendado_em: agendadoEm,
+      });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["printer-maintenances", selecionadaId] });
+      limparFormulariosManutencao();
+      toast.success("Manutenção agendada");
+    },
+    onError: (erro: Error) => {
+      if (/printer_maintenances|schema cache|Could not find the table/i.test(erro.message)) {
+        toast.error("Tabela ainda não criada no banco", {
+          description: "Execute a migration 0019_printer_maintenances.sql no SQL Editor do Supabase.",
+        });
+        return;
+      }
+      toast.error("Não foi possível agendar", { description: erro.message });
+    },
+  });
+
+  const baixarManutencao = useMutation({
+    mutationFn: async () => {
+      if (!manutencaoAberta) throw new Error("Não há manutenção aberta para baixar.");
+      const tecnico = baixa.tecnico_nome.trim();
+      const responsavel = baixa.responsavel_nome.trim();
+      const resolvidoEm = baixa.resolvido_em.trim();
+      const resolucao = baixa.resolucao.trim();
+      if (!tecnico || !responsavel || !resolvidoEm || !resolucao) {
+        throw new Error("Preencha técnico, responsável, data e descrição da resolução.");
+      }
+      const { error } = await supabase
+        .from("printer_maintenances")
+        .update({
+          status: "concluida",
+          tecnico_nome: tecnico,
+          responsavel_nome: responsavel,
+          resolvido_em: resolvidoEm,
+          resolucao,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", manutencaoAberta.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["printer-maintenances", selecionadaId] });
+      limparFormulariosManutencao();
+      toast.success("Manutenção baixada");
+    },
+    onError: (erro: Error) => toast.error("Não foi possível baixar", { description: erro.message }),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -429,6 +546,7 @@ function Impressoras() {
           if (!aberto) {
             setSelecionadaId(null);
             setCorrecao(null);
+            limparFormulariosManutencao();
           }
         }}
       >
@@ -617,6 +735,177 @@ function Impressoras() {
                   ))}
                   {(trocas.data?.length ?? 0) === 0 && (
                     <li className="px-3 py-4 text-sm text-muted-foreground">Nenhuma troca registrada.</li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-sm font-semibold">Histórico de manutenção</h2>
+                  {podeEditar && !emManutencao && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setMostrarBaixa(false);
+                        setMostrarSolicitacao((aberto) => !aberto);
+                      }}
+                    >
+                      {mostrarSolicitacao ? "Cancelar solicitação" : "Registrar manutenção"}
+                    </Button>
+                  )}
+                  {podeEditar && emManutencao && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setMostrarSolicitacao(false);
+                        setMostrarBaixa((aberto) => !aberto);
+                      }}
+                    >
+                      {mostrarBaixa ? "Cancelar baixa" : "Baixa da manutenção"}
+                    </Button>
+                  )}
+                </div>
+
+                <div
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl border px-4 py-3",
+                    emManutencao
+                      ? "border-amber-500/40 bg-amber-500/10"
+                      : "border-emerald-500/40 bg-emerald-500/10",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "h-3 w-3 shrink-0 rounded-full",
+                      emManutencao ? "animate-pulse bg-amber-400" : "bg-emerald-500",
+                    )}
+                    aria-hidden
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {emManutencao ? "Visita Técnica Agendada" : "Em Funcionamento"}
+                    </p>
+                    {manutencaoAberta && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        Agendada para {formatarData(manutencaoAberta.agendado_em)} · {manutencaoAberta.problema}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {mostrarSolicitacao && podeEditar && !emManutencao && (
+                  <div className="grid gap-3 rounded-xl border p-4">
+                    <p className="text-sm font-medium">Solicitação de manutenção</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="manutencao-problema">Descrição do problema</Label>
+                      <Textarea
+                        id="manutencao-problema"
+                        value={solicitacao.problema}
+                        onChange={(evento) =>
+                          setSolicitacao((atual) => ({ ...atual, problema: evento.target.value }))
+                        }
+                        placeholder="Descreva o problema encontrado"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manutencao-agendamento">Data do agendamento</Label>
+                      <Input
+                        id="manutencao-agendamento"
+                        type="date"
+                        value={solicitacao.agendado_em}
+                        onChange={(evento) =>
+                          setSolicitacao((atual) => ({ ...atual, agendado_em: evento.target.value }))
+                        }
+                      />
+                    </div>
+                    <Button
+                      disabled={solicitarManutencao.isPending}
+                      onClick={() => solicitarManutencao.mutate()}
+                    >
+                      {solicitarManutencao.isPending ? "Salvando..." : "Registrar solicitação"}
+                    </Button>
+                  </div>
+                )}
+
+                {mostrarBaixa && podeEditar && manutencaoAberta && (
+                  <div className="grid gap-3 rounded-xl border p-4">
+                    <p className="text-sm font-medium">Baixa da manutenção</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="baixa-tecnico">Nome do técnico</Label>
+                        <Input
+                          id="baixa-tecnico"
+                          value={baixa.tecnico_nome}
+                          onChange={(evento) =>
+                            setBaixa((atual) => ({ ...atual, tecnico_nome: evento.target.value }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="baixa-responsavel">Nome do responsável que acompanhou</Label>
+                        <Input
+                          id="baixa-responsavel"
+                          value={baixa.responsavel_nome}
+                          onChange={(evento) =>
+                            setBaixa((atual) => ({ ...atual, responsavel_nome: evento.target.value }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="baixa-resolvido">Data da resolução</Label>
+                      <Input
+                        id="baixa-resolvido"
+                        type="date"
+                        value={baixa.resolvido_em}
+                        onChange={(evento) =>
+                          setBaixa((atual) => ({ ...atual, resolvido_em: evento.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="baixa-resolucao">Descrição de como foi resolvido</Label>
+                      <Textarea
+                        id="baixa-resolucao"
+                        value={baixa.resolucao}
+                        onChange={(evento) =>
+                          setBaixa((atual) => ({ ...atual, resolucao: evento.target.value }))
+                        }
+                      />
+                    </div>
+                    <Button disabled={baixarManutencao.isPending} onClick={() => baixarManutencao.mutate()}>
+                      {baixarManutencao.isPending ? "Salvando..." : "Confirmar baixa"}
+                    </Button>
+                  </div>
+                )}
+
+                <ul className="divide-y rounded-xl border">
+                  {(manutencoes.data ?? []).map((item) => (
+                    <li key={item.id} className="space-y-1 px-3 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Badge variant={item.status === "agendada" ? "secondary" : "outline"}>
+                          {item.status === "agendada" ? "Visita Técnica Agendada" : "Concluída"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Agendada: {formatarData(item.agendado_em)}
+                          {item.resolvido_em ? ` · Resolvida: ${formatarData(item.resolvido_em)}` : ""}
+                        </span>
+                      </div>
+                      <p className="text-sm">{item.problema}</p>
+                      {item.status === "concluida" && (
+                        <p className="text-xs text-muted-foreground">
+                          Técnico: {texto(item.tecnico_nome)} · Responsável: {texto(item.responsavel_nome)}
+                          <br />
+                          Resolução: {texto(item.resolucao)}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                  {(manutencoes.data?.length ?? 0) === 0 && (
+                    <li className="px-3 py-4 text-sm text-muted-foreground">
+                      Nenhuma manutenção registrada.
+                    </li>
                   )}
                 </ul>
               </div>
