@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Printer, Search, Trash2 } from "lucide-react";
+import { Camera, ImageIcon, Pencil, Plus, Printer, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
+import { abrirAnexo, enviarAnexo } from "@/lib/anexos";
 import { cn } from "@/lib/utils";
 
 const CORES = ["Preto", "Ciano", "Magenta", "Amarelo"] as const;
@@ -66,6 +67,8 @@ type Manutencao = {
   responsavel_nome: string | null;
   resolvido_em: string | null;
   resolucao: string | null;
+  os_numero: string | null;
+  os_foto_path: string | null;
   created_at: string;
 };
 
@@ -76,6 +79,7 @@ const baixaVazia = {
   responsavel_nome: "",
   resolvido_em: "",
   resolucao: "",
+  os_numero: "",
 };
 
 function texto(valor: string | null | undefined) {
@@ -113,6 +117,20 @@ function Impressoras() {
   const [mostrarBaixa, setMostrarBaixa] = useState(false);
   const [solicitacao, setSolicitacao] = useState(solicitacaoVazia);
   const [baixa, setBaixa] = useState(baixaVazia);
+  const [fotoOs, setFotoOs] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!fotoOs) {
+      setFotoPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(fotoOs);
+    setFotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [fotoOs]);
 
   const lista = useQuery({
     queryKey: ["printers", workspaceId],
@@ -163,7 +181,7 @@ function Impressoras() {
       const { data, error } = await supabase
         .from("printer_maintenances")
         .select(
-          "id, status, problema, agendado_em, tecnico_nome, responsavel_nome, resolvido_em, resolucao, created_at",
+          "id, status, problema, agendado_em, tecnico_nome, responsavel_nome, resolvido_em, resolucao, os_numero, os_foto_path, created_at",
         )
         .eq("printer_id", selecionadaId!)
         .order("created_at", { ascending: false });
@@ -373,6 +391,18 @@ function Impressoras() {
     setMostrarBaixa(false);
     setSolicitacao(solicitacaoVazia);
     setBaixa(baixaVazia);
+    setFotoOs(null);
+    if (fotoInputRef.current) fotoInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  }
+
+  function escolherFotoOs(arquivo: File | undefined) {
+    if (!arquivo) return;
+    if (!arquivo.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem da OS.");
+      return;
+    }
+    setFotoOs(arquivo);
   }
 
   const solicitarManutencao = useMutation({
@@ -409,14 +439,18 @@ function Impressoras() {
 
   const baixarManutencao = useMutation({
     mutationFn: async () => {
+      if (!workspaceId) throw new Error("Selecione uma empresa.");
       if (!manutencaoAberta) throw new Error("Não há manutenção aberta para baixar.");
       const tecnico = baixa.tecnico_nome.trim();
       const responsavel = baixa.responsavel_nome.trim();
       const resolvidoEm = baixa.resolvido_em.trim();
       const resolucao = baixa.resolucao.trim();
-      if (!tecnico || !responsavel || !resolvidoEm || !resolucao) {
-        throw new Error("Preencha técnico, responsável, data e descrição da resolução.");
+      const osNumero = baixa.os_numero.trim();
+      if (!tecnico || !responsavel || !resolvidoEm || !resolucao || !osNumero) {
+        throw new Error("Preencha técnico, responsável, data, resolução e o Nº da OS.");
       }
+      if (!fotoOs) throw new Error("Tire ou selecione a foto da OS.");
+      const anexo = await enviarAnexo(workspaceId, fotoOs);
       const { error } = await supabase
         .from("printer_maintenances")
         .update({
@@ -425,6 +459,8 @@ function Impressoras() {
           responsavel_nome: responsavel,
           resolvido_em: resolvidoEm,
           resolucao,
+          os_numero: osNumero,
+          os_foto_path: anexo.path,
           updated_at: new Date().toISOString(),
         })
         .eq("id", manutencaoAberta.id);
@@ -435,7 +471,15 @@ function Impressoras() {
       limparFormulariosManutencao();
       toast.success("Manutenção baixada");
     },
-    onError: (erro: Error) => toast.error("Não foi possível baixar", { description: erro.message }),
+    onError: (erro: Error) => {
+      if (/os_numero|os_foto_path|schema cache|Could not find/i.test(erro.message)) {
+        toast.error("Campos da OS ainda não estão no banco", {
+          description: "Execute a migration 0020_printer_maintenance_os.sql no SQL Editor do Supabase.",
+        });
+        return;
+      }
+      toast.error("Não foi possível baixar", { description: erro.message });
+    },
   });
 
   return (
@@ -853,16 +897,29 @@ function Impressoras() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="baixa-resolvido">Data da resolução</Label>
-                      <Input
-                        id="baixa-resolvido"
-                        type="date"
-                        value={baixa.resolvido_em}
-                        onChange={(evento) =>
-                          setBaixa((atual) => ({ ...atual, resolvido_em: evento.target.value }))
-                        }
-                      />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="baixa-resolvido">Data da resolução</Label>
+                        <Input
+                          id="baixa-resolvido"
+                          type="date"
+                          value={baixa.resolvido_em}
+                          onChange={(evento) =>
+                            setBaixa((atual) => ({ ...atual, resolvido_em: evento.target.value }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="baixa-os">Nº da OS</Label>
+                        <Input
+                          id="baixa-os"
+                          value={baixa.os_numero}
+                          onChange={(evento) =>
+                            setBaixa((atual) => ({ ...atual, os_numero: evento.target.value }))
+                          }
+                          placeholder="Número da ordem de serviço"
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="baixa-resolucao">Descrição de como foi resolvido</Label>
@@ -873,6 +930,66 @@ function Impressoras() {
                           setBaixa((atual) => ({ ...atual, resolucao: evento.target.value }))
                         }
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Foto da OS</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => cameraInputRef.current?.click()}
+                          disabled={baixarManutencao.isPending}
+                        >
+                          <Camera className="mr-2 h-4 w-4" />
+                          Tirar foto
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fotoInputRef.current?.click()}
+                          disabled={baixarManutencao.isPending}
+                        >
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          Escolher imagem
+                        </Button>
+                      </div>
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(evento) => {
+                          escolherFotoOs(evento.target.files?.[0]);
+                          evento.target.value = "";
+                        }}
+                      />
+                      <input
+                        ref={fotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(evento) => {
+                          escolherFotoOs(evento.target.files?.[0]);
+                          evento.target.value = "";
+                        }}
+                      />
+                      {fotoPreview ? (
+                        <div className="overflow-hidden rounded-lg border">
+                          <img
+                            src={fotoPreview}
+                            alt="Pré-visualização da OS"
+                            className="max-h-48 w-full object-contain bg-muted"
+                          />
+                          <p className="truncate px-3 py-2 text-xs text-muted-foreground">
+                            {fotoOs?.name}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          No celular, “Tirar foto” abre a câmera. No computador, você pode escolher uma imagem.
+                        </p>
+                      )}
                     </div>
                     <Button disabled={baixarManutencao.isPending} onClick={() => baixarManutencao.mutate()}>
                       {baixarManutencao.isPending ? "Salvando..." : "Confirmar baixa"}
@@ -894,11 +1011,30 @@ function Impressoras() {
                       </div>
                       <p className="text-sm">{item.problema}</p>
                       {item.status === "concluida" && (
-                        <p className="text-xs text-muted-foreground">
-                          Técnico: {texto(item.tecnico_nome)} · Responsável: {texto(item.responsavel_nome)}
-                          <br />
-                          Resolução: {texto(item.resolucao)}
-                        </p>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <p>
+                            Técnico: {texto(item.tecnico_nome)} · Responsável: {texto(item.responsavel_nome)}
+                          </p>
+                          <p>OS: {texto(item.os_numero)}</p>
+                          <p>Resolução: {texto(item.resolucao)}</p>
+                          {item.os_foto_path && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="link"
+                              className="h-auto px-0"
+                              onClick={() => {
+                                void abrirAnexo(item.os_foto_path!).catch((erro: Error) =>
+                                  toast.error("Não foi possível abrir a foto", {
+                                    description: erro.message,
+                                  }),
+                                );
+                              }}
+                            >
+                              Ver foto da OS
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </li>
                   ))}
