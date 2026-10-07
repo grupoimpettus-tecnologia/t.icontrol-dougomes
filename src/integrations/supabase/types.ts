@@ -944,6 +944,8 @@ export type Database = {
           created_at: string
           criado_por: string | null
           id: string
+          os_foto_path: string | null
+          os_numero: string | null
           printer_id: string
           problema: string
           resolucao: string | null
@@ -959,6 +961,8 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           id?: string
+          os_foto_path?: string | null
+          os_numero?: string | null
           printer_id: string
           problema: string
           resolucao?: string | null
@@ -974,6 +978,8 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           id?: string
+          os_foto_path?: string | null
+          os_numero?: string | null
           printer_id?: string
           problema?: string
           resolucao?: string | null

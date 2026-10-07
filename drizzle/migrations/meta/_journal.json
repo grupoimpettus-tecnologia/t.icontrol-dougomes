@@ -155,6 +155,13 @@
       "when": 1790410000000,
       "tag": "0021_printer_maintenance_os",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791404733371,
+      "tag": "0022_printer_maintenance_os",
+      "breakpoints": true
     }
   ]
 }
