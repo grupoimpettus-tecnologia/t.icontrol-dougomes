@@ -938,6 +938,76 @@ export type Database = {
           },
         ]
       }
+      printer_maintenances: {
+        Row: {
+          agendado_em: string
+          created_at: string
+          criado_por: string | null
+          id: string
+          printer_id: string
+          problema: string
+          resolucao: string | null
+          resolvido_em: string | null
+          responsavel_nome: string | null
+          status: string
+          tecnico_nome: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          agendado_em: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          printer_id: string
+          problema: string
+          resolucao?: string | null
+          resolvido_em?: string | null
+          responsavel_nome?: string | null
+          status?: string
+          tecnico_nome?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          agendado_em?: string
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          printer_id?: string
+          problema?: string
+          resolucao?: string | null
+          resolvido_em?: string | null
+          responsavel_nome?: string | null
+          status?: string
+          tecnico_nome?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "printer_maintenances_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "printer_maintenances_printer_id_fkey"
+            columns: ["printer_id"]
+            isOneToOne: false
+            referencedRelation: "printers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "printer_maintenances_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       printer_toner_movements: {
         Row: {
           cor: string
