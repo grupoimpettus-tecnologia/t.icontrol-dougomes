@@ -159,8 +159,15 @@
     {
       "idx": 22,
       "version": "7",
+      "when": 1791404733371,
+      "tag": "0022_printer_maintenance_os",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
       "when": 1791550000000,
-      "tag": "0022_pdv_layout_versoes",
+      "tag": "0023_pdv_layout_versoes",
       "breakpoints": true
     }
   ]
