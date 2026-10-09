@@ -372,6 +372,40 @@ button.org-box:disabled { opacity: 1; }
   border-top: 0;
   border-left: 2px solid var(--muted-foreground);
 }
+.org-pdv .org-box {
+  min-width: 10rem;
+  max-width: 18rem;
+}
+.org-pdv.org-franqueado .org-box {
+  max-width: none;
+}
+.org-pdv.org-franqueado .org-tree > ul > li > ul > li > ul > li > ul {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding-top: 0.5rem;
+}
+.org-pdv.org-franqueado .org-tree > ul > li > ul > li > ul > li > ul::before {
+  display: none;
+}
+.org-pdv.org-franqueado .org-tree > ul > li > ul > li > ul > li > ul > li {
+  width: 100%;
+  padding: 0.6rem 0 0;
+  align-items: stretch;
+}
+.org-pdv.org-franqueado .org-tree > ul > li > ul > li > ul > li > ul > li::before {
+  display: none;
+}
+.org-pdv.org-franqueado .org-tree > ul > li > ul > li > ul > li > ul > li::after {
+  display: block;
+  left: 50%;
+  width: 0;
+  height: 0.6rem;
+  border-top: 0;
+  border-left: 2px solid var(--muted-foreground);
+}
+
 @media (max-width: 640px) {
   .org-franqueado .org-tree > ul > li > ul {
     grid-template-columns: 1fr;

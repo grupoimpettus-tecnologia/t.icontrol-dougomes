@@ -26,6 +26,7 @@ import {
   type FaseMicroFranqueado,
   type PassoMicroFranqueado,
 } from "@/data/micro-franqueado";
+import { AbaLayoutOp } from "@/components/pdv/AbaLayoutOp";
 
 // Tabelas novas ainda não presentes nos tipos gerados.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,20 +103,27 @@ function temEvidencia(html: string | null | undefined) {
 }
 
 function SistemaPdv() {
+  const atual = useCurrentWorkspace();
+  const podeEditar =
+    atual?.role === "master" || atual?.role === "admin" || atual?.role === "tecnico";
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Sistema PDV</h1>
         <p className="text-sm text-muted-foreground">
-          Implantação de lojas, checklist de etapas e evidências do go-live.
+          Implantação de lojas, checklist de etapas e layout operacional do ponto de venda.
         </p>
       </div>
       <Tabs defaultValue="implantacao" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="implantacao">Implantação de loja</TabsTrigger>
+          <TabsTrigger value="layout-op">Layout Op. Sistema PDV</TabsTrigger>
         </TabsList>
         <TabsContent value="implantacao">
           <AbaImplantacaoLoja />
+        </TabsContent>
+        <TabsContent value="layout-op">
+          <AbaLayoutOp ws={atual?.workspace.id} podeEditar={podeEditar} />
         </TabsContent>
       </Tabs>
     </div>
