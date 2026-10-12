@@ -177,7 +177,7 @@ async function lerJson(resposta: Response) {
 }
 
 function tabelaAusente(mensagem: string) {
-  return /pdv_loja_api_estado|pdv_loja_atualizacoes|schema cache|Could not find the table/i.test(mensagem);
+  return /schema cache|Could not find the table|does not exist/i.test(mensagem);
 }
 
 export const consultarLojasMarca = createServerFn({ method: "POST" })
@@ -426,7 +426,7 @@ export const consultarLojasMarca = createServerFn({ method: "POST" })
       const mensagem = erro instanceof Error ? erro.message : "Falha ao comparar CNPJ";
       avisos.push(
         tabelaAusente(mensagem)
-          ? "Histórico de CNPJ indisponível. Execute a migration 20261012180000_pdv_lojas_marca.sql no SQL Editor do Supabase."
+          ? "Histórico de CNPJ indisponível no momento. Tente novamente em alguns instantes."
           : `Histórico de CNPJ não foi gravado: ${mensagem}`,
       );
     }

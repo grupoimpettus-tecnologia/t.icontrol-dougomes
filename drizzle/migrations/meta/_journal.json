@@ -183,6 +183,13 @@
       "when": 1791837541074,
       "tag": "0025_pdv_lojas_marca",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791837832343,
+      "tag": "0026_pdv_historico_cnpj_master",
+      "breakpoints": true
     }
   ]
 }
