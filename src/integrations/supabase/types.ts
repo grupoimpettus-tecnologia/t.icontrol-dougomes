@@ -676,6 +676,47 @@ export type Database = {
           },
         ]
       }
+      pdv_layout_versoes: {
+        Row: {
+          atual: boolean
+          created_at: string
+          id: string
+          nodes: Json
+          nome: string
+          periodo: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome: string
+          periodo?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome?: string
+          periodo?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_layout_versoes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdv_loja_etapas: {
         Row: {
           concluida: boolean
