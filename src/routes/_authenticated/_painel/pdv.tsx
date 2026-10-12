@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Component, lazy, Suspense, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -27,6 +27,25 @@ import {
   type PassoMicroFranqueado,
 } from "@/data/micro-franqueado";
 import { AbaLayoutOp } from "@/components/pdv/AbaLayoutOp";
+
+const AbaLojasMarca = lazy(() =>
+  import("@/components/pdv/AbaLojasMarca").then((modulo) => ({ default: modulo.AbaLojasMarca })),
+);
+
+class IsolamentoAba extends Component<{ children: ReactNode }, { erro: string | null }> {
+  state = { erro: null as string | null };
+
+  static getDerivedStateFromError(erro: Error) {
+    return { erro: erro.message || "Falha ao abrir esta visão." };
+  }
+
+  render() {
+    if (this.state.erro) {
+      return <p className="p-4 text-sm text-destructive">{this.state.erro}</p>;
+    }
+    return this.props.children;
+  }
+}
 
 // Tabelas novas ainda não presentes nos tipos gerados.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -117,10 +136,18 @@ function SistemaPdv() {
       <Tabs defaultValue="implantacao" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="implantacao">Implantação de loja</TabsTrigger>
+          <TabsTrigger value="lojas-marca">Lojas/Marca</TabsTrigger>
           <TabsTrigger value="layout-op">Layout Op. Sistema PDV</TabsTrigger>
         </TabsList>
         <TabsContent value="implantacao">
           <AbaImplantacaoLoja />
+        </TabsContent>
+        <TabsContent value="lojas-marca">
+          <IsolamentoAba>
+            <Suspense fallback={<p className="p-4 text-sm text-muted-foreground">Abrindo Lojas/Marca…</p>}>
+              <AbaLojasMarca ws={atual?.workspace.id} />
+            </Suspense>
+          </IsolamentoAba>
         </TabsContent>
         <TabsContent value="layout-op">
           <AbaLayoutOp ws={atual?.workspace.id} podeEditar={podeEditar} />
