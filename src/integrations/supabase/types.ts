@@ -717,6 +717,103 @@ export type Database = {
           },
         ]
       }
+      pdv_loja_api_estado: {
+        Row: {
+          cnpj: string
+          codigo_franquia: number
+          codigo_loja: number
+          created_at: string
+          id: string
+          marca: string
+          nome: string
+          updated_at: string
+          visto_em: string
+          workspace_id: string
+        }
+        Insert: {
+          cnpj: string
+          codigo_franquia: number
+          codigo_loja: number
+          created_at?: string
+          id?: string
+          marca: string
+          nome: string
+          updated_at?: string
+          visto_em?: string
+          workspace_id: string
+        }
+        Update: {
+          cnpj?: string
+          codigo_franquia?: number
+          codigo_loja?: number
+          created_at?: string
+          id?: string
+          marca?: string
+          nome?: string
+          updated_at?: string
+          visto_em?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_loja_api_estado_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdv_loja_atualizacoes: {
+        Row: {
+          alterado_em: string
+          cnpj_anterior: string
+          cnpj_novo: string
+          codigo_franquia: number
+          codigo_loja: number
+          created_at: string
+          id: string
+          marca: string
+          nome: string
+          vigente_ate: string
+          workspace_id: string
+        }
+        Insert: {
+          alterado_em?: string
+          cnpj_anterior: string
+          cnpj_novo: string
+          codigo_franquia: number
+          codigo_loja: number
+          created_at?: string
+          id?: string
+          marca: string
+          nome: string
+          vigente_ate: string
+          workspace_id: string
+        }
+        Update: {
+          alterado_em?: string
+          cnpj_anterior?: string
+          cnpj_novo?: string
+          codigo_franquia?: number
+          codigo_loja?: number
+          created_at?: string
+          id?: string
+          marca?: string
+          nome?: string
+          vigente_ate?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_loja_atualizacoes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdv_loja_etapas: {
         Row: {
           concluida: boolean

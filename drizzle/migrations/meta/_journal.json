@@ -176,6 +176,13 @@
       "when": 1791833840684,
       "tag": "0024_pdv_layout_versoes",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791837541074,
+      "tag": "0025_pdv_lojas_marca",
+      "breakpoints": true
     }
   ]
 }
