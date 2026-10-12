@@ -33,13 +33,13 @@ const AbaLojasMarca = lazy(() =>
 );
 
 class IsolamentoAba extends Component<{ children: ReactNode }, { erro: string | null }> {
-  state = { erro: null as string | null };
+  override state = { erro: null as string | null };
 
   static getDerivedStateFromError(erro: Error) {
     return { erro: erro.message || "Falha ao abrir esta visão." };
   }
 
-  render() {
+  override render() {
     if (this.state.erro) {
       return <p className="p-4 text-sm text-destructive">{this.state.erro}</p>;
     }
