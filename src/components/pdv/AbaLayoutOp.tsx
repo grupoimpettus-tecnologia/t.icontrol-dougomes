@@ -154,7 +154,7 @@ export function AbaLayoutOp({ ws, podeEditar }: { ws: string | undefined; podeEd
   const qc = useQueryClient();
   const [grafico, setGrafico] = useState(true);
   const [selecionada, setSelecionada] = useState<string | null>(null);
-  const [editando, setEditando] = useState<(Omit<VersaoLayout, "id"> & { id?: string }) | null>(
+  const [editando, setEditando] = useState<(Omit<VersaoLayout, "id"> & { id?: string | undefined }) | null>(
     null,
   );
   const [blocoAberto, setBlocoAberto] = useState<NoOrg | null>(null);
@@ -183,7 +183,7 @@ export function AbaLayoutOp({ ws, podeEditar }: { ws: string | undefined; podeEd
     versoes[versoes.length - 1];
 
   const salvar = useMutation({
-    mutationFn: async (v: Omit<VersaoLayout, "id"> & { id?: string }) => {
+    mutationFn: async (v: Omit<VersaoLayout, "id"> & { id?: string | undefined }) => {
       if (!ws) throw new Error("Workspace não encontrado");
       if (semTabela) {
         throw new Error(
