@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -669,6 +669,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "org_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdv_layout_versoes: {
+        Row: {
+          atual: boolean
+          created_at: string
+          id: string
+          nodes: Json
+          nome: string
+          periodo: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome: string
+          periodo?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          atual?: boolean
+          created_at?: string
+          id?: string
+          nodes?: Json
+          nome?: string
+          periodo?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_layout_versoes_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
