@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { contatoLojaSchema, exigirMaster } from "@/lib/pdv-loja-contato";
 
 const BASE_PADRAO = "https://lx-degust-api-integracao-prd.azurewebsites.net";
 
@@ -276,6 +277,14 @@ export const consultarLojasMarca = createServerFn({ method: "POST" })
     }
 
     const historicoPorChave = new Map<string, HistoricoLoja[]>();
+    const { data: contatos, error: erroContatos } = await context.supabase
+      .from("pdv_loja_contatos")
+      .select("codigo_franquia, codigo_loja, email")
+      .eq("workspace_id", data.workspaceId);
+    if (erroContatos) throw new Error(`Não foi possível consultar os e-mails das lojas: ${erroContatos.message}`);
+    const emailsLocais = new Map((contatos ?? []).map((contato) => [
+      `${contato.codigo_franquia}:${contato.codigo_loja}`, contato.email,
+    ]));
     const db = context.supabase as unknown as {
       from: (tabela: string) => {
         select: (cols: string) => {
@@ -434,6 +443,9 @@ export const consultarLojasMarca = createServerFn({ method: "POST" })
     const lojas = unidades
       .map(({ cnpjDigitos: _cnpjDigitos, ...loja }) => ({
         ...loja,
+        email: emailsLocais.has(`${loja.codigoFranquia}:${loja.codigoLoja}`)
+          ? emailsLocais.get(`${loja.codigoFranquia}:${loja.codigoLoja}`) || "Não informado"
+          : loja.email,
         historico: (historicoPorChave.get(`${loja.codigoFranquia}:${loja.codigoLoja}`) ?? []).sort((a, b) =>
           a.alteradoEm < b.alteradoEm ? 1 : -1,
         ),
@@ -457,4 +469,26 @@ export const consultarLojasMarca = createServerFn({ method: "POST" })
       lojas,
       avisos,
     };
+  });
+
+export const salvarEmailLoja = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => contatoLojaSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: master, error: erroPapel } = await context.supabase.rpc("is_master", { _user_id: context.userId });
+    if (erroPapel) throw new Error("Não foi possível verificar sua permissão.");
+    exigirMaster(master);
+    const { data: contato, error } = await context.supabase
+      .from("pdv_loja_contatos")
+      .upsert({
+        workspace_id: data.workspaceId,
+        codigo_franquia: data.codigoFranquia,
+        codigo_loja: data.codigoLoja,
+        email: data.email,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "workspace_id,codigo_franquia,codigo_loja" })
+      .select("email")
+      .single();
+    if (error) throw new Error(`Não foi possível salvar o e-mail: ${error.message}`);
+    return contato;
   });

@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { RefreshCw, Store } from "lucide-react";
+import { RefreshCw, Save, Store } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { consultarLojasMarca, type LojaMarca } from "@/lib/pdv-lojas-marca.functions";
+import { consultarLojasMarca, salvarEmailLoja, type ConsultaLojasMarca, type LojaMarca } from "@/lib/pdv-lojas-marca.functions";
+import { Input } from "@/components/ui/input";
+import { useProfile } from "@/hooks/useWorkspaces";
+import { toast } from "sonner";
 
 function formatarConsulta(iso: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -21,13 +24,35 @@ function formatarConsulta(iso: string) {
 
 export function AbaLojasMarca({ ws }: { ws: string | undefined }) {
   const consultar = useServerFn(consultarLojasMarca);
+  const salvarEmail = useServerFn(salvarEmailLoja);
+  const queryClient = useQueryClient();
+  const profile = useProfile();
+  const isMaster = profile.data?.role_global === "master";
   const [selecionada, setSelecionada] = useState<LojaMarca | null>(null);
+  const [email, setEmail] = useState("");
+
+  const gravarEmail = useMutation({
+    mutationFn: (data: { workspaceId: string; codigoFranquia: number; codigoLoja: number; email: string }) => salvarEmail({ data }),
+    onSuccess: (contato, variables) => {
+      const exibido = contato.email || "Não informado";
+      const corresponde = (loja: LojaMarca) => loja.codigoFranquia === variables.codigoFranquia && loja.codigoLoja === variables.codigoLoja;
+      queryClient.setQueryData<ConsultaLojasMarca>(["pdv_lojas_marca", variables.workspaceId], (atual) => atual && ({
+        ...atual, lojas: atual.lojas.map((loja) => corresponde(loja) ? { ...loja, email: exibido } : loja),
+      }));
+      setSelecionada((atual) => atual && corresponde(atual) ? { ...atual, email: exibido } : atual);
+      toast.success("E-mail da loja salvo.");
+    },
+    onError: (erro) => toast.error(erro instanceof Error ? erro.message : "Não foi possível salvar o e-mail."),
+  });
 
   const consulta = useQuery({
     queryKey: ["pdv_lojas_marca", ws],
     enabled: !!ws,
     refetchInterval: 120_000,
-    queryFn: () => consultar({ data: { workspaceId: ws! } }),
+    queryFn: () => {
+      if (!ws) throw new Error("Selecione uma empresa.");
+      return consultar({ data: { workspaceId: ws } });
+    },
   });
 
   const dados = consulta.data;
@@ -93,7 +118,6 @@ export function AbaLojasMarca({ ws }: { ws: string | undefined }) {
                 </CardHeader>
                 <CardContent>
                   <p className="text-3xl font-bold">{marca.quantidade}</p>
-                  <p className="text-xs text-muted-foreground">{marca.comPromocao} com promoção</p>
                 </CardContent>
               </Card>
             ))}
@@ -131,7 +155,10 @@ export function AbaLojasMarca({ ws }: { ws: string | undefined }) {
                         <tr
                           key={`${loja.codigoFranquia}-${loja.codigoLoja}`}
                           className="cursor-pointer border-b last:border-0 hover:bg-muted/50"
-                          onClick={() => setSelecionada(loja)}
+                          onClick={() => {
+                            setSelecionada(loja);
+                            setEmail(loja.email === "Não informado" ? "" : loja.email);
+                          }}
                         >
                           <td className="p-2 font-medium">
                             {loja.nome}
@@ -170,8 +197,21 @@ export function AbaLojasMarca({ ws }: { ws: string | undefined }) {
                 <dd>{selecionada.marca}</dd>
                 <dt className="text-muted-foreground">CNPJ</dt>
                 <dd>{selecionada.cnpj}</dd>
-                <dt className="text-muted-foreground">E-mail</dt>
-                <dd>{selecionada.email}</dd>
+                <dt className="text-muted-foreground"><label htmlFor="loja-email">E-mail</label></dt>
+                <dd className="min-w-0 break-words">
+                  {isMaster ? (
+                    <form className="space-y-2" onSubmit={(event) => {
+                      event.preventDefault();
+                      if (!ws || gravarEmail.isPending) return;
+                      gravarEmail.mutate({ workspaceId: ws, codigoFranquia: selecionada.codigoFranquia, codigoLoja: selecionada.codigoLoja, email: email.trim() });
+                    }}>
+                      <Input id="loja-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} disabled={gravarEmail.isPending} placeholder="Não informado" />
+                      <Button type="submit" size="sm" disabled={gravarEmail.isPending || email.trim() === (selecionada.email === "Não informado" ? "" : selecionada.email)}>
+                        <Save className="mr-2 h-4 w-4" />{gravarEmail.isPending ? "Salvando…" : "Salvar e-mail"}
+                      </Button>
+                    </form>
+                  ) : selecionada.email}
+                </dd>
                 <dt className="text-muted-foreground">Endereço</dt>
                 <dd>{selecionada.endereco}</dd>
                 <dt className="text-muted-foreground">Estado</dt>
