@@ -814,6 +814,41 @@ export type Database = {
           },
         ]
       }
+      pdv_loja_contatos: {
+        Row: {
+          codigo_franquia: number
+          codigo_loja: number
+          email: string
+          id: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          codigo_franquia: number
+          codigo_loja: number
+          email?: string
+          id?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          codigo_franquia?: number
+          codigo_loja?: number
+          email?: string
+          id?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_loja_contatos_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdv_loja_etapas: {
         Row: {
           concluida: boolean

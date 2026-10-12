@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Retirar promoção dos indicadores por marca e salvar e-mail da loja com edição exclusiva do Master (testes de permissão passaram)
+- [ ] Conferir edição e leitura do e-mail no modal com conta Master — bloqueado: sessão autenticada indisponível para validação
 - [x] Reorganizar coluna de Equipamentos e padronizar barras de rolagem
 - [x] Adicionar PDF, XLSX e CSV em todas as listas
 - [x] Ligar Dashboard aos dados reais
