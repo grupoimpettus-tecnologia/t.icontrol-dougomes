@@ -204,6 +204,13 @@
       "when": 1791929839457,
       "tag": "0028_microarea_role_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791930339499,
+      "tag": "0029_microarea_cargo_versions",
+      "breakpoints": true
     }
   ]
 }
