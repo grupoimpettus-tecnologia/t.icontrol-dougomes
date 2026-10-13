@@ -325,6 +325,41 @@ export type Database = {
         }
         Relationships: []
       }
+      microarea_role_functions: {
+        Row: {
+          cargo: string
+          funcoes_html: string
+          id: string
+          microarea: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          cargo: string
+          funcoes_html?: string
+          id?: string
+          microarea: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          cargo?: string
+          funcoes_html?: string
+          id?: string
+          microarea?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "microarea_role_functions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monitor_checks: {
         Row: {
           criado_em: string

@@ -197,6 +197,13 @@
       "when": 1791839077340,
       "tag": "0027_pdv_loja_contatos_master",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791929839457,
+      "tag": "0028_microarea_role_functions",
+      "breakpoints": true
     }
   ]
 }

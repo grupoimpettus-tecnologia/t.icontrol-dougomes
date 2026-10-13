@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ExportarDocumentoMenu, ExportarMenu } from "@/components/ExportarMenu";
 import { OrgChart, type NoOrg } from "@/components/overview/OrgChart";
+import { MicroareaCargos } from "@/components/overview/MicroareaCargos";
+import { podeEditarFuncoes } from "@/lib/microarea-cargos";
 import { DetalhePassoMicro } from "@/components/overview/DetalhePassoMicro";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
 import { ConteudoRico } from "@/components/infra/ConteudoRico";
@@ -206,6 +208,7 @@ function Overview() {
       </TabsContent>
       <TabsContent value="micro">
         <AbaVersoes tipo="micro" ws={ws} versoes={listaVersoes.filter((v) => v.tipo === "micro")} podeEditar={podeEditar && !apresentacao} />
+        {ws && <MicroareaCargos key={ws} workspaceId={ws} podeEditar={podeEditarFuncoes(atual?.role) && !apresentacao} />}
       </TabsContent>
       <TabsContent value="individual">
         <AbaIndividual membros={listaMembros} />
