@@ -295,6 +295,31 @@
 }
 
 /* Organograma (Overviewer do time) */
+.microarea-top, .microarea-area {
+  border: 2px solid var(--primary);
+  border-radius: 0.5rem;
+  background: var(--card);
+  color: var(--card-foreground);
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+}
+.microarea-top { width: 10rem; margin-inline: auto; }
+.microarea-branches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-top: 2rem; position: relative; }
+.microarea-branches::before { content: ""; position: absolute; top: 0; left: 50%; height: 1rem; border-left: 2px solid var(--muted-foreground); }
+.microarea-branch { position: relative; padding: 1rem 0.5rem 0; min-width: 0; }
+.microarea-branch::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; border-top: 2px solid var(--muted-foreground); }
+.microarea-branch:first-child::before { left: 50%; width: 50%; }
+.microarea-branch:last-child::before { width: 50%; }
+.microarea-branch::after { content: ""; position: absolute; top: 0; left: 50%; height: 1rem; border-left: 2px solid var(--muted-foreground); }
+.microarea-area { min-height: 4.5rem; display: flex; align-items: center; justify-content: center; overflow-wrap: anywhere; }
+.microarea-role { position: relative; padding-top: 1rem; }
+.microarea-role::before { content: ""; position: absolute; top: 0; left: 50%; height: 1rem; border-left: 2px solid var(--muted-foreground); }
+@media (max-width: 640px) {
+  .microarea-branches { grid-template-columns: 1fr; gap: 1rem; padding-top: 1rem; }
+  .microarea-branches::before, .microarea-branch::before { display: none; }
+  .microarea-branch { padding-inline: 0; }
+}
 .org-tree ul { position: relative; display: flex; justify-content: center; padding-top: 1.25rem; }
 .org-tree > ul { padding-top: 0; }
 .org-tree li { position: relative; display: flex; flex-direction: column; align-items: center; padding: 1.25rem 0.5rem 0; list-style: none; }
