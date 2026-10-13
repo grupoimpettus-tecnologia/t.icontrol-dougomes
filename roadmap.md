@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Adicionar organograma de microáreas com cargos clicáveis, funções por empresa e validar salvamento
 - [x] Retirar promoção dos indicadores por marca e salvar e-mail da loja com edição exclusiva do Master (testes de permissão passaram)
 - [ ] Conferir edição e leitura do e-mail no modal com conta Master — bloqueado: sessão autenticada indisponível para validação
 - [x] Reorganizar coluna de Equipamentos e padronizar barras de rolagem
