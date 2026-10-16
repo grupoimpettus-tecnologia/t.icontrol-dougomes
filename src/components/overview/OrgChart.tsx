@@ -69,7 +69,7 @@ function Ramo({
               key={f.id}
               no={f}
               todos={todos}
-              exibirFuncoes={exibirFuncoes}
+              exibirFuncoes={Boolean(exibirFuncoes)}
               {...(onSelect ? { onSelect } : {})}
             />
           ))}
