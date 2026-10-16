@@ -335,6 +335,18 @@
 .org-tree ul ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 1.25rem; border-left: 2px solid var(--muted-foreground); }
 .org-box { min-width: 9rem; max-width: 14rem; border: 2px solid var(--primary); border-radius: 0.5rem; background: var(--card); color: var(--card-foreground); padding: 0.5rem 0.75rem; text-align: center; font: inherit; appearance: none; }
 button.org-box:disabled { opacity: 1; }
+.org-tree .org-box-funcoes { min-width: 18rem; max-width: 26rem; padding: 0.75rem 0.9rem; text-align: left; }
+.org-tree .org-funcoes { margin-top: 0.55rem; border-top: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); padding-top: 0.45rem; }
+.org-tree .org-funcoes-texto { font-size: 0.75rem; line-height: 1.35; }
+.org-tree .org-funcoes-texto p { margin: 0.15rem 0; text-align: left; }
+.org-tree .org-funcoes ul,
+.org-tree .org-funcoes ol { display: block; position: static; width: auto; margin: 0; padding: 0.15rem 0 0 1.15rem; justify-content: flex-start; }
+.org-tree .org-funcoes ul::before,
+.org-tree .org-funcoes ol::before,
+.org-tree .org-funcoes li::before,
+.org-tree .org-funcoes li::after { display: none; content: none; border: 0; }
+.org-tree .org-funcoes li { display: list-item; position: static; width: auto; padding: 0.12rem 0; list-style: disc; text-align: left; }
+.org-tree .org-funcoes img { max-width: 100%; height: auto; }
 
 /* Fluxograma franqueado: ramos lado a lado, passos empilhados */
 .org-franqueado .org-tree > ul,

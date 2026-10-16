@@ -444,7 +444,11 @@ function AbaVersoes({ tipo, ws, versoes, podeEditar }: { tipo: "macro" | "micro"
         {!versao ? (
           <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma versão cadastrada.</p>
         ) : grafico ? (
-          <OrgChart nos={versao.nodes} onSelect={setBlocoAberto} />
+          <OrgChart
+            nos={versao.nodes}
+            exibirFuncoes={tipo === "macro"}
+            {...(tipo === "macro" ? {} : { onSelect: setBlocoAberto })}
+          />
         ) : (
           <ul className="space-y-1 text-sm">
             {versao.nodes.map((n) => (

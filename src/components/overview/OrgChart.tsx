@@ -1,3 +1,5 @@
+import { ConteudoRico } from "@/components/infra/ConteudoRico";
+
 export type NoOrg = {
   id: string;
   titulo: string;
@@ -17,33 +19,59 @@ function Ramo({
   no,
   todos,
   onSelect,
+  exibirFuncoes,
 }: {
   no: NoOrg;
   todos: NoOrg[];
   onSelect?: (no: NoOrg) => void;
+  exibirFuncoes?: boolean;
 }) {
   const filhos = todos.filter((n) => n.parent === no.id);
-  const clicavel = Boolean(onSelect);
-  return (
-    <li>
-      <button
-        type="button"
-        className={`org-box text-left ${clicavel ? "cursor-pointer transition hover:border-primary/60 hover:shadow-md" : "cursor-default"}`}
-        onClick={() => onSelect?.(no)}
-        disabled={!clicavel}
-      >
+  const funcoesVisiveis = Boolean(exibirFuncoes && temConteudo(no.conteudo));
+  const clicavel = Boolean(onSelect) && !funcoesVisiveis;
+  const caixa = (
+    <>
+      <div className={funcoesVisiveis ? "text-center" : undefined}>
         <p className="text-sm font-semibold leading-tight">{no.titulo}</p>
         {no.subtitulo && <p className="mt-0.5 text-xs text-muted-foreground">{no.subtitulo}</p>}
-        {temConteudo(no.conteudo) && (
+      </div>
+      {funcoesVisiveis ? (
+        <div className="org-funcoes">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Funções</p>
+          <ConteudoRico html={no.conteudo ?? ""} className="org-funcoes-texto" />
+        </div>
+      ) : (
+        temConteudo(no.conteudo) && (
           <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-primary/80">
             Ver detalhes
           </p>
-        )}
-      </button>
+        )
+      )}
+    </>
+  );
+  return (
+    <li>
+      {clicavel ? (
+        <button
+          type="button"
+          className="org-box cursor-pointer text-left transition hover:border-primary/60 hover:shadow-md"
+          onClick={() => onSelect?.(no)}
+        >
+          {caixa}
+        </button>
+      ) : (
+        <div className={`org-box ${funcoesVisiveis ? "org-box-funcoes" : ""}`}>{caixa}</div>
+      )}
       {filhos.length > 0 && (
         <ul>
           {filhos.map((f) => (
-            <Ramo key={f.id} no={f} todos={todos} {...(onSelect ? { onSelect } : {})} />
+            <Ramo
+              key={f.id}
+              no={f}
+              todos={todos}
+              exibirFuncoes={exibirFuncoes}
+              {...(onSelect ? { onSelect } : {})}
+            />
           ))}
         </ul>
       )}
@@ -55,11 +83,14 @@ export function OrgChart({
   nos,
   onSelect,
   fullWidth = false,
+  exibirFuncoes = false,
 }: {
   nos: NoOrg[];
   onSelect?: (no: NoOrg) => void;
   /** Usa largura disponível (útil para fluxogramas com muitos passos empilhados). */
   fullWidth?: boolean;
+  /** Mostra o conteúdo cadastrado no próprio card, no lugar de "Ver detalhes". */
+  exibirFuncoes?: boolean;
 }) {
   const ids = new Set(nos.map((n) => n.id));
   const raizes = nos.filter((n) => !n.parent || !ids.has(n.parent));
@@ -69,7 +100,13 @@ export function OrgChart({
       <div className={`org-tree mx-auto ${fullWidth ? "w-full max-w-4xl" : "w-max"}`}>
         <ul>
           {raizes.map((r) => (
-            <Ramo key={r.id} no={r} todos={nos} {...(onSelect ? { onSelect } : {})} />
+            <Ramo
+              key={r.id}
+              no={r}
+              todos={nos}
+              exibirFuncoes={exibirFuncoes}
+              {...(onSelect ? { onSelect } : {})}
+            />
           ))}
         </ul>
       </div>
