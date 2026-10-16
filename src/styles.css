@@ -292,6 +292,47 @@
     top: 0;
     width: 3px;
   }
+
+  /* Tabelas do editor, dentro do modal, respeitam a largura e quebram o texto na própria célula. */
+  [role="dialog"] .rich-text-editor {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  [role="dialog"] .rich-text-editor .tableWrapper {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  [role="dialog"] .rich-text-editor table {
+    max-width: 100%;
+    min-width: 0 !important;
+    table-layout: fixed;
+    width: 100% !important;
+  }
+
+  [role="dialog"] .rich-text-editor col {
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  [role="dialog"] .rich-text-editor th,
+  [role="dialog"] .rich-text-editor td {
+    min-width: 0 !important;
+    width: auto !important;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  [role="dialog"] .rich-text-editor th :where(p, li, span, div),
+  [role="dialog"] .rich-text-editor td :where(p, li, span, div) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
+  }
 }
 
 /* Organograma (Overviewer do time) */
