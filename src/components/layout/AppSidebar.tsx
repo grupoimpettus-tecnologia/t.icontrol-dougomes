@@ -6,6 +6,7 @@ import {
   Cpu,
   KeyRound,
   History,
+  CalendarDays,
   LayoutDashboard,
   Network,
   Package,
@@ -25,6 +26,7 @@ const modulos: { titulo: string; itens: Item[] }[] = [
     itens: [
       { to: "/dashboard", label: "Dashboard de Infra", icon: LayoutDashboard },
       { to: "/overview", label: "Overviewer do time", icon: Network },
+      { to: "/demandas", label: "Demandas", icon: CalendarDays },
     ],
   },
   {

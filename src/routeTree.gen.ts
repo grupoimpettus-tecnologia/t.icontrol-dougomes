@@ -23,6 +23,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as AuthenticatedPainelConfiguracoesRouteImport } from './routes/_authenticated/_painel/configuracoes'
 import { Route as AuthenticatedPainelDashboardRouteImport } from './routes/_authenticated/_painel/dashboard'
 import { Route as AuthenticatedPainelOverviewRouteImport } from './routes/_authenticated/_painel/overview'
+import { Route as AuthenticatedPainelDemandasRouteImport } from './routes/_authenticated/_painel/demandas'
 import { Route as AuthenticatedPainelPdvRouteImport } from './routes/_authenticated/_painel/pdv'
 import { Route as AuthenticatedPainelAdminGlobalConvitesRouteImport } from './routes/_authenticated/_painel/admin-global/convites'
 import { Route as AuthenticatedPainelAdminGlobalEmpresasRouteImport } from './routes/_authenticated/_painel/admin-global/empresas'
@@ -112,6 +113,12 @@ const AuthenticatedPainelOverviewRoute =
   AuthenticatedPainelOverviewRouteImport.update({
     id: '/overview',
     path: '/overview',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
+const AuthenticatedPainelDemandasRoute =
+  AuthenticatedPainelDemandasRouteImport.update({
+    id: '/demandas',
+    path: '/demandas',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
 const AuthenticatedPainelPdvRoute = AuthenticatedPainelPdvRouteImport.update({
@@ -226,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/overview': typeof AuthenticatedPainelOverviewRoute
+  '/demandas': typeof AuthenticatedPainelDemandasRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
   '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -257,6 +265,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/overview': typeof AuthenticatedPainelOverviewRoute
+  '/demandas': typeof AuthenticatedPainelDemandasRoute
   '/pdv': typeof AuthenticatedPainelPdvRoute
   '/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -291,6 +300,7 @@ export interface FileRoutesById {
   '/_authenticated/_painel/configuracoes': typeof AuthenticatedPainelConfiguracoesRoute
   '/_authenticated/_painel/dashboard': typeof AuthenticatedPainelDashboardRoute
   '/_authenticated/_painel/overview': typeof AuthenticatedPainelOverviewRoute
+  '/_authenticated/_painel/demandas': typeof AuthenticatedPainelDemandasRoute
   '/_authenticated/_painel/pdv': typeof AuthenticatedPainelPdvRoute
   '/_authenticated/_painel/admin-global/convites': typeof AuthenticatedPainelAdminGlobalConvitesRoute
   '/_authenticated/_painel/admin-global/empresas': typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/overview'
+    | '/demandas'
     | '/pdv'
     | '/admin-global/convites'
     | '/admin-global/empresas'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/overview'
+    | '/demandas'
     | '/pdv'
     | '/admin-global/convites'
     | '/admin-global/empresas'
@@ -388,6 +400,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_painel/configuracoes'
     | '/_authenticated/_painel/dashboard'
     | '/_authenticated/_painel/overview'
+    | '/_authenticated/_painel/demandas'
     | '/_authenticated/_painel/pdv'
     | '/_authenticated/_painel/admin-global/convites'
     | '/_authenticated/_painel/admin-global/empresas'
@@ -521,6 +534,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelOverviewRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/_painel/demandas': {
+      id: '/_authenticated/_painel/demandas'
+      path: '/demandas'
+      fullPath: '/demandas'
+      preLoaderRoute: typeof AuthenticatedPainelDemandasRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/_painel/pdv': {
       id: '/_authenticated/_painel/pdv'
       path: '/pdv'
@@ -647,6 +667,7 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelConfiguracoesRoute: typeof AuthenticatedPainelConfiguracoesRoute
   AuthenticatedPainelDashboardRoute: typeof AuthenticatedPainelDashboardRoute
   AuthenticatedPainelOverviewRoute: typeof AuthenticatedPainelOverviewRoute
+  AuthenticatedPainelDemandasRoute: typeof AuthenticatedPainelDemandasRoute
   AuthenticatedPainelPdvRoute: typeof AuthenticatedPainelPdvRoute
   AuthenticatedPainelAdminGlobalConvitesRoute: typeof AuthenticatedPainelAdminGlobalConvitesRoute
   AuthenticatedPainelAdminGlobalEmpresasRoute: typeof AuthenticatedPainelAdminGlobalEmpresasRoute
@@ -667,6 +688,7 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
   AuthenticatedPainelConfiguracoesRoute: AuthenticatedPainelConfiguracoesRoute,
   AuthenticatedPainelDashboardRoute: AuthenticatedPainelDashboardRoute,
   AuthenticatedPainelOverviewRoute: AuthenticatedPainelOverviewRoute,
+  AuthenticatedPainelDemandasRoute: AuthenticatedPainelDemandasRoute,
   AuthenticatedPainelPdvRoute: AuthenticatedPainelPdvRoute,
   AuthenticatedPainelAdminGlobalConvitesRoute:
     AuthenticatedPainelAdminGlobalConvitesRoute,
