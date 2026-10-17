@@ -218,6 +218,13 @@
       "when": 1792207435090,
       "tag": "0030_demandas_table",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792209451908,
+      "tag": "0031_demandas_escopo_status_chat",
+      "breakpoints": true
     }
   ]
 }

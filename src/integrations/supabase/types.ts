@@ -130,40 +130,101 @@ export type Database = {
           },
         ]
       }
+      demanda_atualizacoes: {
+        Row: {
+          autor_id: string | null
+          created_at: string
+          demanda_id: string
+          id: string
+          texto_html: string
+          workspace_id: string
+        }
+        Insert: {
+          autor_id?: string | null
+          created_at?: string
+          demanda_id: string
+          id?: string
+          texto_html: string
+          workspace_id: string
+        }
+        Update: {
+          autor_id?: string | null
+          created_at?: string
+          demanda_id?: string
+          id?: string
+          texto_html?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demanda_atualizacoes_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demanda_atualizacoes_demanda_id_fkey"
+            columns: ["demanda_id"]
+            isOneToOne: false
+            referencedRelation: "demandas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demanda_atualizacoes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demandas: {
         Row: {
+          classificacao: string | null
           created_at: string
           criado_por: string | null
           data_entrega: string
           data_inicio: string
           data_pedida: string
+          escopo: string | null
+          escopo_nome: string | null
           id: string
           nome: string
           observacoes_html: string | null
+          status: string | null
           updated_at: string
           workspace_id: string
         }
         Insert: {
+          classificacao?: string | null
           created_at?: string
           criado_por?: string | null
           data_entrega: string
           data_inicio: string
           data_pedida: string
+          escopo?: string | null
+          escopo_nome?: string | null
           id?: string
           nome: string
           observacoes_html?: string | null
+          status?: string | null
           updated_at?: string
           workspace_id: string
         }
         Update: {
+          classificacao?: string | null
           created_at?: string
           criado_por?: string | null
           data_entrega?: string
           data_inicio?: string
           data_pedida?: string
+          escopo?: string | null
+          escopo_nome?: string | null
           id?: string
           nome?: string
           observacoes_html?: string | null
+          status?: string | null
           updated_at?: string
           workspace_id?: string
         }
