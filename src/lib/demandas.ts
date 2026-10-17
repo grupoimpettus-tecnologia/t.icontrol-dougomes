@@ -37,7 +37,33 @@ export function segundaDaSemana(data: Date) {
   return base;
 }
 
+export type EscopoDemanda = "empresa" | "unidade" | "marca";
+export type ClassificacaoDemanda = "baixa" | "media" | "alta";
 export type ColunaDemanda = "a_fazer" | "em_andamento" | "concluida";
+
+export const ROTULO_ESCOPO: Record<EscopoDemanda, string> = {
+  empresa: "Empresa",
+  unidade: "Unidade",
+  marca: "Marca/Rede",
+};
+
+export const ROTULO_NOME_ESCOPO: Record<EscopoDemanda, string> = {
+  empresa: "Nome da empresa",
+  unidade: "Nome da unidade",
+  marca: "Nome da marca",
+};
+
+export const ROTULO_CLASSIFICACAO: Record<ClassificacaoDemanda, string> = {
+  baixa: "Baixa",
+  media: "Média",
+  alta: "Alta",
+};
+
+export const ROTULO_COLUNA: Record<ColunaDemanda, string> = {
+  a_fazer: "A Fazer",
+  em_andamento: "Em Andamento",
+  concluida: "Concluídas",
+};
 
 export function colunaDemanda(dataInicio: string, dataEntrega: string, hoje: Date): ColunaDemanda {
   const dia = inicioDoDia(hoje);
@@ -46,6 +72,17 @@ export function colunaDemanda(dataInicio: string, dataEntrega: string, hoje: Dat
   if (entrega < dia) return "concluida";
   if (inicio > dia) return "a_fazer";
   return "em_andamento";
+}
+
+export function resumoDemandas(
+  itens: { data_inicio: string; data_entrega: string; classificacao: string | null }[],
+  hoje: Date,
+) {
+  return {
+    total: itens.length,
+    emAndamento: itens.filter((item) => colunaDemanda(item.data_inicio, item.data_entrega, hoje) === "em_andamento").length,
+    statusAlto: itens.filter((item) => item.classificacao === "alta").length,
+  };
 }
 
 export function sugerirDatasDemanda(dataPedida: Date, entregasOcupadas: string[]) {

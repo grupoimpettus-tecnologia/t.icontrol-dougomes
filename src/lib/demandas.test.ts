@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { colunaDemanda, diaPermitidoParaEntrega, lerIsoData, sugerirDatasDemanda } from "./demandas.ts";
+import { colunaDemanda, diaPermitidoParaEntrega, lerIsoData, resumoDemandas, sugerirDatasDemanda } from "./demandas.ts";
 
 test("sexta, sábado e domingo recuam para a quinta", () => {
   assert.equal(sugerirDatasDemanda(lerIsoData("2026-10-16"), []).dataEntrega, "2026-10-15");
@@ -27,6 +27,21 @@ test("a coluna segue o intervalo entre início e entrega", () => {
   assert.equal(colunaDemanda("2026-10-19", "2026-10-22", hoje), "a_fazer");
   assert.equal(colunaDemanda("2026-10-12", "2026-10-15", hoje), "em_andamento");
   assert.equal(colunaDemanda("2026-10-05", "2026-10-08", hoje), "concluida");
+});
+
+test("o resumo conta total, em andamento e classificação alta", () => {
+  const hoje = lerIsoData("2026-10-14");
+  const resumo = resumoDemandas(
+    [
+      { data_inicio: "2026-10-12", data_entrega: "2026-10-15", classificacao: "alta" },
+      { data_inicio: "2026-10-19", data_entrega: "2026-10-22", classificacao: "baixa" },
+      { data_inicio: "2026-10-05", data_entrega: "2026-10-08", classificacao: "alta" },
+    ],
+    hoje,
+  );
+  assert.equal(resumo.total, 3);
+  assert.equal(resumo.emAndamento, 1);
+  assert.equal(resumo.statusAlto, 2);
 });
 
 test("semana cheia empurra a entrega para a próxima segunda", () => {
