@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { colunaDemanda, diaPermitidoParaEntrega, lerIsoData, resumoDemandas, sugerirDatasDemanda } from "./demandas.ts";
+import { colunaDemanda, diaPermitidoParaEntrega, ladoAtualizacao, lerIsoData, proximoStatus, resumoDemandas, statusDemanda, sugerirDatasDemanda } from "./demandas.ts";
 
 test("sexta, sábado e domingo recuam para a quinta", () => {
   assert.equal(sugerirDatasDemanda(lerIsoData("2026-10-16"), []).dataEntrega, "2026-10-15");
@@ -42,6 +42,21 @@ test("o resumo conta total, em andamento e classificação alta", () => {
   assert.equal(resumo.total, 3);
   assert.equal(resumo.emAndamento, 1);
   assert.equal(resumo.statusAlto, 2);
+});
+
+test("o status manual define a coluna e o próximo passo", () => {
+  const hoje = lerIsoData("2026-10-14");
+  const item = { data_inicio: "2026-10-12", data_entrega: "2026-10-15", status: "a_fazer" as const };
+  assert.equal(statusDemanda(item, hoje), "a_fazer");
+  assert.equal(proximoStatus("a_fazer"), "em_andamento");
+  assert.equal(proximoStatus("em_andamento"), "concluida");
+  assert.equal(proximoStatus("concluida"), null);
+  assert.equal(resumoDemandas([{ ...item, classificacao: "alta" }], hoje).emAndamento, 0);
+});
+
+test("o cadastrante fica à direita e outro usuário à esquerda", () => {
+  assert.equal(ladoAtualizacao("autor-1", "autor-1"), "direita");
+  assert.equal(ladoAtualizacao("autor-2", "autor-1"), "esquerda");
 });
 
 test("semana cheia empurra a entrega para a próxima segunda", () => {

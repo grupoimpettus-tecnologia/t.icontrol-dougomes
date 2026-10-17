@@ -1,16 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarDays, Columns3, Trash2 } from "lucide-react";
+import { CalendarDays, Columns3, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EditorFormatado } from "@/components/infra/EditorFormatado";
 import { ConteudoRico } from "@/components/infra/ConteudoRico";
 import { ExportarMenu } from "@/components/ExportarMenu";
+import { useAuth } from "@/hooks/useAuth";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
 import { textoExportacao } from "@/lib/exportar";
@@ -23,10 +25,12 @@ import {
   ROTULO_COLUNA,
   ROTULO_ESCOPO,
   ROTULO_NOME_ESCOPO,
-  colunaDemanda,
   formatarIsoData,
+  ladoAtualizacao,
   lerIsoData,
+  proximoStatus,
   resumoDemandas,
+  statusDemanda,
   sugerirDatasDemanda,
 } from "@/lib/demandas";
 
@@ -57,12 +61,22 @@ type Demanda = {
   escopo: EscopoDemanda | null;
   escopo_nome: string | null;
   classificacao: ClassificacaoDemanda | null;
+  status: ColunaDemanda | null;
+  criado_por: string | null;
+  created_at: string;
+};
+
+type Atualizacao = {
+  id: string;
+  autor_id: string | null;
+  texto_html: string;
   created_at: string;
 };
 
 const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const COLUNAS: ColunaDemanda[] = ["a_fazer", "em_andamento", "concluida"];
-const CAMPOS = "id, nome, data_inicio, data_pedida, data_entrega, observacoes_html, escopo, escopo_nome, classificacao, created_at";
+const CAMPOS = "id, nome, data_inicio, data_pedida, data_entrega, observacoes_html, escopo, escopo_nome, classificacao, status, criado_por, created_at";
+const MIGRATION_STATUS = "20261017180000_demandas_status_chat.sql";
 
 function exibirData(iso: string) {
   return lerIsoData(iso.slice(0, 10)).toLocaleDateString("pt-BR");
@@ -76,9 +90,11 @@ function PaginaDemandas() {
   const atual = useCurrentWorkspace();
   const ws = atual?.workspace.id;
   const podeEditar = atual?.role === "master" || atual?.role === "admin" || atual?.role === "tecnico";
+  const { user } = useAuth();
   const qc = useQueryClient();
   const hoje = inicioLocal(new Date());
   const [visao, setVisao] = useState<"agenda" | "lista">("agenda");
+  const [aberta, setAberta] = useState<Demanda | null>(null);
   const [nome, setNome] = useState("");
   const [dataPedida, setDataPedida] = useState(formatarIsoData(hoje));
   const [escopo, setEscopo] = useState<EscopoDemanda | "">("");
@@ -95,15 +111,16 @@ function PaginaDemandas() {
       if (!/column|schema cache/i.test(completo.error.message)) throw completo.error;
       const basico = await db
         .from("demandas")
-        .select("id, nome, data_inicio, data_pedida, data_entrega, observacoes_html, created_at")
+        .select("id, nome, data_inicio, data_pedida, data_entrega, observacoes_html, criado_por, created_at")
         .eq("workspace_id", ws)
         .order("data_entrega", { ascending: true });
       if (basico.error) throw basico.error;
-      return (basico.data ?? []).map((item: Omit<Demanda, "escopo" | "escopo_nome" | "classificacao">) => ({
+      return (basico.data ?? []).map((item: Omit<Demanda, "escopo" | "escopo_nome" | "classificacao" | "status">) => ({
         ...item,
         escopo: null,
         escopo_nome: null,
         classificacao: null,
+        status: null,
       }));
     },
   });
@@ -119,7 +136,7 @@ function PaginaDemandas() {
         lerIsoData(dataPedida),
         itens.map((item) => item.data_entrega.slice(0, 10)),
       );
-      const { error } = await db.from("demandas").insert({
+      const payload = {
         workspace_id: ws,
         nome: nome.trim(),
         data_inicio: sugestao.dataInicio,
@@ -129,8 +146,18 @@ function PaginaDemandas() {
         escopo,
         escopo_nome: escopoNome.trim(),
         classificacao,
-      });
-      if (error) throw error;
+        status: "a_fazer",
+        criado_por: user?.id ?? null,
+      };
+      const completo = await db.from("demandas").insert(payload);
+      if (completo.error && /status|column|schema cache/i.test(completo.error.message)) {
+        const semStatus = { ...payload };
+        delete semStatus.status;
+        const basico = await db.from("demandas").insert(semStatus);
+        if (basico.error) throw basico.error;
+      } else if (completo.error) {
+        throw completo.error;
+      }
       return sugestao;
     },
     onSuccess: (sugestao) => {
@@ -147,8 +174,24 @@ function PaginaDemandas() {
     onError: (erro: Error) => {
       toast.error(tabelaAusente(erro.message) ? "Estrutura ainda incompleta no banco" : "Não foi possível cadastrar a demanda", {
         description: tabelaAusente(erro.message)
-          ? "Execute a migration 20261017140000_demandas_escopo_classificacao.sql no SQL Editor do Supabase."
+          ? `Execute a migration ${MIGRATION_STATUS} no SQL Editor do Supabase.`
           : erro.message,
+      });
+    },
+  });
+
+  const mudarStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ColunaDemanda }) => {
+      const { error } = await db.from("demandas").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Status atualizado");
+      qc.invalidateQueries({ queryKey: ["demandas", ws] });
+    },
+    onError: (erro: Error) => {
+      toast.error(tabelaAusente(erro.message) ? "Estrutura ainda incompleta no banco" : "Não foi possível alterar o status", {
+        description: tabelaAusente(erro.message) ? `Execute a migration ${MIGRATION_STATUS} no SQL Editor do Supabase.` : erro.message,
       });
     },
   });
@@ -178,7 +221,7 @@ function PaginaDemandas() {
 
   const linhasExportacao = itens.map((demanda) => ({
     nome: demanda.nome,
-    coluna: ROTULO_COLUNA[colunaDemanda(demanda.data_inicio, demanda.data_entrega, hoje)],
+    coluna: ROTULO_COLUNA[statusDemanda(demanda, hoje)],
     escopo: demanda.escopo ? ROTULO_ESCOPO[demanda.escopo] : "",
     escopo_nome: demanda.escopo_nome ?? "",
     classificacao: demanda.classificacao ? ROTULO_CLASSIFICACAO[demanda.classificacao] : "",
@@ -263,11 +306,11 @@ function PaginaDemandas() {
                   <section key={coluna} className="rounded-lg border bg-muted/20 p-3">
                     <h2 className="mb-3 text-sm font-semibold">{ROTULO_COLUNA[coluna]}</h2>
                     <div className="space-y-2">
-                      {itens.filter((demanda) => colunaDemanda(demanda.data_inicio, demanda.data_entrega, hoje) === coluna).length === 0 && (
+                      {itens.filter((demanda) => statusDemanda(demanda, hoje) === coluna).length === 0 && (
                         <p className="text-sm text-muted-foreground">Nenhuma demanda.</p>
                       )}
                       {itens
-                        .filter((demanda) => colunaDemanda(demanda.data_inicio, demanda.data_entrega, hoje) === coluna)
+                        .filter((demanda) => statusDemanda(demanda, hoje) === coluna)
                         .map((demanda) => (
                           <article key={demanda.id} className="rounded-md border bg-card p-3">
                             <p className="font-medium">{demanda.nome}</p>
@@ -276,6 +319,15 @@ function PaginaDemandas() {
                               {demanda.classificacao ? ` · ${ROTULO_CLASSIFICACAO[demanda.classificacao]}` : ""}
                             </p>
                             <p className="mt-1 text-sm">Entrega {exibirData(demanda.data_entrega)}</p>
+                            <AcoesDemanda
+                              demanda={demanda}
+                              hoje={hoje}
+                              podeEditar={podeEditar}
+                              alterando={mudarStatus.isPending}
+                              onAbrir={() => setAberta(demanda)}
+                              onStatus={(status) => mudarStatus.mutate({ id: demanda.id, status })}
+                              onExcluir={() => excluir.mutate(demanda.id)}
+                            />
                           </article>
                         ))}
                     </div>
@@ -375,17 +427,21 @@ function PaginaDemandas() {
                         <p className="font-medium">{demanda.nome}</p>
                         <p className="text-xs text-muted-foreground">Cadastro {new Date(demanda.created_at).toLocaleString("pt-BR")}</p>
                         <p className="text-sm">
-                          {demanda.escopo ? `${ROTULO_ESCOPO[demanda.escopo]}: ${demanda.escopo_nome ?? ""} · ` : ""}
+                          {ROTULO_COLUNA[statusDemanda(demanda, hoje)]} · {demanda.escopo ? `${ROTULO_ESCOPO[demanda.escopo]}: ${demanda.escopo_nome ?? ""} · ` : ""}
                           {demanda.classificacao ? `${ROTULO_CLASSIFICACAO[demanda.classificacao]} · ` : ""}
                           Início {exibirData(demanda.data_inicio)} · Pedida {exibirData(demanda.data_pedida)} · Entrega {exibirData(demanda.data_entrega)}
                         </p>
                         {demanda.observacoes_html?.trim() && <ConteudoRico html={demanda.observacoes_html} className="text-sm" />}
                       </div>
-                      {podeEditar && (
-                        <Button type="button" variant="ghost" size="icon" aria-label={`Remover ${demanda.nome}`} onClick={() => excluir.mutate(demanda.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <AcoesDemanda
+                        demanda={demanda}
+                        hoje={hoje}
+                        podeEditar={podeEditar}
+                        alterando={mudarStatus.isPending}
+                        onAbrir={() => setAberta(demanda)}
+                        onStatus={(status) => mudarStatus.mutate({ id: demanda.id, status })}
+                        onExcluir={() => excluir.mutate(demanda.id)}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -394,6 +450,16 @@ function PaginaDemandas() {
           </Card>
         </div>
       )}
+      <ModalDemanda
+        demanda={aberta ? itens.find((item) => item.id === aberta.id) ?? aberta : null}
+        aberta={!!aberta}
+        podeEditar={podeEditar}
+        usuarioId={user?.id ?? null}
+        workspaceId={ws}
+        ocupadas={itens.map((item) => item.data_entrega.slice(0, 10))}
+        onFechar={() => setAberta(null)}
+        onSalva={() => qc.invalidateQueries({ queryKey: ["demandas", ws] })}
+      />
     </div>
   );
 }
@@ -402,9 +468,292 @@ function MensagemErro({ mensagem }: { mensagem: string }) {
   return (
     <p className="text-sm text-destructive">
       {tabelaAusente(mensagem)
-        ? "Execute a migration 20261017140000_demandas_escopo_classificacao.sql no SQL Editor do Supabase."
+        ? `Execute a migration ${MIGRATION_STATUS} no SQL Editor do Supabase.`
         : "Não foi possível carregar as demandas."}
     </p>
+  );
+}
+
+function AcoesDemanda({
+  demanda,
+  hoje,
+  podeEditar,
+  alterando,
+  onAbrir,
+  onStatus,
+  onExcluir,
+}: {
+  demanda: Demanda;
+  hoje: Date;
+  podeEditar: boolean;
+  alterando: boolean;
+  onAbrir: () => void;
+  onStatus: (status: ColunaDemanda) => void;
+  onExcluir: () => void;
+}) {
+  const proximo = proximoStatus(statusDemanda(demanda, hoje));
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1">
+      <Button type="button" variant="outline" size="sm" onClick={onAbrir}>
+        <Pencil className="mr-1 h-3.5 w-3.5" />
+        Abrir
+      </Button>
+      {podeEditar && proximo && (
+        <Button type="button" size="sm" disabled={alterando} onClick={() => onStatus(proximo)}>
+          {proximo === "em_andamento" ? "Em andamento" : "Concluir"}
+        </Button>
+      )}
+      {podeEditar && (
+        <Button type="button" variant="ghost" size="icon" aria-label={`Remover ${demanda.nome}`} onClick={onExcluir}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function ModalDemanda({
+  demanda,
+  aberta,
+  podeEditar,
+  usuarioId,
+  workspaceId,
+  ocupadas,
+  onFechar,
+  onSalva,
+}: {
+  demanda: Demanda | null;
+  aberta: boolean;
+  podeEditar: boolean;
+  usuarioId: string | null;
+  workspaceId: string | undefined;
+  ocupadas: string[];
+  onFechar: () => void;
+  onSalva: () => void;
+}) {
+  const [nome, setNome] = useState("");
+  const [dataPedida, setDataPedida] = useState("");
+  const [escopo, setEscopo] = useState<EscopoDemanda | "">("");
+  const [escopoNome, setEscopoNome] = useState("");
+  const [classificacao, setClassificacao] = useState<ClassificacaoDemanda | "">("");
+  const [observacoes, setObservacoes] = useState("");
+  const [texto, setTexto] = useState("");
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!aberta || !demanda) return;
+    setNome(demanda.nome);
+    setDataPedida(demanda.data_pedida.slice(0, 10));
+    setEscopo(demanda.escopo ?? "");
+    setEscopoNome(demanda.escopo_nome ?? "");
+    setClassificacao(demanda.classificacao ?? "");
+    setObservacoes(demanda.observacoes_html ?? "");
+    setTexto("");
+    // Recarrega o formulário só ao abrir outra demanda.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberta, demanda?.id]);
+
+  const atualizacoes = useQuery({
+    queryKey: ["demanda-atualizacoes", demanda?.id],
+    enabled: aberta && !!demanda,
+    queryFn: async (): Promise<{ mensagens: Atualizacao[]; nomes: Record<string, string> }> => {
+      if (!demanda) return { mensagens: [], nomes: {} };
+      const { data, error } = await db
+        .from("demanda_atualizacoes")
+        .select("id, autor_id, texto_html, created_at")
+        .eq("demanda_id", demanda.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const mensagens = (data ?? []) as Atualizacao[];
+      const ids = [...new Set([demanda.criado_por, ...mensagens.map((item) => item.autor_id)].filter((id): id is string => !!id))];
+      const nomes: Record<string, string> = {};
+      if (ids.length) {
+        const pessoas = await supabase.from("profiles").select("id, nome").in("id", ids);
+        for (const pessoa of pessoas.data ?? []) nomes[pessoa.id] = pessoa.nome;
+      }
+      return { mensagens, nomes };
+    },
+  });
+
+  const salvar = useMutation({
+    mutationFn: async () => {
+      if (!demanda || !escopo || !classificacao) throw new Error("Informe o escopo e a classificação.");
+      const sugestao = sugerirDatasDemanda(
+        lerIsoData(dataPedida),
+        ocupadas.filter((data) => data !== demanda.data_entrega.slice(0, 10)),
+      );
+      const { error } = await db
+        .from("demandas")
+        .update({
+          nome: nome.trim(),
+          data_inicio: sugestao.dataInicio,
+          data_pedida: sugestao.dataPedida,
+          data_entrega: sugestao.dataEntrega,
+          observacoes_html: observacoes.trim() ? observacoes : null,
+          escopo,
+          escopo_nome: escopoNome.trim(),
+          classificacao,
+        })
+        .eq("id", demanda.id);
+      if (error) throw error;
+      return sugestao;
+    },
+    onSuccess: (sugestao) => {
+      toast.success("Demanda atualizada", {
+        description: `Início ${exibirData(sugestao.dataInicio)} · pedida ${exibirData(sugestao.dataPedida)} · entrega ${exibirData(sugestao.dataEntrega)}`,
+      });
+      onSalva();
+    },
+    onError: (erro: Error) => toast.error("Não foi possível salvar", { description: erro.message }),
+  });
+
+  const comentar = useMutation({
+    mutationFn: async () => {
+      if (!demanda || !usuarioId || !workspaceId) throw new Error("Entre novamente para registrar a atualização.");
+      if (!textoExportacao(texto).trim()) throw new Error("Escreva a atualização.");
+      const { error } = await db.from("demanda_atualizacoes").insert({
+        demanda_id: demanda.id,
+        workspace_id: workspaceId,
+        autor_id: usuarioId,
+        texto_html: texto,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setTexto("");
+      qc.invalidateQueries({ queryKey: ["demanda-atualizacoes", demanda?.id] });
+    },
+    onError: (erro: Error) => {
+      toast.error(tabelaAusente(erro.message) ? "Histórico ainda não criado no banco" : "Não foi possível registrar a atualização", {
+        description: tabelaAusente(erro.message) ? `Execute a migration ${MIGRATION_STATUS} no SQL Editor do Supabase.` : erro.message,
+      });
+    },
+  });
+
+  const mensagensBase: Atualizacao[] = demanda?.observacoes_html?.trim()
+    ? [{ id: "base", autor_id: demanda.criado_por, texto_html: demanda.observacoes_html, created_at: demanda.created_at }]
+    : [];
+  const mensagens = [...mensagensBase, ...(atualizacoes.data?.mensagens ?? [])];
+  const nomes = atualizacoes.data?.nomes ?? {};
+
+  return (
+    <Dialog
+      open={aberta}
+      onOpenChange={(aberto) => {
+        if (!aberto) onFechar();
+      }}
+    >
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        {demanda && (
+          <>
+            <DialogHeader>
+              <DialogTitle>{demanda.nome}</DialogTitle>
+            </DialogHeader>
+            {podeEditar && (
+              <form
+                className="space-y-3"
+                onSubmit={(evento) => {
+                  evento.preventDefault();
+                  if (nome.trim() && dataPedida && escopo && escopoNome.trim() && classificacao) salvar.mutate();
+                }}
+              >
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editar-nome">Nome</Label>
+                    <Input id="editar-nome" value={nome} onChange={(evento) => setNome(evento.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editar-data">Data prevista</Label>
+                    <Input id="editar-data" type="date" value={dataPedida} onChange={(evento) => setDataPedida(evento.target.value)} required />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label>Escopo</Label>
+                    <Select
+                      value={escopo}
+                      onValueChange={(valor) => {
+                        setEscopo((atual) => {
+                          if (atual && atual !== valor) setEscopoNome("");
+                          return valor as EscopoDemanda;
+                        });
+                      }}
+                    >
+                      <SelectTrigger aria-label="Escopo da demanda">
+                        <SelectValue placeholder="Empresa, unidade ou marca" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="empresa">Empresa</SelectItem>
+                        <SelectItem value="unidade">Unidade</SelectItem>
+                        <SelectItem value="marca">Marca/Rede</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editar-escopo-nome">{escopo ? ROTULO_NOME_ESCOPO[escopo] : "Nome"}</Label>
+                    <Input id="editar-escopo-nome" value={escopoNome} disabled={!escopo} onChange={(evento) => setEscopoNome(evento.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Classificação</Label>
+                    <Select value={classificacao} onValueChange={(valor) => setClassificacao(valor as ClassificacaoDemanda)}>
+                      <SelectTrigger aria-label="Classificação da demanda">
+                        <SelectValue placeholder="Baixa, média ou alta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="baixa">Baixa</SelectItem>
+                        <SelectItem value="media">Média</SelectItem>
+                        <SelectItem value="alta">Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="editar-observacoes">Observações iniciais</Label>
+                  <EditorFormatado id="editar-observacoes" value={observacoes} onChange={setObservacoes} placeholder="Observações da demanda..." />
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={salvar.isPending || !nome.trim() || !escopo || !escopoNome.trim() || !classificacao}>
+                    {salvar.isPending ? "Salvando..." : "Salvar alterações"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
+            <div className="space-y-3 border-t pt-3">
+              <p className="text-sm font-medium">Atualizações</p>
+              {atualizacoes.isError ? (
+                <p className="text-sm text-destructive">Execute a migration {MIGRATION_STATUS} no SQL Editor do Supabase.</p>
+              ) : (
+                <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+                  {mensagens.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma observação ainda.</p>}
+                  {mensagens.map((mensagem) => {
+                    const lado = ladoAtualizacao(mensagem.autor_id, demanda.criado_por);
+                    const autor = mensagem.autor_id ? nomes[mensagem.autor_id] || "Usuário" : "Observação inicial";
+                    return (
+                      <div key={mensagem.id} className={cn("flex", lado === "direita" ? "justify-end" : "justify-start")}>
+                        <div className={cn("max-w-[85%] rounded-2xl px-3 py-2", lado === "direita" ? "bg-primary/15" : "bg-muted")}>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            {autor} · {new Date(mensagem.created_at).toLocaleString("pt-BR")}
+                            {mensagem.id === "base" ? " · inicial" : ""}
+                          </p>
+                          <ConteudoRico html={mensagem.texto_html} className="text-sm" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="demanda-atualizacao">Nova atualização</Label>
+                <EditorFormatado id="demanda-atualizacao" value={texto} onChange={setTexto} placeholder="Escreva uma atualização..." />
+                <Button type="button" disabled={comentar.isPending || !textoExportacao(texto).trim()} onClick={() => comentar.mutate()}>
+                  {comentar.isPending ? "Enviando..." : "Enviar atualização"}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -74,13 +74,34 @@ export function colunaDemanda(dataInicio: string, dataEntrega: string, hoje: Dat
   return "em_andamento";
 }
 
+export function statusDemanda(
+  item: { status?: string | null; data_inicio: string; data_entrega: string },
+  hoje: Date,
+): ColunaDemanda {
+  if (item.status === "a_fazer" || item.status === "em_andamento" || item.status === "concluida") return item.status;
+  return colunaDemanda(item.data_inicio, item.data_entrega, hoje);
+}
+
+export function proximoStatus(status: ColunaDemanda): ColunaDemanda | null {
+  if (status === "a_fazer") return "em_andamento";
+  if (status === "em_andamento") return "concluida";
+  return null;
+}
+
+/** Quem cadastrou fica à direita; os demais usuários ficam à esquerda. */
+export function ladoAtualizacao(autorId: string | null, cadastranteId: string | null): "direita" | "esquerda" {
+  if (cadastranteId && autorId === cadastranteId) return "direita";
+  if (!cadastranteId && !autorId) return "direita";
+  return "esquerda";
+}
+
 export function resumoDemandas(
-  itens: { data_inicio: string; data_entrega: string; classificacao: string | null }[],
+  itens: { data_inicio: string; data_entrega: string; classificacao: string | null; status?: string | null }[],
   hoje: Date,
 ) {
   return {
     total: itens.length,
-    emAndamento: itens.filter((item) => colunaDemanda(item.data_inicio, item.data_entrega, hoje) === "em_andamento").length,
+    emAndamento: itens.filter((item) => statusDemanda(item, hoje) === "em_andamento").length,
     statusAlto: itens.filter((item) => item.classificacao === "alta").length,
   };
 }
