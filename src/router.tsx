@@ -6,10 +6,12 @@ import { routeTree } from "./routeTree.gen";
 // Reload once to fetch the fresh version instead of showing a blank screen.
 if (typeof window !== "undefined") {
   window.addEventListener("vite:preloadError", (event) => {
-    event.preventDefault();
     const chave = "ticontrol-reload-chunk";
     const ultimo = Number(sessionStorage.getItem(chave) ?? 0);
     if (Date.now() - ultimo > 10_000) {
+      // Only swallow the error when we really reload; otherwise the import
+      // resolves to undefined and the router crashes reading `.component`.
+      event.preventDefault();
       sessionStorage.setItem(chave, String(Date.now()));
       window.location.reload();
     }
