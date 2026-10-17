@@ -16,7 +16,7 @@ export function formatarIsoData(data: Date) {
 
 export function lerIsoData(iso: string) {
   const [ano, mes, dia] = iso.split("-").map(Number);
-  return new Date(ano, (mes ?? 1) - 1, dia ?? 1);
+  return new Date(ano ?? 1970, (mes ?? 1) - 1, dia ?? 1);
 }
 
 /** Sexta, sábado e domingo recuam até a quinta, que é o limite da semana. */
