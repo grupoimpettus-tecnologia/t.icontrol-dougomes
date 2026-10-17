@@ -130,6 +130,60 @@ export type Database = {
           },
         ]
       }
+      demandas: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          data_entrega: string
+          data_inicio: string
+          data_pedida: string
+          id: string
+          nome: string
+          observacoes_html: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          data_entrega: string
+          data_inicio: string
+          data_pedida: string
+          id?: string
+          nome: string
+          observacoes_html?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          data_entrega?: string
+          data_inicio?: string
+          data_pedida?: string
+          id?: string
+          nome?: string
+          observacoes_html?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demandas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demandas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment_heartbeats: {
         Row: {
           equipment_id: string
