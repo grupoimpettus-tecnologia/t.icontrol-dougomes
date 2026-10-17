@@ -211,6 +211,13 @@
       "when": 1791930339499,
       "tag": "0029_microarea_cargo_versions",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792207435090,
+      "tag": "0030_demandas_table",
+      "breakpoints": true
     }
   ]
 }
