@@ -151,8 +151,8 @@ function PaginaDemandas() {
       };
       const completo = await db.from("demandas").insert(payload);
       if (completo.error && /status|column|schema cache/i.test(completo.error.message)) {
-        const semStatus = { ...payload };
-        delete semStatus.status;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { status: _status, ...semStatus } = payload;
         const basico = await db.from("demandas").insert(semStatus);
         if (basico.error) throw basico.error;
       } else if (completo.error) {
