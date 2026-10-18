@@ -14,6 +14,7 @@ import { ConteudoRico } from "@/components/infra/ConteudoRico";
 import { supabase } from "@/integrations/supabase/client";
 import { textoExportacao } from "@/lib/exportar";
 import { MICROAREAS, CARGOS_MICROAREA, chaveFuncoes, copiarFuncoes, type FuncaoMicroarea, type VersaoCargos } from "@/lib/microarea-cargos";
+import { completarFuncoesPeloOrganograma, type NoOrganograma } from "@/lib/funcoes-por-responsavel";
 
 type Rascunho = Omit<VersaoCargos, "id"> & { id?: string };
 
@@ -64,6 +65,24 @@ export function MicroareaCargos({ workspaceId, podeEditar }: { workspaceId: stri
     onError: (e: Error) => toast.error("Não foi possível salvar", { description: e.message }),
   });
   const rascunhoAtual = (): Rascunho => ({ ...(versao ? { id: versao.id } : {}), nome: versao?.nome ?? "Visão atual", periodo: versao?.periodo ?? null, atual: versao?.atual ?? true, funcoes });
+  const completar = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.from("org_versions").select("nodes, atual, created_at").eq("workspace_id", workspaceId).eq("tipo", "micro").order("created_at");
+      if (error) throw error;
+      const organogramas = data ?? [];
+      const base = organogramas.find((item) => item.atual) ?? organogramas.at(-1);
+      if (!base) throw new Error("Cadastre o organograma de microárea antes de completar os cargos.");
+      const proximas = completarFuncoesPeloOrganograma(funcoes, (base.nodes ?? []) as NoOrganograma[]);
+      const acrescentadas = proximas.filter((item, indice) => item.funcoes_html !== funcoes[indice]?.funcoes_html).length;
+      if (!acrescentadas) return 0;
+      await salvar.mutateAsync({ ...rascunhoAtual(), funcoes: proximas });
+      return acrescentadas;
+    },
+    onSuccess: (acrescentadas) => {
+      if (!acrescentadas) toast.info("Analista e Assistente já continham as funções classificadas no organograma.");
+    },
+    onError: (e: Error) => toast.error("Não foi possível completar as funções", { description: e.message }),
+  });
   const abrirCargo = (item: FuncaoMicroarea) => setSelecionado({ ...item });
 
   return (
@@ -75,6 +94,7 @@ export function MicroareaCargos({ workspaceId, podeEditar }: { workspaceId: stri
             <Button variant={grafico ? "default" : "outline"} size="sm" onClick={() => setGrafico(!grafico)}>{grafico ? <Table2 className="mr-2 h-4 w-4" /> : <Network className="mr-2 h-4 w-4" />}{grafico ? "Lista" : "Gráfico"}</Button>
             <ExportarMenu size="sm" titulo={`Microáreas e funções por cargo — ${versao?.nome ?? "Visão atual"}`} colunas={[{ chave: "microarea", titulo: "Microárea" }, { chave: "cargo", titulo: "Cargo" }, { chave: "funcoes", titulo: "Funções" }]} linhas={funcoes.map((f) => ({ microarea: f.microarea, cargo: f.cargo, funcoes: textoExportacao(f.funcoes_html) }))} />
             {podeEditar && <>
+              <Button size="sm" variant="outline" disabled={consulta.isPending || consulta.isError || completar.isPending || salvar.isPending} onClick={() => completar.mutate()}>{completar.isPending ? "Completando..." : "Completar Analista e Assistente"}</Button>
               <Button size="sm" variant="outline" disabled={consulta.isPending || consulta.isError} onClick={() => setEditando(rascunhoAtual())}><Pencil className="mr-2 h-4 w-4" />Editar</Button>
               <Button size="sm" variant="outline" disabled={consulta.isPending || consulta.isError} onClick={() => setEditando({ nome: "Nova visão", periodo: String(new Date().getFullYear()), atual: false, funcoes: copiarFuncoes(funcoes) })}><Copy className="mr-2 h-4 w-4" />Nova versão a partir desta</Button>
               <Button size="sm" disabled={consulta.isPending || consulta.isError} onClick={() => setEditando({ nome: "", periodo: "", atual: !versoes.length, funcoes: copiarFuncoes([]) })}><Plus className="mr-2 h-4 w-4" />Versão</Button>
