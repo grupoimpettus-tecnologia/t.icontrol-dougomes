@@ -37,11 +37,21 @@ test("linha vazia herda a classificação e HouseTI entra nos dois cargos", () =
   assert.equal(porNome.get("Visitas locais")?.analista, true);
   assert.equal(porNome.get("Visitas locais")?.assistente, true);
   assert.equal(porNome.get("Antispam/antivírus email")?.assistente, true);
-  assert.equal(porNome.get("Quotas e listas")?.analista, true);
+  assert.equal(porNome.get("Quotas e listas"), undefined);
 });
 
-test("completa analista e assistente sem alterar o gestor nem repetir função já escrita", () => {
-  const funcoes = copiarFuncoes([{ microarea: "Infraestrutura", cargo: "Gestor", funcoes_html: "<p>Função do gestor</p>" }, { microarea: "Infraestrutura", cargo: "Analista", funcoes_html: "<p>1.1 Projeto e Arquitetura de Rede já lançada</p>" }]);
+test("organiza por seção e mantém o subitem abaixo do grupo", () => {
+  const html = `<h2>EQUIPAMENTOS</h2><ul><li><p><strong>Notebooks/Celulares:</strong></p><ul><li><p>Gestão de inventário</p></li><li><p>Suporte técnico hardware: Analista</p></li></ul></li></ul>`;
+  const funcoes = copiarFuncoes([{ microarea: "Infraestrutura", cargo: "Gestor", funcoes_html: "<p>Função do gestor</p>" }]);
+  const resultado = completarFuncoesPeloOrganograma(funcoes, [{ id: "infra", titulo: "Infraestrutura", parent: null, conteudo: html }]);
+  const analista = resultado.find((item) => item.cargo === "Analista" && item.microarea === "Infraestrutura")?.funcoes_html ?? "";
+  assert.match(analista, /<h2>EQUIPAMENTOS<\/h2><ul><li><p><strong>Notebooks\/Celulares:<\/strong><\/p><ul><li><p>Suporte técnico hardware<\/p><\/li><\/ul><\/li><\/ul>/);
+  assert.doesNotMatch(analista, /Gestão de inventário/);
+  assert.equal(resultado.find((item) => item.cargo === "Gestor")?.funcoes_html, "<p>Função do gestor</p>");
+});
+
+test("completa analista e assistente sem alterar o gestor e sem colar a descrição no título", () => {
+  const funcoes = copiarFuncoes([{ microarea: "Infraestrutura", cargo: "Gestor", funcoes_html: "<p>Função do gestor</p>" }, { microarea: "Infraestrutura", cargo: "Analista", funcoes_html: "<p>texto antigo sem seções</p>" }]);
   const resultado = completarFuncoesPeloOrganograma(funcoes, [
     { id: "infra", titulo: "Infraestrutura", parent: null, conteudo: tabela },
     { id: "filho", titulo: "Redes", parent: "infra", conteudo: "<ul><li>Backup de configuração: Assistente</li></ul>" },
@@ -50,9 +60,9 @@ test("completa analista e assistente sem alterar o gestor nem repetir função j
   const analista = resultado.find((item) => item.microarea === "Infraestrutura" && item.cargo === "Analista");
   const assistente = resultado.find((item) => item.microarea === "Infraestrutura" && item.cargo === "Assistente");
   assert.equal(gestor?.funcoes_html, "<p>Função do gestor</p>");
-  assert.match(analista?.funcoes_html ?? "", /1\.2 Configuração de Switches\/Routers/);
-  assert.equal((analista?.funcoes_html ?? "").match(/1\.1 Projeto e Arquitetura de Rede/g)?.length, 1);
+  assert.match(analista?.funcoes_html ?? "", /<h2>Redes<\/h2><ul><li><p>1\.1 Projeto e Arquitetura de Rede<\/p><\/li>/);
+  assert.doesNotMatch(analista?.funcoes_html ?? "", /Definir topologia|texto antigo/);
   assert.match(assistente?.funcoes_html ?? "", /1\.6 Documentação de Rede/);
-  assert.match(assistente?.funcoes_html ?? "", /Backup de configuração/);
+  assert.match(assistente?.funcoes_html ?? "", /<li><p>Backup de configuração<\/p><\/li><\/ul>$/);
   assert.equal(resultado.length, MICROAREAS.length * CARGOS_MICROAREA.length);
 });
