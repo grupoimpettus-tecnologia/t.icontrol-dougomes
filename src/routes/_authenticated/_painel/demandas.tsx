@@ -61,6 +61,8 @@ type Demanda = {
   escopo: EscopoDemanda | null;
   escopo_nome: string | null;
   classificacao: ClassificacaoDemanda | null;
+  solicitante_nome: string | null;
+  responsavel_nome: string | null;
   status: ColunaDemanda | null;
   criado_por: string | null;
   created_at: string;
@@ -75,7 +77,7 @@ type Atualizacao = {
 
 const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const COLUNAS: ColunaDemanda[] = ["a_fazer", "em_andamento", "concluida"];
-const CAMPOS = "id, nome, data_inicio, data_pedida, data_entrega, observacoes_html, escopo, escopo_nome, classificacao, status, criado_por, created_at";
+const CAMPOS = "id, nome, data_inicio, data_pedida, data_entrega, observacoes_html, escopo, escopo_nome, classificacao, solicitante_nome, responsavel_nome, status, criado_por, created_at";
 const MIGRATION_STATUS = "20261017180000_demandas_status_chat.sql";
 
 function exibirData(iso: string) {
@@ -100,6 +102,8 @@ function PaginaDemandas() {
   const [escopo, setEscopo] = useState<EscopoDemanda | "">("");
   const [escopoNome, setEscopoNome] = useState("");
   const [classificacao, setClassificacao] = useState<ClassificacaoDemanda | "">("");
+  const [solicitanteNome, setSolicitanteNome] = useState("");
+  const [responsavelNome, setResponsavelNome] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
   const demandas = useQuery({
@@ -115,11 +119,13 @@ function PaginaDemandas() {
         .eq("workspace_id", ws)
         .order("data_entrega", { ascending: true });
       if (basico.error) throw basico.error;
-      return (basico.data ?? []).map((item: Omit<Demanda, "escopo" | "escopo_nome" | "classificacao" | "status">) => ({
+      return (basico.data ?? []).map((item: Omit<Demanda, "escopo" | "escopo_nome" | "classificacao" | "solicitante_nome" | "responsavel_nome" | "status">) => ({
         ...item,
         escopo: null,
         escopo_nome: null,
         classificacao: null,
+        solicitante_nome: null,
+        responsavel_nome: null,
         status: null,
       }));
     },
@@ -127,7 +133,7 @@ function PaginaDemandas() {
 
   const itens = demandas.data ?? [];
   const resumo = useMemo(() => resumoDemandas(itens, hoje), [itens, hoje]);
-  const formularioPronto = Boolean(nome.trim() && dataPedida && escopo && escopoNome.trim() && classificacao);
+  const formularioPronto = Boolean(nome.trim() && dataPedida && escopo && escopoNome.trim() && classificacao && solicitanteNome.trim() && responsavelNome.trim());
 
   const criar = useMutation({
     mutationFn: async () => {
@@ -146,18 +152,23 @@ function PaginaDemandas() {
         escopo,
         escopo_nome: escopoNome.trim(),
         classificacao,
+        solicitante_nome: solicitanteNome.trim(),
+        responsavel_nome: responsavelNome.trim(),
         status: "a_fazer",
         criado_por: user?.id ?? null,
       };
-      const completo = await db.from("demandas").insert(payload);
-      if (completo.error && /status|column|schema cache/i.test(completo.error.message)) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { status: _status, ...semStatus } = payload;
-        const basico = await db.from("demandas").insert(semStatus);
-        if (basico.error) throw basico.error;
-      } else if (completo.error) {
-        throw completo.error;
+      let pendente = { ...payload };
+      let resultado = await db.from("demandas").insert(pendente);
+      if (resultado.error && /solicitante_nome|responsavel_nome/i.test(resultado.error.message)) {
+        const { solicitante_nome: _solicitante, responsavel_nome: _responsavel, ...semPessoas } = pendente;
+        pendente = semPessoas as typeof pendente;
+        resultado = await db.from("demandas").insert(pendente);
       }
+      if (resultado.error && /status|column|schema cache/i.test(resultado.error.message)) {
+        const { status: _status, ...semStatus } = pendente;
+        resultado = await db.from("demandas").insert(semStatus);
+      }
+      if (resultado.error) throw resultado.error;
       return sugestao;
     },
     onSuccess: (sugestao) => {
@@ -168,6 +179,8 @@ function PaginaDemandas() {
       setEscopo("");
       setEscopoNome("");
       setClassificacao("");
+      setSolicitanteNome("");
+      setResponsavelNome("");
       setObservacoes("");
       qc.invalidateQueries({ queryKey: ["demandas", ws] });
     },
@@ -225,6 +238,8 @@ function PaginaDemandas() {
     escopo: demanda.escopo ? ROTULO_ESCOPO[demanda.escopo] : "",
     escopo_nome: demanda.escopo_nome ?? "",
     classificacao: demanda.classificacao ? ROTULO_CLASSIFICACAO[demanda.classificacao] : "",
+    solicitante: demanda.solicitante_nome ?? "",
+    responsavel: demanda.responsavel_nome ?? "",
     cadastro: new Date(demanda.created_at).toLocaleString("pt-BR"),
     inicio: exibirData(demanda.data_inicio),
     pedida: exibirData(demanda.data_pedida),
@@ -288,6 +303,8 @@ function PaginaDemandas() {
                 { chave: "escopo", titulo: "Escopo" },
                 { chave: "escopo_nome", titulo: "Nome do escopo" },
                 { chave: "classificacao", titulo: "Classificação" },
+                { chave: "solicitante", titulo: "Nome do solicitante" },
+                { chave: "responsavel", titulo: "Nome do responsável" },
                 { chave: "cadastro", titulo: "Cadastro" },
                 { chave: "inicio", titulo: "Início" },
                 { chave: "pedida", titulo: "Data pedida" },
@@ -317,6 +334,8 @@ function PaginaDemandas() {
                             <p className="mt-1 text-xs text-muted-foreground">
                               {demanda.escopo ? `${ROTULO_ESCOPO[demanda.escopo]} · ${demanda.escopo_nome ?? ""}` : "Sem escopo"}
                               {demanda.classificacao ? ` · ${ROTULO_CLASSIFICACAO[demanda.classificacao]}` : ""}
+                              {demanda.solicitante_nome ? ` · Solicitante ${demanda.solicitante_nome}` : ""}
+                              {demanda.responsavel_nome ? ` · Responsável ${demanda.responsavel_nome}` : ""}
                             </p>
                             <p className="mt-1 text-sm">Entrega {exibirData(demanda.data_entrega)}</p>
                             <AcoesDemanda
@@ -410,6 +429,16 @@ function PaginaDemandas() {
                       </Select>
                     </div>
                   </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="demanda-solicitante">Nome do solicitante</Label>
+                      <Input id="demanda-solicitante" value={solicitanteNome} onChange={(evento) => setSolicitanteNome(evento.target.value)} placeholder="Quem solicitou" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="demanda-responsavel">Nome do responsável</Label>
+                      <Input id="demanda-responsavel" value={responsavelNome} onChange={(evento) => setResponsavelNome(evento.target.value)} placeholder="Quem responde pela demanda" />
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="demanda-observacoes">Observações</Label>
                     <EditorFormatado id="demanda-observacoes" value={observacoes} onChange={setObservacoes} placeholder="Observações da demanda..." />
@@ -429,6 +458,8 @@ function PaginaDemandas() {
                         <p className="text-sm">
                           {ROTULO_COLUNA[statusDemanda(demanda, hoje)]} · {demanda.escopo ? `${ROTULO_ESCOPO[demanda.escopo]}: ${demanda.escopo_nome ?? ""} · ` : ""}
                           {demanda.classificacao ? `${ROTULO_CLASSIFICACAO[demanda.classificacao]} · ` : ""}
+                          {demanda.solicitante_nome ? `Solicitante ${demanda.solicitante_nome} · ` : ""}
+                          {demanda.responsavel_nome ? `Responsável ${demanda.responsavel_nome} · ` : ""}
                           Início {exibirData(demanda.data_inicio)} · Pedida {exibirData(demanda.data_pedida)} · Entrega {exibirData(demanda.data_entrega)}
                         </p>
                         {demanda.observacoes_html?.trim() && <ConteudoRico html={demanda.observacoes_html} className="text-sm" />}
@@ -536,6 +567,8 @@ function ModalDemanda({
   const [escopo, setEscopo] = useState<EscopoDemanda | "">("");
   const [escopoNome, setEscopoNome] = useState("");
   const [classificacao, setClassificacao] = useState<ClassificacaoDemanda | "">("");
+  const [solicitanteNome, setSolicitanteNome] = useState("");
+  const [responsavelNome, setResponsavelNome] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [texto, setTexto] = useState("");
   const qc = useQueryClient();
@@ -547,6 +580,8 @@ function ModalDemanda({
     setEscopo(demanda.escopo ?? "");
     setEscopoNome(demanda.escopo_nome ?? "");
     setClassificacao(demanda.classificacao ?? "");
+    setSolicitanteNome(demanda.solicitante_nome ?? "");
+    setResponsavelNome(demanda.responsavel_nome ?? "");
     setObservacoes(demanda.observacoes_html ?? "");
     setTexto("");
     // Recarrega o formulário só ao abrir outra demanda.
@@ -593,6 +628,8 @@ function ModalDemanda({
           escopo,
           escopo_nome: escopoNome.trim(),
           classificacao,
+          solicitante_nome: solicitanteNome.trim(),
+          responsavel_nome: responsavelNome.trim(),
         })
         .eq("id", demanda.id);
       if (error) throw error;
@@ -654,7 +691,7 @@ function ModalDemanda({
                 className="space-y-3"
                 onSubmit={(evento) => {
                   evento.preventDefault();
-                  if (nome.trim() && dataPedida && escopo && escopoNome.trim() && classificacao) salvar.mutate();
+                  if (nome.trim() && dataPedida && escopo && escopoNome.trim() && classificacao && solicitanteNome.trim() && responsavelNome.trim()) salvar.mutate();
                 }}
               >
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -707,12 +744,22 @@ function ModalDemanda({
                     </Select>
                   </div>
                 </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editar-solicitante">Nome do solicitante</Label>
+                    <Input id="editar-solicitante" value={solicitanteNome} onChange={(evento) => setSolicitanteNome(evento.target.value)} placeholder="Quem solicitou" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="editar-responsavel">Nome do responsável</Label>
+                    <Input id="editar-responsavel" value={responsavelNome} onChange={(evento) => setResponsavelNome(evento.target.value)} placeholder="Quem responde pela demanda" />
+                  </div>
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="editar-observacoes">Observações iniciais</Label>
                   <EditorFormatado id="editar-observacoes" value={observacoes} onChange={setObservacoes} placeholder="Observações da demanda..." />
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={salvar.isPending || !nome.trim() || !escopo || !escopoNome.trim() || !classificacao}>
+                  <Button type="submit" disabled={salvar.isPending || !nome.trim() || !escopo || !escopoNome.trim() || !classificacao || !solicitanteNome.trim() || !responsavelNome.trim()}>
                     {salvar.isPending ? "Salvando..." : "Salvar alterações"}
                   </Button>
                 </DialogFooter>
