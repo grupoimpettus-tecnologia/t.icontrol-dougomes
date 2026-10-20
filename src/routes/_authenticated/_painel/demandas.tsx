@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarDays, Columns3, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Columns3, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,6 +36,8 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+const DEMANDAS_POR_PAGINA = 3;
 
 export const Route = createFileRoute("/_authenticated/_painel/demandas")({
   head: () => ({
@@ -105,6 +107,7 @@ function PaginaDemandas() {
   const [solicitanteNome, setSolicitanteNome] = useState("");
   const [responsavelNome, setResponsavelNome] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [paginaAgenda, setPaginaAgenda] = useState(1);
 
   const demandas = useQuery({
     queryKey: ["demandas", ws],
@@ -131,9 +134,37 @@ function PaginaDemandas() {
     },
   });
 
+  const contagensAtualizacoes = useQuery({
+    queryKey: ["demanda-atualizacoes-contagem", ws],
+    enabled: !!ws,
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await db.from("demanda_atualizacoes").select("demanda_id").eq("workspace_id", ws);
+      if (error) throw error;
+      const mapa: Record<string, number> = {};
+      for (const linha of data ?? []) {
+        const id = linha.demanda_id as string;
+        mapa[id] = (mapa[id] ?? 0) + 1;
+      }
+      return mapa;
+    },
+  });
+
   const itens = demandas.data ?? [];
   const resumo = useMemo(() => resumoDemandas(itens, hoje), [itens, hoje]);
+  const itensAgenda = useMemo(
+    () => [...itens].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [itens],
+  );
+  const totalPaginasAgenda = Math.max(1, Math.ceil(itensAgenda.length / DEMANDAS_POR_PAGINA));
+  const paginaAtualAgenda = Math.min(paginaAgenda, totalPaginasAgenda);
+  const inicioAgenda = (paginaAtualAgenda - 1) * DEMANDAS_POR_PAGINA;
+  const demandasAgendaPagina = itensAgenda.slice(inicioAgenda, inicioAgenda + DEMANDAS_POR_PAGINA);
   const formularioPronto = Boolean(nome.trim() && dataPedida && escopo && escopoNome.trim() && classificacao && solicitanteNome.trim() && responsavelNome.trim());
+
+  function contagemInteracoes(demanda: Demanda) {
+    const base = demanda.observacoes_html?.trim() ? 1 : 0;
+    return base + (contagensAtualizacoes.data?.[demanda.id] ?? 0);
+  }
 
   const criar = useMutation({
     mutationFn: async () => {
@@ -182,7 +213,9 @@ function PaginaDemandas() {
       setSolicitanteNome("");
       setResponsavelNome("");
       setObservacoes("");
+      setPaginaAgenda(1);
       qc.invalidateQueries({ queryKey: ["demandas", ws] });
+      qc.invalidateQueries({ queryKey: ["demanda-atualizacoes-contagem", ws] });
     },
     onError: (erro: Error) => {
       toast.error(tabelaAusente(erro.message) ? "Estrutura ainda incompleta no banco" : "Não foi possível cadastrar a demanda", {
@@ -448,34 +481,87 @@ function PaginaDemandas() {
               {demandas.isError ? (
                 <MensagemErro mensagem={(demandas.error as Error).message} />
               ) : (
-                <ul className="divide-y rounded-lg border">
-                  {itens.length === 0 && <li className="p-4 text-sm text-muted-foreground">Nenhuma demanda cadastrada.</li>}
-                  {itens.map((demanda) => (
-                    <li key={demanda.id} className="flex items-start justify-between gap-3 p-3">
-                      <div className="space-y-1">
-                        <p className="font-medium">{demanda.nome}</p>
-                        <p className="text-xs text-muted-foreground">Cadastro {new Date(demanda.created_at).toLocaleString("pt-BR")}</p>
-                        <p className="text-sm">
-                          {ROTULO_COLUNA[statusDemanda(demanda, hoje)]} · {demanda.escopo ? `${ROTULO_ESCOPO[demanda.escopo]}: ${demanda.escopo_nome ?? ""} · ` : ""}
-                          {demanda.classificacao ? `${ROTULO_CLASSIFICACAO[demanda.classificacao]} · ` : ""}
-                          {demanda.solicitante_nome ? `Solicitante ${demanda.solicitante_nome} · ` : ""}
-                          {demanda.responsavel_nome ? `Responsável ${demanda.responsavel_nome} · ` : ""}
-                          Início {exibirData(demanda.data_inicio)} · Pedida {exibirData(demanda.data_pedida)} · Entrega {exibirData(demanda.data_entrega)}
-                        </p>
-                        {demanda.observacoes_html?.trim() && <ConteudoRico html={demanda.observacoes_html} className="text-sm" />}
+                <div className="space-y-3">
+                  <ul className="divide-y rounded-lg border">
+                    {itensAgenda.length === 0 && <li className="p-4 text-sm text-muted-foreground">Nenhuma demanda cadastrada.</li>}
+                    {demandasAgendaPagina.map((demanda) => {
+                      const interacoes = contagemInteracoes(demanda);
+                      return (
+                        <li key={demanda.id} className="flex items-start justify-between gap-3 p-3">
+                          <div className="space-y-1">
+                            <p className="font-medium">{demanda.nome}</p>
+                            <p className="text-xs text-muted-foreground">Cadastro {new Date(demanda.created_at).toLocaleString("pt-BR")}</p>
+                            <p className="text-sm">
+                              {ROTULO_COLUNA[statusDemanda(demanda, hoje)]} · {demanda.escopo ? `${ROTULO_ESCOPO[demanda.escopo]}: ${demanda.escopo_nome ?? ""} · ` : ""}
+                              {demanda.classificacao ? `${ROTULO_CLASSIFICACAO[demanda.classificacao]} · ` : ""}
+                              {demanda.solicitante_nome ? `Solicitante ${demanda.solicitante_nome} · ` : ""}
+                              {demanda.responsavel_nome ? `Responsável ${demanda.responsavel_nome} · ` : ""}
+                              Início {exibirData(demanda.data_inicio)} · Pedida {exibirData(demanda.data_pedida)} · Entrega {exibirData(demanda.data_entrega)}
+                            </p>
+                            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              {interacoes === 0
+                                ? "Nenhuma interação"
+                                : `${interacoes} ${interacoes === 1 ? "interação" : "interações"}`}
+                            </p>
+                          </div>
+                          <AcoesDemanda
+                            demanda={demanda}
+                            hoje={hoje}
+                            podeEditar={podeEditar}
+                            alterando={mudarStatus.isPending}
+                            onAbrir={() => setAberta(demanda)}
+                            onStatus={(status) => mudarStatus.mutate({ id: demanda.id, status })}
+                            onExcluir={() => excluir.mutate(demanda.id)}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {itensAgenda.length > DEMANDAS_POR_PAGINA && (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        Página {paginaAtualAgenda} de {totalPaginasAgenda} · {itensAgenda.length} demandas
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={paginaAtualAgenda <= 1}
+                          onClick={() => setPaginaAgenda((p) => Math.max(1, p - 1))}
+                          aria-label="Página anterior"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        {Array.from({ length: totalPaginasAgenda }, (_, i) => i + 1).map((pagina) => (
+                          <Button
+                            key={pagina}
+                            type="button"
+                            variant={pagina === paginaAtualAgenda ? "default" : "outline"}
+                            size="icon"
+                            className="h-8 w-8 text-xs"
+                            onClick={() => setPaginaAgenda(pagina)}
+                          >
+                            {pagina}
+                          </Button>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={paginaAtualAgenda >= totalPaginasAgenda}
+                          onClick={() => setPaginaAgenda((p) => Math.min(totalPaginasAgenda, p + 1))}
+                          aria-label="Próxima página"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <AcoesDemanda
-                        demanda={demanda}
-                        hoje={hoje}
-                        podeEditar={podeEditar}
-                        alterando={mudarStatus.isPending}
-                        onAbrir={() => setAberta(demanda)}
-                        onStatus={(status) => mudarStatus.mutate({ id: demanda.id, status })}
-                        onExcluir={() => excluir.mutate(demanda.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -489,7 +575,10 @@ function PaginaDemandas() {
         workspaceId={ws}
         ocupadas={itens.map((item) => item.data_entrega.slice(0, 10))}
         onFechar={() => setAberta(null)}
-        onSalva={() => qc.invalidateQueries({ queryKey: ["demandas", ws] })}
+        onSalva={() => {
+          qc.invalidateQueries({ queryKey: ["demandas", ws] });
+          qc.invalidateQueries({ queryKey: ["demanda-atualizacoes-contagem", ws] });
+        }}
       />
     </div>
   );
@@ -659,6 +748,7 @@ function ModalDemanda({
     onSuccess: () => {
       setTexto("");
       qc.invalidateQueries({ queryKey: ["demanda-atualizacoes", demanda?.id] });
+      qc.invalidateQueries({ queryKey: ["demanda-atualizacoes-contagem", workspaceId] });
     },
     onError: (erro: Error) => {
       toast.error(tabelaAusente(erro.message) ? "Histórico ainda não criado no banco" : "Não foi possível registrar a atualização", {
