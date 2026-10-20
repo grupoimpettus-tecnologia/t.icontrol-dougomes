@@ -57,6 +57,22 @@ export async function enviarEmailSmtp(opcoes: {
     throw new Error("SMTP não configurado no servidor (DEFAULT_SMTP_HOST/USER/PASSWORD/FROM).");
   }
 
+  const { rodandoNoWorker, enviarViaSocket } = await import("@/lib/smtp-worker.server");
+  if (rodandoNoWorker()) {
+    await enviarViaSocket({
+      host: process.env["DEFAULT_SMTP_HOST"]!,
+      port: Number(process.env["DEFAULT_SMTP_PORT"] ?? 587),
+      user: process.env["DEFAULT_SMTP_USER"]!,
+      pass: process.env["DEFAULT_SMTP_PASSWORD"]!,
+      from: process.env["DEFAULT_SMTP_FROM"]!,
+      to: Array.isArray(opcoes.to) ? opcoes.to : [opcoes.to],
+      subject: opcoes.subject,
+      text: opcoes.text,
+      html: opcoes.html,
+    });
+    return;
+  }
+
   const nodemailer = await import("nodemailer");
   const configurada = Number(process.env["DEFAULT_SMTP_PORT"] ?? 587);
   const portas = Array.from(new Set([465, configurada, 587]));
