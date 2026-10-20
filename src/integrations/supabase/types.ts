@@ -192,6 +192,8 @@ export type Database = {
           id: string
           nome: string
           observacoes_html: string | null
+          responsavel_nome: string | null
+          solicitante_nome: string | null
           status: string | null
           updated_at: string
           workspace_id: string
@@ -208,6 +210,8 @@ export type Database = {
           id?: string
           nome: string
           observacoes_html?: string | null
+          responsavel_nome?: string | null
+          solicitante_nome?: string | null
           status?: string | null
           updated_at?: string
           workspace_id: string
@@ -224,6 +228,8 @@ export type Database = {
           id?: string
           nome?: string
           observacoes_html?: string | null
+          responsavel_nome?: string | null
+          solicitante_nome?: string | null
           status?: string | null
           updated_at?: string
           workspace_id?: string
