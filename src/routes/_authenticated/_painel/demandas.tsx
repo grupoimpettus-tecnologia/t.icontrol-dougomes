@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CalendarDays, ChevronLeft, ChevronRight, Columns3, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { ExportarMenu } from "@/components/ExportarMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentWorkspace } from "@/hooks/useWorkspaces";
 import { supabase } from "@/integrations/supabase/client";
+import { concluirEEnviarDemanda } from "@/lib/demandas.functions";
 import { textoExportacao } from "@/lib/exportar";
 import { cn } from "@/lib/utils";
 import {
@@ -108,6 +110,8 @@ function PaginaDemandas() {
   const [responsavelNome, setResponsavelNome] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [paginaAgenda, setPaginaAgenda] = useState(1);
+  const [conclusao, setConclusao] = useState<Demanda | null>(null);
+  const concluirFn = useServerFn(concluirEEnviarDemanda);
 
   const demandas = useQuery({
     queryKey: ["demandas", ws],
@@ -239,6 +243,31 @@ function PaginaDemandas() {
       toast.error(tabelaAusente(erro.message) ? "Estrutura ainda incompleta no banco" : "Não foi possível alterar o status", {
         description: tabelaAusente(erro.message) ? `Execute a migration ${MIGRATION_STATUS} no SQL Editor do Supabase.` : erro.message,
       });
+    },
+  });
+
+  function aoMudarStatus(demanda: Demanda, status: ColunaDemanda) {
+    if (status === "concluida") {
+      setConclusao(demanda);
+      return;
+    }
+    mudarStatus.mutate({ id: demanda.id, status });
+  }
+
+  const concluirDemanda = useMutation({
+    mutationFn: async ({ demandaId, emailDestino, conclusaoHtml }: { demandaId: string; emailDestino: string; conclusaoHtml: string }) =>
+      concluirFn({ data: { demandaId, emailDestino, conclusaoHtml } }),
+    onSuccess: (resultado) => {
+      toast.success("Demanda concluída", {
+        description: `E-mail enviado para ${resultado.destinatario}`,
+      });
+      setConclusao(null);
+      qc.invalidateQueries({ queryKey: ["demandas", ws] });
+      qc.invalidateQueries({ queryKey: ["demanda-atualizacoes-contagem", ws] });
+      qc.invalidateQueries({ queryKey: ["demanda-atualizacoes"] });
+    },
+    onError: (erro: Error) => {
+      toast.error("Não foi possível concluir a demanda", { description: erro.message });
     },
   });
 
@@ -375,9 +404,9 @@ function PaginaDemandas() {
                               demanda={demanda}
                               hoje={hoje}
                               podeEditar={podeEditar}
-                              alterando={mudarStatus.isPending}
+                              alterando={mudarStatus.isPending || concluirDemanda.isPending}
                               onAbrir={() => setAberta(demanda)}
-                              onStatus={(status) => mudarStatus.mutate({ id: demanda.id, status })}
+                              onStatus={(status) => aoMudarStatus(demanda, status)}
                               onExcluir={() => excluir.mutate(demanda.id)}
                             />
                           </article>
@@ -509,9 +538,9 @@ function PaginaDemandas() {
                             demanda={demanda}
                             hoje={hoje}
                             podeEditar={podeEditar}
-                            alterando={mudarStatus.isPending}
+                            alterando={mudarStatus.isPending || concluirDemanda.isPending}
                             onAbrir={() => setAberta(demanda)}
-                            onStatus={(status) => mudarStatus.mutate({ id: demanda.id, status })}
+                            onStatus={(status) => aoMudarStatus(demanda, status)}
                             onExcluir={() => excluir.mutate(demanda.id)}
                           />
                         </li>
@@ -580,6 +609,18 @@ function PaginaDemandas() {
           qc.invalidateQueries({ queryKey: ["demanda-atualizacoes-contagem", ws] });
         }}
       />
+      <ModalConclusao
+        demanda={conclusao ? itens.find((item) => item.id === conclusao.id) ?? conclusao : null}
+        aberta={!!conclusao}
+        enviando={concluirDemanda.isPending}
+        onFechar={() => {
+          if (!concluirDemanda.isPending) setConclusao(null);
+        }}
+        onConfirmar={({ emailDestino, conclusaoHtml }) => {
+          if (!conclusao) return;
+          concluirDemanda.mutate({ demandaId: conclusao.id, emailDestino, conclusaoHtml });
+        }}
+      />
     </div>
   );
 }
@@ -629,6 +670,95 @@ function AcoesDemanda({
         </Button>
       )}
     </div>
+  );
+}
+
+function ModalConclusao({
+  demanda,
+  aberta,
+  enviando,
+  onFechar,
+  onConfirmar,
+}: {
+  demanda: Demanda | null;
+  aberta: boolean;
+  enviando: boolean;
+  onFechar: () => void;
+  onConfirmar: (dados: { emailDestino: string; conclusaoHtml: string }) => void;
+}) {
+  const [emailDestino, setEmailDestino] = useState("");
+  const [conclusaoHtml, setConclusaoHtml] = useState("");
+
+  useEffect(() => {
+    if (!aberta || !demanda) return;
+    setEmailDestino("");
+    setConclusaoHtml("");
+  }, [aberta, demanda?.id]);
+
+  const pronto = Boolean(emailDestino.trim() && textoExportacao(conclusaoHtml).trim());
+
+  return (
+    <Dialog
+      open={aberta}
+      onOpenChange={(aberto) => {
+        if (!aberto) onFechar();
+      }}
+    >
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        {demanda && (
+          <>
+            <DialogHeader>
+              <DialogTitle>Concluir demanda</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Registre as considerações finais de <span className="font-medium text-foreground">{demanda.nome}</span> e informe o e-mail
+              que receberá a entrega.
+            </p>
+            <form
+              className="space-y-3"
+              onSubmit={(evento) => {
+                evento.preventDefault();
+                if (!pronto || enviando) return;
+                onConfirmar({ emailDestino: emailDestino.trim(), conclusaoHtml });
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="conclusao-email">E-mail do destinatário</Label>
+                <Input
+                  id="conclusao-email"
+                  type="email"
+                  autoComplete="email"
+                  value={emailDestino}
+                  onChange={(evento) => setEmailDestino(evento.target.value)}
+                  placeholder="solicitante@empresa.com"
+                  required
+                />
+                {demanda.solicitante_nome && (
+                  <p className="text-xs text-muted-foreground">Solicitante cadastrado: {demanda.solicitante_nome}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="conclusao-texto">Considerações de conclusão</Label>
+                <EditorFormatado
+                  id="conclusao-texto"
+                  value={conclusaoHtml}
+                  onChange={setConclusaoHtml}
+                  placeholder="Descreva o que foi entregue e as considerações finais..."
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" disabled={enviando} onClick={onFechar}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={!pronto || enviando}>
+                  {enviando ? "Concluindo..." : "Concluir e enviar e-mail"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
