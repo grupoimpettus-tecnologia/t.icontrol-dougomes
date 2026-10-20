@@ -27,7 +27,7 @@ function b64(valor: string) {
 
 function enderecoDe(valor: string) {
   const m = valor.match(/<([^>]+)>/);
-  return (m ? m[1] : valor).trim();
+  return (m?.[1] ?? valor).trim();
 }
 
 function quebrar(b64txt: string) {
@@ -56,7 +56,7 @@ export async function enviarViaSocket(o: Opcoes) {
     for (;;) {
       const linhas = buffer.split("\r\n");
       for (let i = 0; i < linhas.length - 1; i++) {
-        const l = linhas[i];
+        const l = linhas[i] ?? "";
         if (/^\d{3} /.test(l)) {
           const texto = linhas.slice(0, i + 1).join("\n");
           buffer = linhas.slice(i + 1).join("\r\n");
