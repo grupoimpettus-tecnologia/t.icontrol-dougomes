@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Corrigir falha por memória ao baixar backup da empresa e verificar o download com conta autenticada
+- [x] Corrigir falha por memória ao baixar backup da empresa; download autenticado validado com 225.361 registros (59,8 MB), testes de integridade passaram
 - [x] Preparar pacote de estrutura do banco e guia de ambiente para migração de conta, sem valores de segredos; metadados consultados e sintaxe SQL validada, sem executar no destino
 - [x] Adicionar lista/gráfico, exportação, edição e versões ao organograma de cargos com a aparência do exemplo; criação e funções verificadas após recarregar com Master, CSV conferido e dados temporários removidos
 - [x] Adicionar organograma de microáreas com cargos clicáveis e funções por empresa; salvamento e leitura após recarregar verificados com Master, apresentação somente leitura e sem transbordamento no celular
