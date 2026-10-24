@@ -1,32 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { TABELAS_BACKUP, TAMANHO_PAGINA_BACKUP } from "@/lib/backup-export";
 
 const FORMATO = "ticontrol-backup";
 const VERSAO = 1;
 
 /** Tabelas da empresa. Contas (profiles), senhas e push ficam de fora. */
-const TABELAS = [
-  "workspaces",
-  "user_workspaces",
-  "invites",
-  "access_entries",
-  "service_assets",
-  "equipments",
-  "equipment_heartbeats",
-  "phone_lines",
-  "phone_stock",
-  "team_members",
-  "org_versions",
-  "monitors",
-  "monitor_checks",
-  "monitor_incidents",
-  "monitor_notification_recipients",
-  "notification_logs",
-  "pdv_lojas",
-  "pdv_loja_etapas",
-  "audit_logs",
-] as const;
+const TABELAS = TABELAS_BACKUP;
 
 type Tabela = (typeof TABELAS)[number];
 interface Linha {
@@ -143,40 +124,6 @@ async function exigirGestor(dbUsuario: Db, userId: string, workspaceId: string) 
   return empresa as { id: string; nome: string; slug: string };
 }
 
-async function lerConvites(db: Db, workspaceId: string): Promise<Linha[]> {
-  const linhas: Linha[] = [];
-  const pagina = 1000;
-  for (let inicio = 0; ; inicio += pagina) {
-    const { data, error } = await db
-      .from("invites")
-      .select("*")
-      .contains("workspace_ids", [workspaceId])
-      .order("id", { ascending: true })
-      .range(inicio, inicio + pagina - 1);
-    if (error) throw new Error(`invites: ${error.message}`);
-    linhas.push(...((data ?? []) as Linha[]));
-    if (!data || data.length < pagina) break;
-  }
-  return linhas;
-}
-
-async function lerTudo(db: Db, tabela: string, coluna: string, valor: string): Promise<Linha[]> {
-  const linhas: Linha[] = [];
-  const pagina = 1000;
-  for (let inicio = 0; ; inicio += pagina) {
-    const { data, error } = await db
-      .from(tabela)
-      .select("*")
-      .eq(coluna, valor)
-      .order("id", { ascending: true })
-      .range(inicio, inicio + pagina - 1);
-    if (error) throw new Error(`${tabela}: ${error.message}`);
-    linhas.push(...((data ?? []) as Linha[]));
-    if (!data || data.length < pagina) break;
-  }
-  return linhas;
-}
-
 async function lerIds(db: Db, tabela: string, workspaceId: string): Promise<string[]> {
   const ids: string[] = [];
   const pagina = 1000;
@@ -231,28 +178,60 @@ export const exportarBackupEmpresa = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ workspaceId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const empresa = await exigirGestor(context.supabase, context.userId, data.workspaceId);
+    return {
+      formato: FORMATO,
+      versao: VERSAO,
+      gerado_em: new Date().toISOString(),
+      workspace: { id: empresa.id, nome: empresa.nome, slug: empresa.slug },
+    };
+  });
+
+/** Each authorized call reads only one bounded page, not the entire history. */
+export const exportarPaginaBackupEmpresa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    workspaceId: z.string().uuid(),
+    tabela: z.enum(TABELAS_BACKUP),
+    depoisId: z.string().max(80).nullable(),
+    ultimoId: z.string().max(80).nullable(),
+    geradoEm: z.string().datetime(),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    await exigirGestor(context.supabase, context.userId, data.workspaceId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as Db;
-
-    const tabelas: Record<string, Linha[]> = {};
-    tabelas["workspaces"] = await lerTudo(db, "workspaces", "id", empresa.id);
-
-    tabelas["invites"] = await lerConvites(db, empresa.id);
-
-    for (const tabela of TABELAS) {
-      if (tabela === "workspaces" || tabela === "invites") continue;
-      tabelas[tabela] = await lerTudo(db, tabela, "workspace_id", empresa.id);
+    const datas: Partial<Record<Tabela, string>> = {
+      equipment_heartbeats: "recebido_em", monitor_checks: "criado_em",
+      monitor_incidents: "iniciado_em",
+    };
+    function consulta(campos: string) {
+      let q = db.from(data.tabela).select(campos);
+      if (data.tabela === "workspaces") q = q.eq("id", data.workspaceId);
+      else if (data.tabela === "invites") q = q.contains("workspace_ids", [data.workspaceId]);
+      else q = q.eq("workspace_id", data.workspaceId);
+      // Exclude records created after export began, including newly arriving checks.
+      q = q.lte(datas[data.tabela] ?? "created_at", data.geradoEm);
+      return q;
     }
-
-    return JSON.parse(
-      JSON.stringify({
-        formato: FORMATO,
-        versao: VERSAO,
-        gerado_em: new Date().toISOString(),
-        workspace: { id: empresa.id, nome: empresa.nome, slug: empresa.slug },
-        tabelas,
-      }),
-    ) as JsonSerial;
+    let ultimoId = data.ultimoId;
+    if (!ultimoId) {
+      const { data: ultimas, error } = await consulta("id").order("id", { ascending: false }).limit(1);
+      if (error) throw new Error(`Não foi possível ler ${data.tabela}: ${error.message}`);
+      if (!ultimas?.length) return { linhasJson: "[]", quantidade: 0, proximoId: null, ultimoId: null };
+      ultimoId = String(ultimas[0].id);
+    }
+    let q = consulta("*").lte("id", ultimoId).order("id", { ascending: true }).limit(TAMANHO_PAGINA_BACKUP);
+    if (data.depoisId) q = q.gt("id", data.depoisId);
+    const { data: linhas, error } = await q;
+    if (error) throw new Error(`Não foi possível ler ${data.tabela}: ${error.message}`);
+    const pagina = (linhas ?? []) as Linha[];
+    const finalId = pagina.length ? String(pagina[pagina.length - 1]?.id) : null;
+    return {
+      linhasJson: JSON.stringify(pagina),
+      quantidade: pagina.length,
+      ultimoId,
+      proximoId: pagina.length === TAMANHO_PAGINA_BACKUP && finalId !== ultimoId ? finalId : null,
+    };
   });
 
 export const restaurarBackupEmpresa = createServerFn({ method: "POST" })
