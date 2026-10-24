@@ -202,6 +202,7 @@ export const exportarPaginaBackupEmpresa = createServerFn({ method: "POST" })
     const db = supabaseAdmin as Db;
     const datas: Partial<Record<Tabela, string>> = {
       equipment_heartbeats: "recebido_em", monitor_checks: "criado_em",
+      monitor_incidents: "iniciado_em",
     };
     function consulta(campos: string) {
       let q = db.from(data.tabela).select(campos);
