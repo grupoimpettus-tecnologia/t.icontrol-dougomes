@@ -13,3 +13,4 @@
 - Authorize store contact writes with authenticated `is_master` RPC validation and matching RLS policies; client profile flags control presentation only.
 - Keep microarea role functions in a dedicated workspace/area/role record, separate from org_versions, to preserve historical charts; enforce existing workspace management permissions through RLS.
 - Store cargo-chart snapshots in workspace-scoped microarea_cargo_versions, backfill legacy role functions once, and never mutate org_versions or legacy contacts when saving cargo-chart versions.
+- Export workspace backups through individually authorized keyset pages and browser Blob parts, retaining the restore format; never accumulate all monitoring history in a server function because it exceeds hosting memory.

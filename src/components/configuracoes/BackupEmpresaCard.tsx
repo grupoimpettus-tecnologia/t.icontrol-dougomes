@@ -16,7 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { exportarBackupEmpresa, restaurarBackupEmpresa } from "@/lib/backup.functions";
+import { exportarBackupEmpresa, exportarPaginaBackupEmpresa, restaurarBackupEmpresa } from "@/lib/backup.functions";
+import { montarArquivoBackup } from "@/lib/backup-export";
 
 export function BackupEmpresaCard({
   workspaceId,
@@ -34,27 +35,41 @@ export function BackupEmpresaCard({
   const [confirmacao, setConfirmacao] = useState("");
   const [backup, setBackup] = useState<unknown>(null);
   const [nomeArquivo, setNomeArquivo] = useState("");
+  const [linhasLidas, setLinhasLidas] = useState(0);
+  const [arquivoPronto, setArquivoPronto] = useState<Blob | null>(null);
   const exportar = useServerFn(exportarBackupEmpresa);
+  const exportarPagina = useServerFn(exportarPaginaBackupEmpresa);
   const restaurar = useServerFn(restaurarBackupEmpresa);
 
   const download = useMutation({
     mutationFn: async () => {
       if (!workspaceId) throw new Error("Selecione uma empresa.");
-      return exportar({ data: { workspaceId } });
+      setArquivoPronto(null);
+      setLinhasLidas(0);
+      const cabecalho = await exportar({ data: { workspaceId } });
+      return montarArquivoBackup(cabecalho,
+        (pedido) => exportarPagina({ data: { ...pedido, workspaceId, geradoEm: cabecalho.gerado_em } }),
+        (total) => setLinhasLidas(total),
+      );
     },
     onSuccess: (arquivo) => {
-      const blob = new Blob([JSON.stringify(arquivo, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const dia = new Date().toISOString().slice(0, 10);
-      link.href = url;
-      link.download = `ticontrol-backup-${slug || "empresa"}-${dia}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success("Backup gerado");
+      setArquivoPronto(arquivo);
+      toast.success("Backup pronto para baixar");
     },
     onError: (erro: Error) => toast.error("Não foi possível gerar o backup", { description: erro.message }),
   });
+
+  function baixarArquivo() {
+    if (!arquivoPronto) return;
+    const url = URL.createObjectURL(arquivoPronto);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ticontrol-backup-${slug || "empresa"}-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  }
 
   const aplicar = useMutation({
     mutationFn: async () => {
@@ -101,9 +116,9 @@ export function BackupEmpresaCard({
       <CardContent className="space-y-3">
         {podeGerir && workspaceId ? (
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => download.mutate()} disabled={download.isPending}>
+            <Button onClick={() => arquivoPronto ? baixarArquivo() : download.mutate()} disabled={download.isPending}>
               <Download className="mr-2 h-4 w-4" />
-              {download.isPending ? "Gerando..." : "Baixar backup"}
+              {download.isPending ? `Gerando… ${linhasLidas.toLocaleString("pt-BR")} registros` : arquivoPronto ? "Salvar backup pronto" : "Baixar backup"}
             </Button>
             <Button variant="outline" onClick={() => arquivoRef.current?.click()} disabled={aplicar.isPending}>
               <Upload className="mr-2 h-4 w-4" />
